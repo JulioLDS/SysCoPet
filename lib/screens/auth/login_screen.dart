@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 
 class LoginScreen extends StatelessWidget {
-  final VoidCallback onToggle; // Callback para ir para Cadastro
+  final VoidCallback onToggleRegister; // Callback para ir para Cadastro
+  final VoidCallback onForgotPassword; // Callback para ir para Recuperação
 
-  const LoginScreen({super.key, required this.onToggle});
+  const LoginScreen({
+    super.key,
+    required this.onToggleRegister,
+    required this.onForgotPassword,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +26,10 @@ class LoginScreen extends StatelessWidget {
               ),
             ),
             const Spacer(),
-            TextButton(onPressed: onToggle, child: const Text('Cadastrar')),
+            TextButton(
+              onPressed: onToggleRegister,
+              child: const Text('Cadastrar'),
+            ),
           ],
         ),
         const Divider(height: 32),
@@ -70,9 +78,7 @@ class LoginScreen extends StatelessWidget {
         Align(
           alignment: Alignment.centerRight,
           child: TextButton(
-            onPressed: () {
-              // TODO: Implementar recuperação de senha
-            },
+            onPressed: onForgotPassword,
             child: const Text('Esqueci minha senha'),
           ),
         ),
@@ -149,7 +155,7 @@ class LoginScreen extends StatelessWidget {
                 style: TextStyle(color: Colors.grey[600]),
               ),
               TextButton(
-                onPressed: onToggle,
+                onPressed: onToggleRegister,
                 child: const Text(
                   'Cadastre-se',
                   style: TextStyle(

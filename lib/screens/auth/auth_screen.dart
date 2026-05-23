@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'login_screen.dart';
 import 'register_screen.dart';
+import 'forgot_password_screen.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -9,12 +10,15 @@ class AuthScreen extends StatefulWidget {
   State<AuthScreen> createState() => _AuthScreenState();
 }
 
-class _AuthScreenState extends State<AuthScreen> {
-  bool _isLoginMode = true; // Controla se está em Login ou Cadastro
+// Enum para controlar qual tela está sendo exibida
+enum AuthMode { login, register, forgotPassword }
 
-  void _toggleAuthMode() {
+class _AuthScreenState extends State<AuthScreen> {
+  AuthMode _currentMode = AuthMode.login;
+
+  void _setMode(AuthMode mode) {
     setState(() {
-      _isLoginMode = !_isLoginMode;
+      _currentMode = mode;
     });
   }
 
@@ -44,7 +48,7 @@ class _AuthScreenState extends State<AuthScreen> {
         // Lado Esquerdo (Informações/Promotional)
         Expanded(
           child: Container(
-            color: Color(0xFF0D9488), // Verde Teal escuro
+            color: const Color(0xFF0D9488), // Verde Teal escuro
             child: Center(
               child: Padding(
                 padding: const EdgeInsets.all(40),
@@ -85,6 +89,18 @@ class _AuthScreenState extends State<AuthScreen> {
                         color: Colors.white.withOpacity(0.9),
                       ),
                     ),
+                    const SizedBox(height: 40),
+                    // Placeholder para imagem dos pets
+                    Container(
+                      height: 200,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: const Center(
+                        child: Text('🐕 🐈', style: TextStyle(fontSize: 60)),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -112,9 +128,7 @@ class _AuthScreenState extends State<AuthScreen> {
                       ),
                     ],
                   ),
-                  child: _isLoginMode
-                      ? LoginScreen(onToggle: _toggleAuthMode)
-                      : RegisterScreen(onToggle: _toggleAuthMode),
+                  child: _buildCurrentScreen(),
                 ),
               ),
             ),
@@ -142,11 +156,26 @@ class _AuthScreenState extends State<AuthScreen> {
               ),
             ],
           ),
-          child: _isLoginMode
-              ? LoginScreen(onToggle: _toggleAuthMode)
-              : RegisterScreen(onToggle: _toggleAuthMode),
+          child: _buildCurrentScreen(),
         ),
       ),
     );
+  }
+
+  // ===== BUILD DA TELA ATUAL =====
+  Widget _buildCurrentScreen() {
+    switch (_currentMode) {
+      case AuthMode.login:
+        return LoginScreen(
+          onToggleRegister: () => _setMode(AuthMode.register),
+          onForgotPassword: () => _setMode(AuthMode.forgotPassword),
+        );
+      case AuthMode.register:
+        return RegisterScreen(onToggle: () => _setMode(AuthMode.login));
+      case AuthMode.forgotPassword:
+        return ForgotPasswordScreen(
+          onBackToLogin: () => _setMode(AuthMode.login),
+        );
+    }
   }
 }
