@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart'; 
 
-class LoginScreen extends StatelessWidget {
+import '../../providers/auth_provider.dart';
+import 'home_screen.dart';
+
+class LoginScreen extends StatefulWidget {
   final VoidCallback onToggleRegister; // Callback para ir para Cadastro
   final VoidCallback onForgotPassword; // Callback para ir para Recuperação
 
@@ -11,7 +15,19 @@ class LoginScreen extends StatelessWidget {
   });
 
   @override
+  State<LoginScreen> createState() => _LoginScreenState();
+  
+}
+
+
+class _LoginScreenState extends State<LoginScreen> {
+  final emailController = TextEditingController();
+  final passwordController = TextEditingController();
+
+  @override
   Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -27,7 +43,7 @@ class LoginScreen extends StatelessWidget {
             ),
             const Spacer(),
             TextButton(
-              onPressed: onToggleRegister,
+              onPressed: widget.onToggleRegister,
               child: const Text('Cadastrar'),
             ),
           ],
@@ -78,7 +94,7 @@ class LoginScreen extends StatelessWidget {
         Align(
           alignment: Alignment.centerRight,
           child: TextButton(
-            onPressed: onForgotPassword,
+            onPressed: widget.onForgotPassword,
             child: const Text('Esqueci minha senha'),
           ),
         ),
@@ -88,7 +104,32 @@ class LoginScreen extends StatelessWidget {
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
-            onPressed: () {
+            onPressed: authProvider.isLoading
+                ? null
+                :() async {
+
+                  final success = await authProvider.login(
+                    email: emailController.text,
+                    password: passwordController.text
+                    );
+
+                    if (!mounted) return;
+
+                    if(!success) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Login inválido"),
+                        )
+                      );
+                      return;
+                    }
+
+                    Navigator.pushReplacement(
+                      context,
+                       MaterialPageRoute(
+                        builder: (_) => const HomeScreen(),
+                        )
+                        );
+
               // TODO: Implementar login
             },
             style: ElevatedButton.styleFrom(
@@ -155,7 +196,7 @@ class LoginScreen extends StatelessWidget {
                 style: TextStyle(color: Colors.grey[600]),
               ),
               TextButton(
-                onPressed: onToggleRegister,
+                onPressed: widget.onToggleRegister,
                 child: const Text(
                   'Cadastre-se',
                   style: TextStyle(
