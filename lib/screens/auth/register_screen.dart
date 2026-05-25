@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:syscopet/providers/auth_provider.dart';
+import 'home_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   final VoidCallback onToggle; // Callback para voltar para Login
@@ -18,7 +19,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
-
     final authProvider = Provider.of<AuthProvider>(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -62,10 +62,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
           decoration: const InputDecoration(
             labelText: 'Nome completo',
             prefixIcon: Icon(Icons.person_outline),
-            border: OutlineInputBorder(),   
+            border: OutlineInputBorder(),
           ),
           controller: nameController,
-
         ),
         const SizedBox(height: 16),
 
@@ -147,44 +146,77 @@ class _RegisterScreenState extends State<RegisterScreen> {
           width: double.infinity,
           child: ElevatedButton(
             onPressed: authProvider.isLoading
-              ? null
-             :() async {
-              // TODO: Implementar cadastro
+                ? null
+                : () async {
+                    // Validação básica
+                    if (nameController.text.isEmpty ||
+                        emailController.text.isEmpty ||
+                        passwordController.text.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Preencha todos os campos'),
+                        ),
+                      );
+                      return;
+                    }
 
-              final result = await authProvider.register(
-                          nome: nameController.text,
-                          email: emailController.text,
-                          senha: passwordController.text,
-                        );
-
-                        if (!mounted) return;
-
-                        if (result != null) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text(result)),
-                          );
-
-                          return;
-                        }
-
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Usuário criado com sucesso'),
+                    if (passwordController.text.length < 6) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Senha deve ter pelo menos 6 caracteres',
                           ),
-                        );
+                        ),
+                      );
+                      return;
+                    }
 
-                        Navigator.pop(context);
-            },
+                    print('🔥 Tentando cadastrar usuário...');
+
+                    final result = await authProvider.register(
+                      nome: nameController.text,
+                      email: emailController.text,
+                      senha: passwordController.text,
+                    );
+
+                    print('🔥 Resultado do cadastro: $result');
+
+                    if (!mounted) return;
+
+                    if (result != null) {
+                      print('❌ Cadastro falhou: $result');
+                      ScaffoldMessenger.of(
+                        context,
+                      ).showSnackBar(SnackBar(content: Text(result)));
+                      return;
+                    }
+
+                    print('✅ Cadastro sucesso! Navegando para Home...');
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Usuário criado com sucesso!'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+
+                    // Navega para HomeScreen e remove todas as telas anteriores
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(builder: (_) => const HomeScreen()),
+                      (route) => false,
+                    );
+                  },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF0D9488),
               padding: const EdgeInsets.symmetric(vertical: 16),
             ),
             child: authProvider.isLoading
-            ? const CircularProgressIndicator()
-            :const Text(
-              'Cadastrar',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-            ),
+                ? const CircularProgressIndicator()
+                : const Text(
+                    'Cadastrar',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
           ),
         ),
         const SizedBox(height: 24),
@@ -205,16 +237,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
         // Botões Sociais
         OutlinedButton.icon(
           onPressed: () {},
-            icon: const Icon(
-              Icons.g_mobiledata,
-              size: 24,
-            ),
-            label: const Text('Continuar com Google'),
-            style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              minimumSize: const Size(double.infinity, 48),
-            ),
-          ),  
+          icon: const Icon(Icons.g_mobiledata, size: 24),
+          label: const Text('Continuar com Google'),
+          style: OutlinedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            minimumSize: const Size(double.infinity, 48),
+          ),
+        ),
         const SizedBox(height: 12),
 
         OutlinedButton.icon(
