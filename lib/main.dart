@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import 'providers/auth_provider.dart';
 import 'core/themes/app_theme.dart';
 import 'screens/auth/auth_screen.dart';
 
@@ -11,11 +14,14 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return ChangeNotifierProvider(
+     create:(_)=> AuthProvider(),
+     child:  MaterialApp(
       title: 'SyscoPet',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       home: const AuthScreen(),
+      )
     );
   }
 }

@@ -1,12 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:syscopet/providers/auth_provider.dart';
 
-class RegisterScreen extends StatelessWidget {
+class RegisterScreen extends StatefulWidget {
   final VoidCallback onToggle; // Callback para voltar para Login
 
   const RegisterScreen({super.key, required this.onToggle});
 
   @override
+  State<RegisterScreen> createState() => _RegisterScreenState();
+}
+
+class _RegisterScreenState extends State<RegisterScreen> {
+  final nameController = TextEditingController();
+  final emailController = TextEditingController();
+  final passwordController = TextEditingController();
+
+  @override
   Widget build(BuildContext context) {
+
+    final authProvider = Provider.of<AuthProvider>(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -21,7 +34,7 @@ class RegisterScreen extends StatelessWidget {
               ),
             ),
             const Spacer(),
-            TextButton(onPressed: onToggle, child: const Text('Entrar')),
+            TextButton(onPressed: widget.onToggle, child: const Text('Entrar')),
           ],
         ),
         const Divider(height: 32),
@@ -49,8 +62,10 @@ class RegisterScreen extends StatelessWidget {
           decoration: const InputDecoration(
             labelText: 'Nome completo',
             prefixIcon: Icon(Icons.person_outline),
-            border: OutlineInputBorder(),
+            border: OutlineInputBorder(),   
           ),
+          controller: nameController,
+
         ),
         const SizedBox(height: 16),
 
@@ -61,6 +76,7 @@ class RegisterScreen extends StatelessWidget {
             border: OutlineInputBorder(),
           ),
           keyboardType: TextInputType.emailAddress,
+          controller: emailController,
         ),
         const SizedBox(height: 16),
 
@@ -72,6 +88,7 @@ class RegisterScreen extends StatelessWidget {
             border: OutlineInputBorder(),
           ),
           obscureText: true,
+          controller: passwordController,
         ),
         const SizedBox(height: 16),
 
@@ -83,6 +100,7 @@ class RegisterScreen extends StatelessWidget {
             border: OutlineInputBorder(),
           ),
           obscureText: true,
+          controller: passwordController,
         ),
         const SizedBox(height: 16),
 
@@ -128,14 +146,42 @@ class RegisterScreen extends StatelessWidget {
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
-            onPressed: () {
+            onPressed: authProvider.isLoading
+              ? null
+             :() async {
               // TODO: Implementar cadastro
+
+              final result = await authProvider.register(
+                          nome: nameController.text,
+                          email: emailController.text,
+                          senha: passwordController.text,
+                        );
+
+                        if (!mounted) return;
+
+                        if (result != null) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(result)),
+                          );
+
+                          return;
+                        }
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Usuário criado com sucesso'),
+                          ),
+                        );
+
+                        Navigator.pop(context);
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF0D9488),
               padding: const EdgeInsets.symmetric(vertical: 16),
             ),
-            child: const Text(
+            child: authProvider.isLoading
+            ? const CircularProgressIndicator()
+            :const Text(
               'Cadastrar',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
@@ -159,19 +205,16 @@ class RegisterScreen extends StatelessWidget {
         // Botões Sociais
         OutlinedButton.icon(
           onPressed: () {},
-          icon: Image.asset(
-            'assets/icons/google.png',
-            height: 24,
-            errorBuilder: (context, error, stackTrace) {
-              return const Icon(Icons.g_mobiledata, size: 24);
-            },
-          ),
-          label: const Text('Continuar com Google'),
-          style: OutlinedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            minimumSize: const Size(double.infinity, 48),
-          ),
-        ),
+            icon: const Icon(
+              Icons.g_mobiledata,
+              size: 24,
+            ),
+            label: const Text('Continuar com Google'),
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              minimumSize: const Size(double.infinity, 48),
+            ),
+          ),  
         const SizedBox(height: 12),
 
         OutlinedButton.icon(

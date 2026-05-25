@@ -57,7 +57,7 @@ class _AuthScreenState extends State<AuthScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'PetSaúde',
+                      'SysCoPet',
                       style: TextStyle(
                         fontSize: 40,
                         fontWeight: FontWeight.bold,
