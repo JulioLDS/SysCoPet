@@ -11,20 +11,26 @@ class AuthProvider extends ChangeNotifier {
   bool isLoading = false;
 
   Future<String?> register({
-    required String name,
+    required String nome,
     required String email,
-    required String password,
+    required String senha,
   }) async {
+
+    print("1 - Entrou no provider");
 
     isLoading = true;
     notifyListeners();
 
+    print("2 - Chamando authService");
+
     final result = await _authService.register(
-      name: name,
+      nome: nome,
       email: email,
-      password: password,
+      senha: senha,
     );
 
+    print("3 - Voltou do authService");
+    
     isLoading = false;
     notifyListeners();
 
@@ -33,7 +39,7 @@ class AuthProvider extends ChangeNotifier {
 
   Future<bool> login({
     required String email,
-    required String password,
+    required String senha,
   }) async {
 
     isLoading = true;
@@ -41,7 +47,7 @@ class AuthProvider extends ChangeNotifier {
 
     final user = await _authService.login(
       email: email,
-      password: password,
+      senha: senha,
     );
 
     isLoading = false;

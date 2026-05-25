@@ -33,7 +33,7 @@ class HomeScreen extends StatelessWidget {
       ),
       body: Center(
         child: Text(
-          'Bem-vindo ${authProvider.currentUser?.name ?? ''}',
+          'Bem-vindo ${authProvider.currentUser?.nome ?? ''}',
           style: const TextStyle(
             fontSize: 22,
           ),

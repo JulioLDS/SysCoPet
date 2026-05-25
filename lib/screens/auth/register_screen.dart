@@ -152,9 +152,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
               // TODO: Implementar cadastro
 
               final result = await authProvider.register(
-                          name: nameController.text,
+                          nome: nameController.text,
                           email: emailController.text,
-                          password: passwordController.text,
+                          senha: passwordController.text,
                         );
 
                         if (!mounted) return;
@@ -205,19 +205,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
         // Botões Sociais
         OutlinedButton.icon(
           onPressed: () {},
-          icon: Image.asset(
-            'assets/icons/google.png',
-            height: 24,
-            errorBuilder: (context, error, stackTrace) {
-              return const Icon(Icons.g_mobiledata, size: 24);
-            },
-          ),
-          label: const Text('Continuar com Google'),
-          style: OutlinedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            minimumSize: const Size(double.infinity, 48),
-          ),
-        ),
+            icon: const Icon(
+              Icons.g_mobiledata,
+              size: 24,
+            ),
+            label: const Text('Continuar com Google'),
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              minimumSize: const Size(double.infinity, 48),
+            ),
+          ),  
         const SizedBox(height: 12),
 
         OutlinedButton.icon(

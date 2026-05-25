@@ -10,13 +10,15 @@ import '../models/user_model.dart';
 class AuthService {
 
   Future<String?> register({
-    required String name,
+    required String nome,
     required String email,
-    required String password,
+    required String senha,
   }) async {
 
+print("4 - Entrou no service");
+
     final url =
-        Uri.parse('${ApiConfig.baseUrl}/auth/register');
+        Uri.parse('${ApiConfig.baseUrl}/usuarios');
 
     final response = await http.post(
       url,
@@ -24,12 +26,16 @@ class AuthService {
         'Content-Type': 'application/json',
       },
       body: jsonEncode({
-        'name': name,
+        'nome': nome,
         'email': email,
-        'password': password,
+        'senha': senha,
       }),
     );
 
+    print("5 - Recebeu resposta");
+    print(response.statusCode);
+  print(response.body);
+  
     if (response.statusCode == 201) {
       return null;
     }
@@ -41,7 +47,7 @@ class AuthService {
 
   Future<UserModel?> login({
     required String email,
-    required String password,
+    required String senha,
   }) async {
 
 /* Salvar token após login
@@ -53,7 +59,7 @@ class AuthService {
     );
 */
     final url =
-        Uri.parse('${ApiConfig.baseUrl}/auth/login');
+        Uri.parse('${ApiConfig.baseUrl}/usuarios/login');
 
     final response = await http.post(
       url,
@@ -62,7 +68,7 @@ class AuthService {
       },
       body: jsonEncode({
         'email': email,
-        'password': password,
+        'senha': senha,
       }),
     );
 
@@ -73,7 +79,7 @@ class AuthService {
     final data = jsonDecode(response.body);
 
     return UserModel(
-      name: data['user']['name'],
+      nome: data['user']['nome'],
       email: data['user']['email'],
     );
   }
