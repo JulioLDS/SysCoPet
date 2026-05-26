@@ -167,17 +167,7 @@ class _LoginScreenState extends State<LoginScreen> {
             minimumSize: const Size(double.infinity, 48),
           ),
         ),
-        const SizedBox(height: 12),
 
-        OutlinedButton.icon(
-          onPressed: () {},
-          icon: const Icon(Icons.apple, size: 24),
-          label: const Text('Entrar com Apple'),
-          style: OutlinedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            minimumSize: const Size(double.infinity, 48),
-          ),
-        ),
         const SizedBox(height: 32),
 
         // Link para Cadastro
