@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart'; 
+import 'package:provider/provider.dart';
 
 import '../../providers/auth_provider.dart';
-import 'home_screen.dart';
+import '../home/home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   final VoidCallback onToggleRegister; // Callback para ir para Cadastro
@@ -16,9 +16,7 @@ class LoginScreen extends StatefulWidget {
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
-  
 }
-
 
 class _LoginScreenState extends State<LoginScreen> {
   final emailController = TextEditingController();
@@ -106,32 +104,28 @@ class _LoginScreenState extends State<LoginScreen> {
           child: ElevatedButton(
             onPressed: authProvider.isLoading
                 ? null
-                :() async {
-
-                  final success = await authProvider.login(
-                    email: emailController.text,
-                    senha: passwordController.text
+                : () async {
+                    final success = await authProvider.login(
+                      email: emailController.text,
+                      senha: passwordController.text,
                     );
 
                     if (!mounted) return;
 
-                    if(!success) {
+                    if (!success) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Login inválido"),
-                        )
+                        const SnackBar(content: Text("Login inválido")),
                       );
                       return;
                     }
 
                     Navigator.pushReplacement(
                       context,
-                       MaterialPageRoute(
-                        builder: (_) => const HomeScreen(),
-                        )
-                        );
+                      MaterialPageRoute(builder: (_) => const HomeScreen()),
+                    );
 
-              // TODO: Implementar login
-            },
+                    // TODO: Implementar login
+                  },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF0D9488),
               padding: const EdgeInsets.symmetric(vertical: 16),

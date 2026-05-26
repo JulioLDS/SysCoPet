@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:syscopet/providers/auth_provider.dart';
-import 'home_screen.dart';
+import '../home/home_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   final VoidCallback onToggle; // Callback para voltar para Login
