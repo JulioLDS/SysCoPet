@@ -1,18 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import '../../providers/auth_provider.dart';
 import '../home/home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
-  final VoidCallback onToggleRegister; // Callback para ir para Cadastro
-  final VoidCallback onForgotPassword; // Callback para ir para Recuperação
+  final VoidCallback onForgotPassword;
 
-  const LoginScreen({
-    super.key,
-    required this.onToggleRegister,
-    required this.onForgotPassword,
-  });
+  const LoginScreen({super.key, required this.onForgotPassword});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -23,33 +17,20 @@ class _LoginScreenState extends State<LoginScreen> {
   final passwordController = TextEditingController();
 
   @override
+  void dispose() {
+    emailController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        // Título
-        Row(
-          children: [
-            Text(
-              'Entrar',
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF0D9488),
-              ),
-            ),
-            const Spacer(),
-            TextButton(
-              onPressed: widget.onToggleRegister,
-              child: const Text('Cadastrar'),
-            ),
-          ],
-        ),
-        const Divider(height: 32),
-
-        const SizedBox(height: 24),
-
         // Boas-vindas
         Text(
           'Bem-vindo de volta! 🐾',
@@ -64,40 +45,55 @@ class _LoginScreenState extends State<LoginScreen> {
             context,
           ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
         ),
-        const SizedBox(height: 32),
-
-        // Campos de Input
+        const SizedBox(height: 24), // ✅ Reduzido de 32 para 24
+        // Campo E-mail
         TextField(
-          decoration: const InputDecoration(
+          controller: emailController,
+          decoration: InputDecoration(
             labelText: 'E-mail',
-            prefixIcon: Icon(Icons.email_outlined),
-            border: OutlineInputBorder(),
+            prefixIcon: const Icon(
+              Icons.email_outlined,
+              color: Color(0xFF0D9488),
+            ),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            filled: true,
+            fillColor: Colors.grey[50],
           ),
           keyboardType: TextInputType.emailAddress,
         ),
-        const SizedBox(height: 16),
-
+        const SizedBox(height: 12), // ✅ Reduzido de 16 para 12
+        // Campo Senha
         TextField(
-          decoration: const InputDecoration(
+          controller: passwordController,
+          decoration: InputDecoration(
             labelText: 'Senha',
-            prefixIcon: Icon(Icons.lock_outline),
-            suffixIcon: Icon(Icons.visibility_outlined),
-            border: OutlineInputBorder(),
+            prefixIcon: const Icon(
+              Icons.lock_outline,
+              color: Color(0xFF0D9488),
+            ),
+            suffixIcon: IconButton(
+              icon: const Icon(Icons.visibility_outlined),
+              onPressed: () {}, // TODO: Toggle visibilidade
+            ),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            filled: true,
+            fillColor: Colors.grey[50],
           ),
           obscureText: true,
         ),
-        const SizedBox(height: 16),
-
-        // Esqueci minha senha
+        const SizedBox(height: 4), // ✅ Reduzido de 8 para 4
+        // Esqueci senha
         Align(
           alignment: Alignment.centerRight,
           child: TextButton(
             onPressed: widget.onForgotPassword,
-            child: const Text('Esqueci minha senha'),
+            child: const Text(
+              'Esqueci minha senha',
+              style: TextStyle(color: Color(0xFF0D9488)),
+            ),
           ),
         ),
-        const SizedBox(height: 24),
-
+        const SizedBox(height: 20), // ✅ Reduzido de 24 para 20
         // Botão Entrar
         SizedBox(
           width: double.infinity,
@@ -109,87 +105,80 @@ class _LoginScreenState extends State<LoginScreen> {
                       email: emailController.text,
                       senha: passwordController.text,
                     );
-
                     if (!mounted) return;
-
                     if (!success) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text("Login inválido")),
                       );
                       return;
                     }
-
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(builder: (_) => const HomeScreen()),
                     );
-
-                    // TODO: Implementar login
                   },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF0D9488),
               padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
-            child: const Text(
-              'Entrar',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-            ),
+            child: authProvider.isLoading
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : const Text(
+                    'Entrar',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
           ),
         ),
-        const SizedBox(height: 24),
-
+        const SizedBox(height: 20), // ✅ Reduzido de 24 para 20
         // Divider
         Row(
           children: [
-            const Expanded(child: Divider()),
+            Expanded(child: Divider(color: Colors.grey[300])),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text('ou', style: TextStyle(color: Colors.grey[600])),
+              child: Text('ou', style: TextStyle(color: Colors.grey[500])),
             ),
-            const Expanded(child: Divider()),
+            Expanded(child: Divider(color: Colors.grey[300])),
           ],
         ),
-        const SizedBox(height: 24),
-
-        // Botões Sociais
+        const SizedBox(height: 20), // ✅ Reduzido de 24 para 20
+        // Botão Google (Apple removido)
         OutlinedButton.icon(
-          onPressed: () {},
+          onPressed: () {}, // TODO: Google Sign-In
           icon: Image.asset(
             'assets/icons/google.png',
             height: 24,
-            errorBuilder: (context, error, stackTrace) {
-              return const Icon(Icons.g_mobiledata, size: 24);
-            },
+            errorBuilder: (context, error, stackTrace) => const Icon(
+              Icons.g_mobiledata,
+              size: 24,
+              color: Color(0xFF0D9488),
+            ),
           ),
           label: const Text('Entrar com Google'),
           style: OutlinedButton.styleFrom(
             padding: const EdgeInsets.symmetric(vertical: 12),
             minimumSize: const Size(double.infinity, 48),
+            side: const BorderSide(color: Color(0xFF0D9488)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
           ),
         ),
-
-        const SizedBox(height: 32),
-
-        // Link para Cadastro
+        const SizedBox(height: 20),
         Center(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'Ainda não tem uma conta? ',
-                style: TextStyle(color: Colors.grey[600]),
-              ),
-              TextButton(
-                onPressed: widget.onToggleRegister,
-                child: const Text(
-                  'Cadastre-se',
-                  style: TextStyle(
-                    color: Color(0xFF0D9488),
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
+          child: Text(
+            'Ainda não tem uma conta? Cadastre-se',
+            style: TextStyle(color: Colors.grey[500], fontSize: 14),
           ),
         ),
       ],

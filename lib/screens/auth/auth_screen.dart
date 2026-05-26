@@ -10,10 +10,24 @@ class AuthScreen extends StatefulWidget {
 }
 
 class _AuthScreenState extends State<AuthScreen> {
-  bool _isLoginMode = true;
+  int _selectedIndex = 0; // 0 = Entrar, 1 = Cadastrar
+  bool _isAnimating = false; // Controle de animação
 
-  void _toggleMode() {
-    setState(() => _isLoginMode = !_isLoginMode);
+  // Função para trocar de aba com bloqueio durante animação
+  void _changeTab(int newIndex) {
+    if (_isAnimating || _selectedIndex == newIndex) return;
+
+    setState(() {
+      _isAnimating = true;
+      _selectedIndex = newIndex;
+    });
+
+    // Desbloqueia após a duração da animação
+    Future.delayed(const Duration(milliseconds: 1000), () {
+      if (mounted) {
+        setState(() => _isAnimating = false);
+      }
+    });
   }
 
   @override
@@ -23,7 +37,7 @@ class _AuthScreenState extends State<AuthScreen> {
       body: LayoutBuilder(
         builder: (context, constraints) {
           bool isDesktop = constraints.maxWidth > 850;
-          double screenHeight = constraints.maxHeight; // Altura da tela
+          double screenHeight = constraints.maxHeight;
 
           if (isDesktop) {
             return _buildDesktopLayout(screenHeight);
@@ -39,7 +53,7 @@ class _AuthScreenState extends State<AuthScreen> {
   Widget _buildDesktopLayout(double screenHeight) {
     return Stack(
       children: [
-        // 1. BACKGROUND
+        // 1. BACKGROUND (INALTERADO)
         Container(
           decoration: const BoxDecoration(
             image: DecorationImage(
@@ -49,14 +63,14 @@ class _AuthScreenState extends State<AuthScreen> {
           ),
         ),
 
-        // 2. CONTEÚDO
+        // 2. CONTEÚDO (INALTERADO)
         Row(
           children: [
-            // LADO ESQUERDO
+            // LADO ESQUERDO (TEXTO + PETS) - EXATAMENTE COMO ESTAVA
             Expanded(
               child: Stack(
                 children: [
-                  // TEXTO (Posicionado no topo)
+                  // TEXTO
                   Positioned(
                     top: 60,
                     left: 120,
@@ -92,8 +106,8 @@ class _AuthScreenState extends State<AuthScreen> {
                           TextSpan(
                             text: 'A saúde do seu pet\n',
                             style: const TextStyle(
-                              fontSize: 38, // Tamanho levemente aumentado
-                              fontWeight: FontWeight.w800, // Bold Extra Forte
+                              fontSize: 38,
+                              fontWeight: FontWeight.w800,
                               color: Color(0xFF1E293B),
                               height: 1.2,
                             ),
@@ -103,13 +117,13 @@ class _AuthScreenState extends State<AuthScreen> {
                                 style: const TextStyle(
                                   fontSize: 38,
                                   fontWeight: FontWeight.w800,
-                                  color: Color(0xFF0D9488), // Verde
+                                  color: Color(0xFF0D9488),
                                 ),
                               ),
                               WidgetSpan(
                                 alignment: PlaceholderAlignment.middle,
                                 child: Icon(
-                                  Icons.favorite_border, // Contorno de coração
+                                  Icons.favorite_border,
                                   color: const Color(0xFF0D9488),
                                   size: 36,
                                 ),
@@ -133,37 +147,35 @@ class _AuthScreenState extends State<AuthScreen> {
                     ),
                   ),
 
-                  // PETS (Position Absolute: Topo 50%, Altura 70%)
+                  // PETS
                   Positioned(
-                    top:
-                        screenHeight *
-                        0.20, // Começa no meio da tela (empurrado pra baixo)
+                    top: screenHeight * 0.20,
                     left: 100,
                     right: 0,
-                    height:
-                        screenHeight *
-                        1.05, // Ocupa 70% da altura (sai para fora)
+                    height: screenHeight * 1.05,
                     child: Image.asset(
                       'assets/images/pets.png',
                       fit: BoxFit.contain,
-                      alignment:
-                          Alignment.topCenter, // Alinha pelo topo do container
+                      alignment: Alignment.topCenter,
                     ),
                   ),
                 ],
               ),
             ),
 
-            // LADO DIREITO (Formulário)
+            // LADO DIREITO (Card com Tabs + Formulário)
             Expanded(
               child: Center(
                 child: Container(
-                  constraints: const BoxConstraints(maxWidth: 480),
+                  constraints: const BoxConstraints(
+                    maxWidth: 480,
+                    maxHeight: 670,
+                  ),
                   margin: const EdgeInsets.symmetric(
                     horizontal: 40,
                     vertical: 40,
                   ),
-                  padding: const EdgeInsets.all(40),
+                  padding: const EdgeInsets.fromLTRB(40, 10, 40, 40),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(24),
@@ -175,18 +187,168 @@ class _AuthScreenState extends State<AuthScreen> {
                       ),
                     ],
                   ),
-                  child: _isLoginMode
-                      ? LoginScreen(
-                          onToggleRegister: _toggleMode,
-                          onForgotPassword: () {},
-                        )
-                      : RegisterScreen(onToggle: _toggleMode),
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Positioned(
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        child: _buildAnimatedTabs(),
+                      ),
+
+                      Positioned(
+                        top: 60,
+                        left: 0,
+                        right: 0,
+                        child: SizedBox(
+                          height: 580,
+                          child: ClipRect(
+                            child: AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 1000),
+                              transitionBuilder:
+                                  (Widget child, Animation<double> animation) {
+                                    final bool isLogin =
+                                        child.key == const ValueKey('login');
+                                    final Offset startOffset = isLogin
+                                        ? const Offset(-1.5, 0.0)
+                                        : const Offset(1.5, 0.0);
+
+                                    return SlideTransition(
+                                      position:
+                                          Tween<Offset>(
+                                            begin: startOffset,
+                                            end: Offset.zero,
+                                          ).animate(
+                                            CurvedAnimation(
+                                              parent: animation,
+                                              curve: Curves.easeInOutCubic,
+                                            ),
+                                          ),
+                                      child: child,
+                                    );
+                                  },
+                              child: _selectedIndex == 0
+                                  ? LoginScreen(
+                                      key: const ValueKey('login'),
+                                      onForgotPassword: () {},
+                                    )
+                                  : RegisterScreen(
+                                      key: const ValueKey('register'),
+                                    ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
           ],
         ),
       ],
+    );
+  }
+
+  // ===== TABS ANIMADAS =====
+  Widget _buildAnimatedTabs() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return Column(
+          children: [
+            // 1. Área dos textos com toque EXPANDIDO
+            Row(
+              children: [
+                // Tab "Entrar"
+                Expanded(
+                  child: MouseRegion(
+                    cursor: _isAnimating
+                        ? SystemMouseCursors.wait
+                        : SystemMouseCursors.click,
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () => _changeTab(0),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 20,
+                          horizontal: 8,
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          'Entrar',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: _selectedIndex == 0
+                                ? const Color(0xFF0D9488)
+                                : Colors.grey.shade500,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                // Tab "Cadastrar"
+                Expanded(
+                  child: MouseRegion(
+                    cursor: _isAnimating
+                        ? SystemMouseCursors.wait
+                        : SystemMouseCursors.click,
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () => _changeTab(1),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 20,
+                          horizontal: 8,
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          'Cadastrar',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: _selectedIndex == 1
+                                ? const Color(0xFF0D9488)
+                                : Colors.grey.shade500,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            // 2. Linhas Indicadoras
+            SizedBox(
+              height: 3,
+              child: Stack(
+                children: [
+                  // Linha de fundo (Cinza claro)
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    child: Container(height: 2, color: const Color(0xFFE2E8F0)),
+                  ),
+                  // Linha verde animada
+                  AnimatedPositioned(
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                    left: _selectedIndex == 0 ? 0 : null,
+                    right: _selectedIndex == 1 ? 0 : null,
+                    width: constraints.maxWidth / 2,
+                    height: 2,
+                    bottom: 0,
+                    child: Container(color: const Color(0xFF0D9488)),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -230,12 +392,21 @@ class _AuthScreenState extends State<AuthScreen> {
                       ],
                     ),
                     const SizedBox(height: 30),
-                    _isLoginMode
-                        ? LoginScreen(
-                            onToggleRegister: _toggleMode,
-                            onForgotPassword: () {},
-                          )
-                        : RegisterScreen(onToggle: _toggleMode),
+
+                    // Tabs Animadas (Mobile)
+                    _buildAnimatedTabs(),
+                    const SizedBox(height: 16),
+
+                    // Formulário com animação
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 500),
+                      child: _selectedIndex == 0
+                          ? LoginScreen(
+                              key: const ValueKey('login'),
+                              onForgotPassword: () {},
+                            )
+                          : RegisterScreen(key: const ValueKey('register')),
+                    ),
                   ],
                 ),
               ),
