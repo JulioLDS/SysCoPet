@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:syscopet/providers/auth_provider.dart';
+import 'package:flutter/gestures.dart';
 import '../home/home_screen.dart';
+import 'legal_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -41,6 +43,29 @@ class _RegisterScreenState extends State<RegisterScreen> {
     confirmPasswordFocusNode.dispose();
     checkboxFocusNode.dispose();
     super.dispose();
+  }
+
+  Route _buildLightRoute(Widget page) {
+    return PageRouteBuilder(
+      pageBuilder: (context, animation, secondaryAnimation) => page,
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        // Fade + leve subida (0.05 de offset para ser sutil)
+        const begin = Offset(0.0, 0.05);
+        const end = Offset.zero;
+        var tween = Tween(
+          begin: begin,
+          end: end,
+        ).chain(CurveTween(curve: Curves.easeOut));
+        return FadeTransition(
+          opacity: animation,
+          child: SlideTransition(
+            position: tween.animate(animation),
+            child: child,
+          ),
+        );
+      },
+      transitionDuration: const Duration(milliseconds: 250),
+    );
   }
 
   Future<void> _handleRegister() async {
@@ -243,7 +268,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
             onTap: () => setState(() => _agreeTerms = !_agreeTerms),
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Row(
+              child: // Checkbox Termos
+              Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Checkbox(
@@ -256,24 +282,121 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     child: Padding(
                       padding: const EdgeInsets.only(top: 8),
                       child: RichText(
-                        text: const TextSpan(
-                          style: TextStyle(fontSize: 12, color: Colors.grey),
+                        text: TextSpan(
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey,
+                            height: 1.4,
+                          ),
                           children: [
-                            TextSpan(text: 'Eu concordo com os '),
+                            const TextSpan(text: 'Eu concordo com os '),
+
+                            // ✅ Link: Termos de Uso
+                            // ✅ Link: Termos de Uso
                             TextSpan(
                               text: 'Termos de Uso',
-                              style: TextStyle(
+                              style: const TextStyle(
                                 color: Color(0xFF0D9488),
                                 fontWeight: FontWeight.w600,
+                                decoration: TextDecoration.underline,
                               ),
+                              recognizer: TapGestureRecognizer()
+                                ..onTap = () {
+                                  Navigator.push(
+                                    context,
+                                    _buildLightRoute(
+                                      LegalScreen(
+                                        title: 'Termos de Uso',
+                                        content: [
+                                          const TextSpan(
+                                            text: '1. Aceitação dos Termos\n\n',
+                                          ),
+                                          const TextSpan(
+                                            text:
+                                                'Ao acessar e usar o aplicativo PetSaúde, você aceita e concorda em estar vinculado aos termos e provisões deste acordo.\n\n',
+                                          ),
+                                          const TextSpan(
+                                            text: '2. Uso do Serviço\n\n',
+                                          ),
+                                          const TextSpan(
+                                            text:
+                                                'Este aplicativo destina-se a auxiliar no gerenciamento de saúde de animais de estimação. O usuário é responsável por manter a precisão das informações inseridas.\n\n',
+                                          ),
+                                          const TextSpan(
+                                            text:
+                                                '3. Isenção de Responsabilidade\n\n',
+                                          ),
+                                          const TextSpan(
+                                            text:
+                                                'O PetSaúde não substitui o aconselhamento veterinário profissional. Em caso de emergência médica, procure sempre um veterinário qualificado.\n\n',
+                                          ),
+                                          const TextSpan(
+                                            text:
+                                                '4. Propriedade Intelectual\n\n',
+                                          ),
+                                          const TextSpan(
+                                            text:
+                                                'Todo o conteúdo, marca e design do PetSaúde são propriedade exclusiva da empresa.',
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
                             ),
-                            TextSpan(text: ' e '),
+
+                            const TextSpan(text: ' e '),
+
+                            // ✅ Link: Política de Privacidade
                             TextSpan(
                               text: 'Política de Privacidade',
-                              style: TextStyle(
+                              style: const TextStyle(
                                 color: Color(0xFF0D9488),
                                 fontWeight: FontWeight.w600,
+                                decoration: TextDecoration.underline,
                               ),
+                              recognizer: TapGestureRecognizer()
+                                ..onTap = () {
+                                  Navigator.push(
+                                    context,
+                                    _buildLightRoute(
+                                      LegalScreen(
+                                        title: 'Política de Privacidade',
+                                        content: [
+                                          const TextSpan(
+                                            text: '1. Coleta de Dados\n\n',
+                                          ),
+                                          const TextSpan(
+                                            text:
+                                                'Coletamos informações que você nos fornece diretamente, como nome, e-mail e dados de saúde do seu pet.\n\n',
+                                          ),
+                                          const TextSpan(
+                                            text: '2. Uso das Informações\n\n',
+                                          ),
+                                          const TextSpan(
+                                            text:
+                                                'Utilizamos seus dados para personalizar sua experiência, enviar lembretes de vacinas e melhorar nossos serviços.\n\n',
+                                          ),
+                                          const TextSpan(
+                                            text:
+                                                '3. Compartilhamento de Dados\n\n',
+                                          ),
+                                          const TextSpan(
+                                            text:
+                                                'Nunca vendemos seus dados pessoais. Podemos compartilhar informações apenas com parceiros veterinários quando necessário para o atendimento.\n\n',
+                                          ),
+                                          const TextSpan(
+                                            text: '4. Segurança\n\n',
+                                          ),
+                                          const TextSpan(
+                                            text:
+                                                'Implementamos medidas de segurança para proteger suas informações contra acesso não autorizado.',
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
                             ),
                           ],
                         ),
