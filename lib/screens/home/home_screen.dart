@@ -411,9 +411,8 @@ class _HomeScreenState extends State<HomeScreen> {
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(
-        builder: (_) => LoginScreen(
-          onForgotPassword: () {}, // Apenas este parâmetro é necessário agora
-        ),
+        builder: (_) =>
+            LoginScreen(onForgotPassword: () {}, onGoToRegister: () {}),
       ),
       (route) => false,
     );

@@ -2,11 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../home/home_screen.dart';
+import 'package:flutter/gestures.dart';
 
 class LoginScreen extends StatefulWidget {
   final VoidCallback onForgotPassword;
+  final VoidCallback onGoToRegister;
 
-  const LoginScreen({super.key, required this.onForgotPassword});
+  const LoginScreen({
+    super.key,
+    required this.onForgotPassword,
+    required this.onGoToRegister,
+  });
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -212,10 +218,25 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
           const SizedBox(height: 20),
 
+          // Link para Cadastro (apenas "Cadastre-se" é clicável e verde)
           Center(
-            child: Text(
-              'Ainda não tem uma conta? Cadastre-se',
-              style: TextStyle(color: Colors.grey.shade500, fontSize: 14),
+            child: Text.rich(
+              TextSpan(
+                text: 'Ainda não tem uma conta? ',
+                style: TextStyle(color: Colors.grey.shade500, fontSize: 14),
+                children: [
+                  TextSpan(
+                    text: 'Cadastre-se',
+                    style: const TextStyle(
+                      color: Color(0xFF0D9488), // ✅ Verde PetSaúde
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
+                    recognizer: TapGestureRecognizer()
+                      ..onTap = widget.onGoToRegister,
+                  ),
+                ],
+              ),
             ),
           ),
         ],

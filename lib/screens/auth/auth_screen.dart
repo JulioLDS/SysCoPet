@@ -232,6 +232,7 @@ class _AuthScreenState extends State<AuthScreen> {
                                   ? LoginScreen(
                                       key: const ValueKey('login'),
                                       onForgotPassword: () {},
+                                      onGoToRegister: () => _changeTab(1),
                                     )
                                   : RegisterScreen(
                                       key: const ValueKey('register'),
@@ -404,6 +405,7 @@ class _AuthScreenState extends State<AuthScreen> {
                           ? LoginScreen(
                               key: const ValueKey('login'),
                               onForgotPassword: () {},
+                              onGoToRegister: () => _changeTab(1),
                             )
                           : RegisterScreen(key: const ValueKey('register')),
                     ),
