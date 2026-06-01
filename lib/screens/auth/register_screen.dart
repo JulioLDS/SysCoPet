@@ -16,14 +16,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
 
-  // ✅ FocusNodes para navegação sequencial
+  // ✅ FocusNodes
   final nameFocusNode = FocusNode();
   final emailFocusNode = FocusNode();
   final passwordFocusNode = FocusNode();
   final confirmPasswordFocusNode = FocusNode();
-  final checkboxFocusNode = FocusNode(); // ✅ Novo FocusNode para o checkbox
+  final checkboxFocusNode = FocusNode();
 
   bool _agreeTerms = false;
+
+  // ✅ Controles de visibilidade das senhas
+  bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
 
   @override
   void dispose() {
@@ -160,13 +164,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ),
         const SizedBox(height: 16),
 
-        // ✅ Campo Senha
+        // ✅ Campo Senha com visibilidade
         TextField(
           controller: passwordController,
           focusNode: passwordFocusNode,
           textInputAction: TextInputAction.next,
           onSubmitted: (_) =>
               FocusScope.of(context).requestFocus(confirmPasswordFocusNode),
+          obscureText: _obscurePassword, // ✅ Controlado pelo estado
           decoration: InputDecoration(
             labelText: 'Senha',
             prefixIcon: const Icon(
@@ -174,29 +179,33 @@ class _RegisterScreenState extends State<RegisterScreen> {
               color: Color(0xFF0D9488),
             ),
             suffixIcon: IconButton(
-              icon: const Icon(Icons.visibility_outlined),
-              onPressed: () {}, // TODO: Toggle visibilidade
+              icon: Icon(
+                _obscurePassword ? Icons.visibility_outlined : Icons.visibility,
+                color: Colors.grey.shade600,
+              ),
+              onPressed: () {
+                setState(() => _obscurePassword = !_obscurePassword);
+              },
             ),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             filled: true,
             fillColor: Colors.grey.shade50,
           ),
-          obscureText: true,
         ),
         const SizedBox(height: 16),
 
-        // ✅ Campo Confirmar Senha (CORRIGIDO)
+        // ✅ Campo Confirmar Senha com visibilidade
         TextField(
           controller: confirmPasswordController,
           focusNode: confirmPasswordFocusNode,
           textInputAction: TextInputAction.done,
           onSubmitted: (_) {
-            // ✅ Pula o IconButton e vai direto para o checkbox
             FocusScope.of(context).unfocus();
             Future.delayed(const Duration(milliseconds: 100), () {
               FocusScope.of(context).requestFocus(checkboxFocusNode);
             });
           },
+          obscureText: _obscureConfirmPassword, // ✅ Controlado pelo estado
           decoration: InputDecoration(
             labelText: 'Confirmar senha',
             prefixIcon: const Icon(
@@ -204,16 +213,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
               color: Color(0xFF0D9488),
             ),
             suffixIcon: IconButton(
-              icon: const Icon(Icons.visibility_outlined),
-              onPressed: () {},
-              // ✅ Remove da navegação por teclado
+              icon: Icon(
+                _obscureConfirmPassword
+                    ? Icons.visibility_outlined
+                    : Icons.visibility,
+                color: Colors.grey.shade600,
+              ),
+              onPressed: () {
+                setState(
+                  () => _obscureConfirmPassword = !_obscureConfirmPassword,
+                );
+              },
               focusNode: FocusNode(skipTraversal: true),
             ),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             filled: true,
             fillColor: Colors.grey.shade50,
           ),
-          obscureText: true,
         ),
         const SizedBox(height: 16),
 
@@ -222,9 +238,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
           focusNode: checkboxFocusNode,
           canRequestFocus: true,
           skipTraversal: false,
-          onFocusChange: (hasFocus) {
-            if (hasFocus) {}
-          },
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: () => setState(() => _agreeTerms = !_agreeTerms),

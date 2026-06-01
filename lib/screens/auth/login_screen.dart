@@ -16,8 +16,12 @@ class _LoginScreenState extends State<LoginScreen> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
 
+  // ✅ FocusNodes
   final emailFocusNode = FocusNode();
   final passwordFocusNode = FocusNode();
+
+  // ✅ Controle de visibilidade da senha
+  bool _obscurePassword = true;
 
   @override
   void dispose() {
@@ -71,6 +75,7 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
           const SizedBox(height: 24),
 
+          // ✅ Campo E-mail
           TextField(
             controller: emailController,
             focusNode: emailFocusNode,
@@ -93,11 +98,13 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
           const SizedBox(height: 12),
 
+          // ✅ Campo Senha com visibilidade
           TextField(
             controller: passwordController,
             focusNode: passwordFocusNode,
             textInputAction: TextInputAction.done,
             onSubmitted: (_) => _handleLogin(),
+            obscureText: _obscurePassword, // ✅ Controlado pelo estado
             decoration: InputDecoration(
               labelText: 'Senha',
               prefixIcon: const Icon(
@@ -105,8 +112,15 @@ class _LoginScreenState extends State<LoginScreen> {
                 color: Color(0xFF0D9488),
               ),
               suffixIcon: IconButton(
-                icon: const Icon(Icons.visibility_outlined),
-                onPressed: () {}, // TODO: Toggle visibilidade
+                icon: Icon(
+                  _obscurePassword
+                      ? Icons.visibility_outlined
+                      : Icons.visibility,
+                  color: Colors.grey.shade600,
+                ),
+                onPressed: () {
+                  setState(() => _obscurePassword = !_obscurePassword);
+                },
               ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -114,7 +128,6 @@ class _LoginScreenState extends State<LoginScreen> {
               filled: true,
               fillColor: Colors.grey.shade50,
             ),
-            obscureText: true,
           ),
           const SizedBox(height: 4),
 
