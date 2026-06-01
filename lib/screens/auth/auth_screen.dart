@@ -236,13 +236,59 @@ class _AuthScreenState extends State<AuthScreen> {
                                       onForgotPassword: () {
                                         Navigator.push(
                                           context,
-                                          MaterialPageRoute(
-                                            builder: (context) =>
-                                                ForgotPasswordScreen(
-                                                  onBackToLogin: () {
-                                                    Navigator.pop(context);
-                                                  },
+                                          PageRouteBuilder(
+                                            pageBuilder:
+                                                (
+                                                  context,
+                                                  animation,
+                                                  secondaryAnimation,
+                                                ) => ForgotPasswordScreen(
+                                                  onBackToLogin: () =>
+                                                      Navigator.pop(context),
                                                 ),
+                                            transitionsBuilder:
+                                                (
+                                                  context,
+                                                  animation,
+                                                  secondaryAnimation,
+                                                  child,
+                                                ) {
+                                                  const begin = Offset(
+                                                    0.0,
+                                                    0.1,
+                                                  ); // Leve slide de baixo para cima
+                                                  const end = Offset.zero;
+                                                  const curve =
+                                                      Curves.easeOutCubic;
+
+                                                  var tween =
+                                                      Tween(
+                                                        begin: begin,
+                                                        end: end,
+                                                      ).chain(
+                                                        CurveTween(
+                                                          curve: curve,
+                                                        ),
+                                                      );
+                                                  var slideAnimation = animation
+                                                      .drive(tween);
+                                                  var fadeAnimation =
+                                                      CurvedAnimation(
+                                                        parent: animation,
+                                                        curve: Curves.easeOut,
+                                                      );
+
+                                                  return FadeTransition(
+                                                    opacity: fadeAnimation,
+                                                    child: SlideTransition(
+                                                      position: slideAnimation,
+                                                      child: child,
+                                                    ),
+                                                  );
+                                                },
+                                            transitionDuration: const Duration(
+                                              milliseconds: 350,
+                                            ), // Duração suave
                                           ),
                                         );
                                       },
@@ -421,12 +467,53 @@ class _AuthScreenState extends State<AuthScreen> {
                               onForgotPassword: () {
                                 Navigator.push(
                                   context,
-                                  MaterialPageRoute(
-                                    builder: (context) => ForgotPasswordScreen(
-                                      onBackToLogin: () {
-                                        Navigator.pop(context);
-                                      },
-                                    ),
+                                  PageRouteBuilder(
+                                    pageBuilder:
+                                        (
+                                          context,
+                                          animation,
+                                          secondaryAnimation,
+                                        ) => ForgotPasswordScreen(
+                                          onBackToLogin: () =>
+                                              Navigator.pop(context),
+                                        ),
+                                    transitionsBuilder:
+                                        (
+                                          context,
+                                          animation,
+                                          secondaryAnimation,
+                                          child,
+                                        ) {
+                                          const begin = Offset(
+                                            0.0,
+                                            0.1,
+                                          ); // Leve slide de baixo para cima
+                                          const end = Offset.zero;
+                                          const curve = Curves.easeOutCubic;
+
+                                          var tween = Tween(
+                                            begin: begin,
+                                            end: end,
+                                          ).chain(CurveTween(curve: curve));
+                                          var slideAnimation = animation.drive(
+                                            tween,
+                                          );
+                                          var fadeAnimation = CurvedAnimation(
+                                            parent: animation,
+                                            curve: Curves.easeOut,
+                                          );
+
+                                          return FadeTransition(
+                                            opacity: fadeAnimation,
+                                            child: SlideTransition(
+                                              position: slideAnimation,
+                                              child: child,
+                                            ),
+                                          );
+                                        },
+                                    transitionDuration: const Duration(
+                                      milliseconds: 350,
+                                    ), // Duração suave
                                   ),
                                 );
                               },

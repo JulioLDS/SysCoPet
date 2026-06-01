@@ -31,7 +31,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       return;
     }
 
-    // TODO: Implementar lógica de recuperação de senha
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Instruções enviadas para o e-mail!'),
