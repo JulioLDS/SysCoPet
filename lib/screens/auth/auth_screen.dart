@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'login_screen.dart';
 import 'register_screen.dart';
+import 'forgot_password_screen.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -228,10 +229,23 @@ class _AuthScreenState extends State<AuthScreen> {
                                       child: child,
                                     );
                                   },
+                              // Substitua a criação do LoginScreen por:
                               child: _selectedIndex == 0
                                   ? LoginScreen(
                                       key: const ValueKey('login'),
-                                      onForgotPassword: () {},
+                                      onForgotPassword: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                ForgotPasswordScreen(
+                                                  onBackToLogin: () {
+                                                    Navigator.pop(context);
+                                                  },
+                                                ),
+                                          ),
+                                        );
+                                      },
                                       onGoToRegister: () => _changeTab(1),
                                     )
                                   : RegisterScreen(
@@ -404,7 +418,18 @@ class _AuthScreenState extends State<AuthScreen> {
                       child: _selectedIndex == 0
                           ? LoginScreen(
                               key: const ValueKey('login'),
-                              onForgotPassword: () {},
+                              onForgotPassword: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => ForgotPasswordScreen(
+                                      onBackToLogin: () {
+                                        Navigator.pop(context);
+                                      },
+                                    ),
+                                  ),
+                                );
+                              },
                               onGoToRegister: () => _changeTab(1),
                             )
                           : RegisterScreen(key: const ValueKey('register')),
