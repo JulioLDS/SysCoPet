@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'login_screen.dart';
 import 'register_screen.dart';
+import 'forgot_password_screen.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -228,10 +229,70 @@ class _AuthScreenState extends State<AuthScreen> {
                                       child: child,
                                     );
                                   },
+                              // Substitua a criação do LoginScreen por:
                               child: _selectedIndex == 0
                                   ? LoginScreen(
                                       key: const ValueKey('login'),
-                                      onForgotPassword: () {},
+                                      onForgotPassword: () {
+                                        Navigator.push(
+                                          context,
+                                          PageRouteBuilder(
+                                            pageBuilder:
+                                                (
+                                                  context,
+                                                  animation,
+                                                  secondaryAnimation,
+                                                ) => ForgotPasswordScreen(
+                                                  onBackToLogin: () =>
+                                                      Navigator.pop(context),
+                                                ),
+                                            transitionsBuilder:
+                                                (
+                                                  context,
+                                                  animation,
+                                                  secondaryAnimation,
+                                                  child,
+                                                ) {
+                                                  const begin = Offset(
+                                                    0.0,
+                                                    0.1,
+                                                  ); // Leve slide de baixo para cima
+                                                  const end = Offset.zero;
+                                                  const curve =
+                                                      Curves.easeOutCubic;
+
+                                                  var tween =
+                                                      Tween(
+                                                        begin: begin,
+                                                        end: end,
+                                                      ).chain(
+                                                        CurveTween(
+                                                          curve: curve,
+                                                        ),
+                                                      );
+                                                  var slideAnimation = animation
+                                                      .drive(tween);
+                                                  var fadeAnimation =
+                                                      CurvedAnimation(
+                                                        parent: animation,
+                                                        curve: Curves.easeOut,
+                                                      );
+
+                                                  return FadeTransition(
+                                                    opacity: fadeAnimation,
+                                                    child: SlideTransition(
+                                                      position: slideAnimation,
+                                                      child: child,
+                                                    ),
+                                                  );
+                                                },
+                                            transitionDuration: const Duration(
+                                              milliseconds: 350,
+                                            ), // Duração suave
+                                          ),
+                                        );
+                                      },
+                                      onGoToRegister: () => _changeTab(1),
                                     )
                                   : RegisterScreen(
                                       key: const ValueKey('register'),
@@ -403,7 +464,60 @@ class _AuthScreenState extends State<AuthScreen> {
                       child: _selectedIndex == 0
                           ? LoginScreen(
                               key: const ValueKey('login'),
-                              onForgotPassword: () {},
+                              onForgotPassword: () {
+                                Navigator.push(
+                                  context,
+                                  PageRouteBuilder(
+                                    pageBuilder:
+                                        (
+                                          context,
+                                          animation,
+                                          secondaryAnimation,
+                                        ) => ForgotPasswordScreen(
+                                          onBackToLogin: () =>
+                                              Navigator.pop(context),
+                                        ),
+                                    transitionsBuilder:
+                                        (
+                                          context,
+                                          animation,
+                                          secondaryAnimation,
+                                          child,
+                                        ) {
+                                          const begin = Offset(
+                                            0.0,
+                                            0.1,
+                                          ); // Leve slide de baixo para cima
+                                          const end = Offset.zero;
+                                          const curve = Curves.easeOutCubic;
+
+                                          var tween = Tween(
+                                            begin: begin,
+                                            end: end,
+                                          ).chain(CurveTween(curve: curve));
+                                          var slideAnimation = animation.drive(
+                                            tween,
+                                          );
+                                          var fadeAnimation = CurvedAnimation(
+                                            parent: animation,
+                                            curve: Curves.easeOut,
+                                          );
+
+                                          return FadeTransition(
+                                            opacity: fadeAnimation,
+                                            child: SlideTransition(
+                                              position: slideAnimation,
+                                              child: child,
+                                            ),
+                                          );
+                                        },
+                                    transitionDuration: const Duration(
+                                      milliseconds: 350,
+                                    ), // Duração suave
+                                  ),
+                                );
+                              },
+                              onGoToRegister: () => _changeTab(1),
                             )
                           : RegisterScreen(key: const ValueKey('register')),
                     ),
