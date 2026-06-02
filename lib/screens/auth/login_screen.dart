@@ -39,21 +39,31 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _handleLogin() async {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final success = await authProvider.login(
+
+    final authProvider =
+        Provider.of<AuthProvider>(context, listen: false);
+
+    final errorMessage = await authProvider.login(
       email: emailController.text,
       senha: passwordController.text,
     );
     if (!mounted) return;
-    if (!success) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Login inválido")));
+
+    if (errorMessage != null) {
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(errorMessage),
+        ),
+      );
+
       return;
     }
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (_) => const HomeScreen()),
+      MaterialPageRoute(
+        builder: (_) => const HomeScreen(),
+      ),
     );
   }
 
