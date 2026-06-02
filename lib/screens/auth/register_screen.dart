@@ -6,7 +6,12 @@ import '../home/home_screen.dart';
 import 'legal_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({super.key});
+  final VoidCallback onGoToLogin;
+
+  const RegisterScreen({
+    super.key,
+    required this.onGoToLogin,
+  });
 
   @override
   State<RegisterScreen> createState() => _RegisterScreenState();
@@ -114,15 +119,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Usuário criado com sucesso!'),
+        content: Text('Usuário criado com sucesso! Faça login para continuar.'),
         backgroundColor: Colors.green,
       ),
     );
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (_) => const HomeScreen()),
-      (route) => false,
-    );
+    widget.onGoToLogin();
   }
 
   @override
