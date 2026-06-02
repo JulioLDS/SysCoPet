@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   final VoidCallback onBackToLogin;
@@ -124,16 +125,19 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       children: [
                         // Ícone
                         Container(
-                          width: 80,
-                          height: 80,
+                          width: 120,
+                          height: 90,
                           decoration: BoxDecoration(
                             color: const Color(0xFF0D9488).withOpacity(0.1),
                             borderRadius: BorderRadius.circular(20),
                           ),
-                          child: const Icon(
-                            Icons.mark_email_unread_outlined,
-                            size: 40,
-                            color: Color(0xFF0D9488),
+                          child: Transform.translate(
+                            offset: const Offset(3, 3),
+                            child: SvgPicture.asset(
+                              'assets/icons/envelope.svg',
+                              width: 80,
+                              height: 80,
+                            ),
                           ),
                         ),
                         const SizedBox(height: 24),

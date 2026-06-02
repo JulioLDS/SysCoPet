@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../home/home_screen.dart';
 import 'package:flutter/gestures.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class LoginScreen extends StatefulWidget {
   final VoidCallback onForgotPassword;
@@ -39,9 +40,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _handleLogin() async {
-
-    final authProvider =
-        Provider.of<AuthProvider>(context, listen: false);
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
     final errorMessage = await authProvider.login(
       email: emailController.text,
@@ -50,20 +49,15 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!mounted) return;
 
     if (errorMessage != null) {
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(errorMessage),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(errorMessage)));
 
       return;
     }
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(
-        builder: (_) => const HomeScreen(),
-      ),
+      MaterialPageRoute(builder: (_) => const HomeScreen()),
     );
   }
 
@@ -76,11 +70,17 @@ class _LoginScreenState extends State<LoginScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            'Bem-vindo de volta! 🐾',
-            style: Theme.of(
-              context,
-            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Bem-vindo de volta! ',
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SvgPicture.asset('assets/icons/patas.svg', height: 30, width: 30),
+            ],
           ),
           const SizedBox(height: 8),
           Text(
