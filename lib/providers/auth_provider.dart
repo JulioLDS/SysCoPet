@@ -15,7 +15,6 @@ class AuthProvider extends ChangeNotifier {
     required String email,
     required String senha,
   }) async {
-
     print("1 - Entrou no provider");
 
     isLoading = true;
@@ -30,38 +29,34 @@ class AuthProvider extends ChangeNotifier {
     );
 
     print("3 - Voltou do authService");
-    
+
     isLoading = false;
     notifyListeners();
 
     return result;
   }
 
-  Future<bool> login({
-    required String email,
-    required String senha,
-  }) async {
-
+  Future<String?> login({required String email, required String senha}) async {
     isLoading = true;
     notifyListeners();
 
     final user = await _authService.login(
-      email: email,
-      senha: senha,
+      email: email, 
+      senha: senha
     );
 
     isLoading = false;
     notifyListeners();
 
-    if (user == null) {
-      return false;
+    if (user['sucesso'] != true) {
+      return user['erro'];
     }
 
-    currentUser = user;
+    currentUser = user['user'];
 
     notifyListeners();
 
-    return true;
+    return null;
   }
 
   void logout() {
