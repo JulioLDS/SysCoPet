@@ -52,7 +52,7 @@ class AuthService {
     }
 
     return {
-      'success': true,
+      'sucesso': true,
       'user': UserModel(
         nome: data['user']['nome'],
         email: data['user']['email'],

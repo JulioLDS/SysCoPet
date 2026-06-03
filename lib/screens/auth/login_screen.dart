@@ -59,6 +59,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
       return;
     }
+    print(authProvider.currentUser?.nome);
+    print(authProvider.currentUser?.email);
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
