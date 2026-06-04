@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
@@ -9,6 +11,7 @@ class AuthProvider extends ChangeNotifier {
   UserModel? currentUser;
 
   bool isLoading = false;
+  bool isInitialized = false;
 
   Future<String?> register({
     required String nome,
@@ -36,6 +39,42 @@ class AuthProvider extends ChangeNotifier {
     return result;
   }
 
+  //salvar sessao
+  Future<void> _saveUserSession() async {
+    if (currentUser == null) return;
+
+    final prefs = await SharedPreferences.getInstance();
+
+    await prefs.setString(
+      'user_session',
+      jsonEncode({
+        'nome': currentUser!.nome,
+        'email': currentUser!.email,
+      }),
+    );
+  }
+
+  //carregar sessão
+  Future<void> loadSession() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    final session = prefs.getString('user_session');
+
+    if (session != null) { 
+
+      final data = jsonDecode(session);
+
+      currentUser = UserModel(
+        nome: data['nome'],
+        email: data['email'],
+      );
+    }
+
+    isInitialized = true;
+
+    notifyListeners();
+  }
+
   Future<String?> login({required String email, required String senha}) async {
     isLoading = true;
     notifyListeners();
@@ -54,13 +93,21 @@ class AuthProvider extends ChangeNotifier {
 
     currentUser = user['user'];
 
+    await _saveUserSession();
+
     notifyListeners();
 
     return null;
   }
 
-  void logout() {
+  //Logout
+  Future<void> logout() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    await prefs.remove('user_session');
+
     currentUser = null;
+
     notifyListeners();
   }
 }

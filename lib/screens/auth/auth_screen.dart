@@ -306,6 +306,7 @@ class _AuthScreenState extends State<AuthScreen> {
                                     )
                                   : RegisterScreen(
                                       key: const ValueKey('register'),
+                                      onGoToLogin: ()=> _changeTab(0),
                                     ),
                             ),
                           ),
@@ -529,7 +530,9 @@ class _AuthScreenState extends State<AuthScreen> {
                               },
                               onGoToRegister: () => _changeTab(1),
                             )
-                          : RegisterScreen(key: const ValueKey('register')),
+                          : RegisterScreen(key: const ValueKey('register'),
+                          onGoToLogin: () => _changeTab(0),
+                          ),
                     ),
                   ],
                 ),

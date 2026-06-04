@@ -6,6 +6,8 @@ class CodeVerificationWidget extends StatelessWidget {
   final List<FocusNode> focusNodes;
   final VoidCallback onVerify;
   final VoidCallback onResend;
+  final bool canResend;
+  final int secondsRemaining;
 
   const CodeVerificationWidget({
     super.key,
@@ -13,6 +15,8 @@ class CodeVerificationWidget extends StatelessWidget {
     required this.focusNodes,
     required this.onVerify,
     required this.onResend,
+    required this.canResend,
+    required this.secondsRemaining,
   });
 
   @override
@@ -143,9 +147,11 @@ class CodeVerificationWidget extends StatelessWidget {
 
         // Link Reenviar Código
         TextButton(
-          onPressed: onResend,
-          child: const Text(
-            'Reenviar Código',
+          onPressed: canResend ? onResend:null,
+          child:  Text(
+            canResend ?
+            'Reenviar Código'
+            :'Reenviar em ${secondsRemaining}s',
             style: TextStyle(
               color: Color(0xFF0D9488),
               fontWeight: FontWeight.w600,
