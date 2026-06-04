@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'login_screen.dart';
 import 'register_screen.dart';
-import 'forgot_password_screen.dart';
+import '../forgot_password/forgot_password_screen.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'dart:math';
 
