@@ -406,14 +406,15 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // Função de Logout
-  void _logout(BuildContext context, AuthProvider authProvider) {
-    authProvider.logout();
-    Navigator.pushAndRemoveUntil(
+  Future<void> _logout(
+    BuildContext context,
+    AuthProvider authProvider,)
+    async {
+    await authProvider.logout();
+
+    Navigator.pushNamedAndRemoveUntil(
       context,
-      MaterialPageRoute(
-        builder: (_) =>
-            LoginScreen(onForgotPassword: () {}, onGoToRegister: () {}),
-      ),
+      '/',
       (route) => false,
     );
   }
