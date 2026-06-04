@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'login_screen.dart';
 import 'register_screen.dart';
-import 'forgot_password_screen.dart';
+import '../forgot_password/forgot_password_screen.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'dart:math';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -79,69 +81,77 @@ class _AuthScreenState extends State<AuthScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.pets,
-                              color: const Color(0xFF0D9488),
-                              size: 40,
-                            ),
-                            const SizedBox(width: 10),
-                            const Text(
-                              '4UPet',
-                              style: TextStyle(
-                                fontSize: 28,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF0D9488),
+                        // ✅ LOGO: Posicionamento independente
+                        Transform.translate(
+                          offset: const Offset(
+                            -120,
+                            -100,
+                          ), // ← AJUSTE AQUI: x = esquerda/direita, y = cima/baixo
+                          child: Center(
+                            child: Transform.rotate(
+                              angle: pi / 2,
+                              child: SvgPicture.asset(
+                                'assets/icons/logo.svg',
+                                height: 300,
                               ),
                             ),
-                          ],
+                          ),
                         ),
-                        const SizedBox(height: 8),
-                        const Text(
-                          'Cuidar é amar',
-                          style: TextStyle(fontSize: 16, color: Colors.grey),
-                        ),
-                        const SizedBox(height: 45),
-                        Text.rich(
-                          TextSpan(
-                            text: 'A saúde do seu pet\n',
-                            style: const TextStyle(
-                              fontSize: 38,
-                              fontWeight: FontWeight.w800,
-                              color: Color(0xFF1E293B),
-                              height: 1.2,
-                            ),
+
+                        // ✅ TEXTOS: Todos movidos juntos como um bloco
+                        Transform.translate(
+                          offset: Offset(
+                            50,
+                            screenHeight < 800
+                                ? -(screenHeight * 0.31)
+                                : -(screenHeight * 0.22),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              TextSpan(
-                                text: 'em boas patas ',
-                                style: const TextStyle(
-                                  fontSize: 38,
-                                  fontWeight: FontWeight.w800,
-                                  color: Color(0xFF0D9488),
+                              const SizedBox(height: 45),
+                              Text.rich(
+                                TextSpan(
+                                  text: 'A saúde do seu pet\n',
+                                  style: const TextStyle(
+                                    fontSize: 38,
+                                    fontWeight: FontWeight.w800,
+                                    color: Color(0xFF1E293B),
+                                    height: 1.2,
+                                  ),
+                                  children: [
+                                    TextSpan(
+                                      text: 'em boas patas ',
+                                      style: const TextStyle(
+                                        fontSize: 38,
+                                        fontWeight: FontWeight.w800,
+                                        color: Color(0xFF0D9488),
+                                      ),
+                                    ),
+                                    WidgetSpan(
+                                      alignment: PlaceholderAlignment.middle,
+                                      child: Icon(
+                                        Icons.favorite_border,
+                                        color: const Color(0xFF0D9488),
+                                        size: 36,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              WidgetSpan(
-                                alignment: PlaceholderAlignment.middle,
-                                child: Icon(
-                                  Icons.favorite_border,
-                                  color: const Color(0xFF0D9488),
-                                  size: 36,
+                              const SizedBox(height: 20),
+                              SizedBox(
+                                width: 420,
+                                child: Text(
+                                  'Gerencie consultas, vacinas, medicamentos e muito mais. Tudo para o bem-estar do seu melhor amigo.',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.grey[600],
+                                    height: 1.5,
+                                  ),
                                 ),
                               ),
                             ],
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        SizedBox(
-                          width: 420,
-                          child: Text(
-                            'Gerencie consultas, vacinas, medicamentos e muito mais. Tudo para o bem-estar do seu melhor amigo.',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.grey[600],
-                              height: 1.5,
-                            ),
                           ),
                         ),
                       ],
@@ -176,7 +186,7 @@ class _AuthScreenState extends State<AuthScreen> {
                     horizontal: 40,
                     vertical: 40,
                   ),
-                  padding: const EdgeInsets.fromLTRB(40, 10, 40, 40),
+                  padding: const EdgeInsets.fromLTRB(40, 10, 40, 0),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(24),

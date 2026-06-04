@@ -4,6 +4,7 @@ import 'package:syscopet/providers/auth_provider.dart';
 import 'package:flutter/gestures.dart';
 import '../home/home_screen.dart';
 import 'legal_screen.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class RegisterScreen extends StatefulWidget {
   final VoidCallback onGoToLogin;
@@ -134,11 +135,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          'Criar uma conta 🐾',
-          style: Theme.of(
-            context,
-          ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Crie uma conta ',
+              style: Theme.of(
+                context,
+              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            SvgPicture.asset('assets/icons/patas.svg', height: 30, width: 30),
+          ],
         ),
         const SizedBox(height: 8),
         Text(
