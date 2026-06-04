@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
+import 'dart:async';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../widgets/forgot_password/email_form_widget.dart';
 import '../../widgets/forgot_password/code_verification_widget.dart';
 import '../../widgets/forgot_password/reset_password_widget.dart';
+import '../../services/auth_service.dart';
+
+
 
 class ForgotPasswordScreen extends StatefulWidget {
   final VoidCallback onBackToLogin;
@@ -16,9 +20,13 @@ class ForgotPasswordScreen extends StatefulWidget {
 
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   int _currentStep = 0; // 0 = Email, 1 = Código, 2 = Nova Senha
+  final AuthService _authService = AuthService();
+
   final emailController = TextEditingController();
   final newPasswordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
+
+
 
   // Controladores para os 6 dígitos do código
   final List<TextEditingController> _codeControllers = List.generate(
@@ -27,11 +35,44 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   );
   final List<FocusNode> _codeFocusNodes = List.generate(6, (_) => FocusNode());
 
+  //Controle botao reenviar
+  int _secondsRemaining = 30;
+  bool _canResend = false;
+
+  Timer? _resendTimer;
+
+  void _startResendTimer() {
+    _canResend = false;
+    _secondsRemaining = 30;
+
+    _resendTimer?.cancel();
+
+    _resendTimer = Timer.periodic(
+      const Duration(seconds: 1),
+      (timer) {
+        if (_secondsRemaining > 0) {
+          setState(() {
+            _secondsRemaining--;
+          });
+        } else {
+          timer.cancel();
+
+          setState(() {
+            _canResend = true;
+          });
+        }
+      },
+    );
+  }
+
+  
+
   @override
   void dispose() {
     emailController.dispose();
     newPasswordController.dispose();
     confirmPasswordController.dispose();
+    _resendTimer?.cancel();
     for (var controller in _codeControllers) {
       controller.dispose();
     }
@@ -41,8 +82,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     super.dispose();
   }
 
+
+  
   // ✅ Etapa 1: Enviar email
-  void _handleSendEmail() {
+  Future<void> _handleSendEmail() async {
     if (emailController.text.isEmpty || !emailController.text.contains('@')) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -53,7 +96,30 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       return;
     }
 
-    setState(() => _currentStep = 1);
+    final result = await _authService.forgotPassword(
+      email: emailController.text.trim(),
+    );
+
+    if(result['sucesso'] == true){
+      _startResendTimer();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result['mensagem']),
+        backgroundColor: const Color(0xFF0D9488),
+        ),
+        );
+    
+
+    setState(() {
+      _currentStep = 1;
+    }); 
+    } else{
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+        content: Text(result['erro']),
+        backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   // ✅ Etapa 2: Verificar código (simulado)
@@ -73,7 +139,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   }
 
   // ✅ Etapa 3: Redefinir senha
-  void _handleResetPassword() {
+  Future<void> _handleResetPassword() async {
     if (newPasswordController.text.isEmpty ||
         newPasswordController.text.length < 6) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -95,24 +161,59 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Senha redefinida com sucesso!'),
-        backgroundColor: Color(0xFF0D9488),
-      ),
+    final codigo = _codeControllers
+      .map((controller) => controller.text)
+      .join();
+
+    final result = await _authService.resetPassword(
+      email: emailController.text.trim(),
+      codigo: codigo,
+      novaSenha: newPasswordController.text,
     );
 
-    Navigator.of(context).popUntil((route) => route.isFirst);
+    if (result['sucesso'] == true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['mensagem']),
+            backgroundColor: const Color(0xFF0D9488),
+          ),
+        );
+
+        Navigator.pop(context);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['erro']),
+            backgroundColor: Colors.red,
+          ),
+        );
+     }
+
+    //Navigator.of(context).popUntil((route) => route.isFirst);
   }
 
   // Reenviar código
-  void _handleResendCode() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Código reenviado!'),
-        backgroundColor: Color(0xFF0D9488),
-      ),
+  Future<void> _handleResendCode() async {
+    final result = await _authService.forgotPassword(
+      email: emailController.text.trim(),
     );
+
+    if (result['sucesso'] == true) {
+      _startResendTimer();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Código reenviado com sucesso!'),
+          backgroundColor: Color(0xFF0D9488),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result['erro']),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   @override
@@ -207,6 +308,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   focusNodes: _codeFocusNodes,
                   onVerify: _handleVerifyCode,
                   onResend: _handleResendCode,
+                  canResend: _canResend,
+                  secondsRemaining: _secondsRemaining,
                 ),
                 ResetPasswordWidget(
                   key: const ValueKey('reset-password'),
@@ -246,6 +349,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     focusNodes: _codeFocusNodes,
                     onVerify: _handleVerifyCode,
                     onResend: _handleResendCode,
+                    canResend: _canResend,
+                    secondsRemaining: _secondsRemaining,
                   ),
                   ResetPasswordWidget(
                     key: const ValueKey('reset-password-mobile'),
