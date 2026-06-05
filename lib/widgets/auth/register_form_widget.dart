@@ -45,22 +45,8 @@ class _RegisterFormWidgetState extends State<RegisterFormWidget> {
   Route _buildLightRoute(Widget page) {
     return PageRouteBuilder(
       pageBuilder: (context, animation, secondaryAnimation) => page,
-      transitionsBuilder: (context, animation, secondaryAnimation, child) {
-        const begin = Offset(0.0, 0.05);
-        const end = Offset.zero;
-        var tween = Tween(
-          begin: begin,
-          end: end,
-        ).chain(CurveTween(curve: Curves.easeOut));
-        return FadeTransition(
-          opacity: animation,
-          child: SlideTransition(
-            position: tween.animate(animation),
-            child: child,
-          ),
-        );
-      },
-      transitionDuration: const Duration(milliseconds: 250),
+      transitionDuration: Duration.zero, // ✅ Sem animação
+      reverseTransitionDuration: Duration.zero,
     );
   }
 

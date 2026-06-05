@@ -39,10 +39,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Future<void> _handleRegister() async {
-    final registerFormState = context
-        .findAncestorStateOfType<State<RegisterFormWidget>>();
-
-    // Validações básicas
     if (nameController.text.isEmpty ||
         emailController.text.isEmpty ||
         passwordController.text.isEmpty) {

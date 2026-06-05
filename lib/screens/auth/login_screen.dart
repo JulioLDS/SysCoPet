@@ -49,9 +49,15 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
+    // ✅ Navegação instantânea sem animação
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (_) => const HomeScreen()),
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            const HomeScreen(),
+        transitionDuration: Duration.zero,
+        reverseTransitionDuration: Duration.zero,
+      ),
     );
   }
 

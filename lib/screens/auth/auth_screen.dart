@@ -13,10 +13,39 @@ class AuthScreen extends StatefulWidget {
 }
 
 class _AuthScreenState extends State<AuthScreen> {
-  int _selectedIndex = 0; // 0 = Entrar, 1 = Cadastrar
-  bool _isAnimating = false; // Controle de animação
+  int _selectedIndex = 0;
+  bool _isAnimating = false;
 
-  // Função para trocar de aba com bloqueio durante animação
+  // ✅ Cache para pré-carregar a tela de ForgotPassword
+  bool _isForgotPasswordPreloaded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // ✅ Pré-carregar TODOS os assets críticos na inicialização
+    _preloadAllAssets();
+  }
+
+  Future<void> _preloadAllAssets() async {
+    // Pré-carregar imagens PNG
+    await Future.wait([
+      precacheImage(const AssetImage('assets/images/background2.png'), context),
+      precacheImage(const AssetImage('assets/images/pets.png'), context),
+      precacheImage(
+        const AssetImage('assets/images/background_mobile.png'),
+        context,
+      ),
+      precacheImage(const AssetImage('assets/icons/google.png'), context),
+    ]);
+
+    // ✅ SVGs são automaticamente cacheados pelo flutter_svg
+    // Não precisamos pré-carregá-los manualmente
+
+    setState(() {
+      _isForgotPasswordPreloaded = true;
+    });
+  }
+
   void _changeTab(int newIndex) {
     if (_isAnimating || _selectedIndex == newIndex) return;
 
@@ -25,12 +54,54 @@ class _AuthScreenState extends State<AuthScreen> {
       _selectedIndex = newIndex;
     });
 
-    // Desbloqueia após a duração da animação
     Future.delayed(const Duration(milliseconds: 1000), () {
       if (mounted) {
         setState(() => _isAnimating = false);
       }
     });
+  }
+
+  // ✅ Navegação otimizada para ForgotPassword
+  void _goToForgotPassword() {
+    // Se já estiver pré-carregado, navega instantaneamente
+    if (_isForgotPasswordPreloaded) {
+      Navigator.push(
+        context,
+        PageRouteBuilder(
+          pageBuilder: (context, animation, secondaryAnimation) =>
+              ForgotPasswordScreen(onBackToLogin: () => Navigator.pop(context)),
+          transitionDuration: Duration.zero,
+          reverseTransitionDuration: Duration.zero,
+        ),
+      );
+    } else {
+      // Mostra loading enquanto carrega
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(color: Color(0xFF0D9488)),
+        ),
+      );
+
+      // Pré-carrega e navega
+      _preloadAllAssets().then((_) {
+        if (mounted) {
+          Navigator.pop(context); // Fecha loading
+          Navigator.push(
+            context,
+            PageRouteBuilder(
+              pageBuilder: (context, animation, secondaryAnimation) =>
+                  ForgotPasswordScreen(
+                    onBackToLogin: () => Navigator.pop(context),
+                  ),
+              transitionDuration: Duration.zero,
+              reverseTransitionDuration: Duration.zero,
+            ),
+          );
+        }
+      });
+    }
   }
 
   @override
@@ -52,11 +123,9 @@ class _AuthScreenState extends State<AuthScreen> {
     );
   }
 
-  // ===== LAYOUT DESKTOP =====
   Widget _buildDesktopLayout(double screenHeight) {
     return Stack(
       children: [
-        // 1. BACKGROUND (INALTERADO)
         Container(
           decoration: const BoxDecoration(
             image: DecorationImage(
@@ -65,15 +134,11 @@ class _AuthScreenState extends State<AuthScreen> {
             ),
           ),
         ),
-
-        // 2. CONTEÚDO (INALTERADO)
         Row(
           children: [
-            // LADO ESQUERDO (TEXTO + PETS) - EXATAMENTE COMO ESTAVA
             Expanded(
               child: Stack(
                 children: [
-                  // TEXTO
                   Positioned(
                     top: 60,
                     left: 120,
@@ -81,12 +146,8 @@ class _AuthScreenState extends State<AuthScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // ✅ LOGO: Posicionamento independente
                         Transform.translate(
-                          offset: const Offset(
-                            -120,
-                            -100,
-                          ), // ← AJUSTE AQUI: x = esquerda/direita, y = cima/baixo
+                          offset: const Offset(-120, -100),
                           child: Center(
                             child: Transform.rotate(
                               angle: pi / 2,
@@ -97,8 +158,6 @@ class _AuthScreenState extends State<AuthScreen> {
                             ),
                           ),
                         ),
-
-                        // ✅ TEXTOS: Todos movidos juntos como um bloco
                         Transform.translate(
                           offset: Offset(
                             50,
@@ -128,11 +187,11 @@ class _AuthScreenState extends State<AuthScreen> {
                                         color: Color(0xFF0D9488),
                                       ),
                                     ),
-                                    WidgetSpan(
+                                    const WidgetSpan(
                                       alignment: PlaceholderAlignment.middle,
                                       child: Icon(
                                         Icons.favorite_border,
-                                        color: const Color(0xFF0D9488),
+                                        color: Color(0xFF0D9488),
                                         size: 36,
                                       ),
                                     ),
@@ -157,8 +216,6 @@ class _AuthScreenState extends State<AuthScreen> {
                       ],
                     ),
                   ),
-
-                  // PETS
                   Positioned(
                     top: screenHeight * 0.20,
                     left: 100,
@@ -173,8 +230,6 @@ class _AuthScreenState extends State<AuthScreen> {
                 ],
               ),
             ),
-
-            // LADO DIREITO (Card com Tabs + Formulário)
             Expanded(
               child: Center(
                 child: Container(
@@ -207,7 +262,6 @@ class _AuthScreenState extends State<AuthScreen> {
                         right: 0,
                         child: _buildAnimatedTabs(),
                       ),
-
                       Positioned(
                         top: 60,
                         left: 0,
@@ -239,74 +293,15 @@ class _AuthScreenState extends State<AuthScreen> {
                                       child: child,
                                     );
                                   },
-                              // Substitua a criação do LoginScreen por:
                               child: _selectedIndex == 0
                                   ? LoginScreen(
                                       key: const ValueKey('login'),
-                                      onForgotPassword: () {
-                                        Navigator.push(
-                                          context,
-                                          PageRouteBuilder(
-                                            pageBuilder:
-                                                (
-                                                  context,
-                                                  animation,
-                                                  secondaryAnimation,
-                                                ) => ForgotPasswordScreen(
-                                                  onBackToLogin: () =>
-                                                      Navigator.pop(context),
-                                                ),
-                                            transitionsBuilder:
-                                                (
-                                                  context,
-                                                  animation,
-                                                  secondaryAnimation,
-                                                  child,
-                                                ) {
-                                                  const begin = Offset(
-                                                    0.0,
-                                                    0.1,
-                                                  ); // Leve slide de baixo para cima
-                                                  const end = Offset.zero;
-                                                  const curve =
-                                                      Curves.easeOutCubic;
-
-                                                  var tween =
-                                                      Tween(
-                                                        begin: begin,
-                                                        end: end,
-                                                      ).chain(
-                                                        CurveTween(
-                                                          curve: curve,
-                                                        ),
-                                                      );
-                                                  var slideAnimation = animation
-                                                      .drive(tween);
-                                                  var fadeAnimation =
-                                                      CurvedAnimation(
-                                                        parent: animation,
-                                                        curve: Curves.easeOut,
-                                                      );
-
-                                                  return FadeTransition(
-                                                    opacity: fadeAnimation,
-                                                    child: SlideTransition(
-                                                      position: slideAnimation,
-                                                      child: child,
-                                                    ),
-                                                  );
-                                                },
-                                            transitionDuration: const Duration(
-                                              milliseconds: 350,
-                                            ), // Duração suave
-                                          ),
-                                        );
-                                      },
+                                      onForgotPassword: _goToForgotPassword,
                                       onGoToRegister: () => _changeTab(1),
                                     )
                                   : RegisterScreen(
                                       key: const ValueKey('register'),
-                                      onGoToLogin: ()=> _changeTab(0),
+                                      onGoToLogin: () => _changeTab(0),
                                     ),
                             ),
                           ),
@@ -323,16 +318,13 @@ class _AuthScreenState extends State<AuthScreen> {
     );
   }
 
-  // ===== TABS ANIMADAS =====
   Widget _buildAnimatedTabs() {
     return LayoutBuilder(
       builder: (context, constraints) {
         return Column(
           children: [
-            // 1. Área dos textos com toque EXPANDIDO
             Row(
               children: [
-                // Tab "Entrar"
                 Expanded(
                   child: MouseRegion(
                     cursor: _isAnimating
@@ -361,7 +353,6 @@ class _AuthScreenState extends State<AuthScreen> {
                     ),
                   ),
                 ),
-                // Tab "Cadastrar"
                 Expanded(
                   child: MouseRegion(
                     cursor: _isAnimating
@@ -392,19 +383,16 @@ class _AuthScreenState extends State<AuthScreen> {
                 ),
               ],
             ),
-            // 2. Linhas Indicadoras
             SizedBox(
               height: 3,
               child: Stack(
                 children: [
-                  // Linha de fundo (Cinza claro)
                   Positioned(
                     left: 0,
                     right: 0,
                     bottom: 0,
                     child: Container(height: 2, color: const Color(0xFFE2E8F0)),
                   ),
-                  // Linha verde animada
                   AnimatedPositioned(
                     duration: const Duration(milliseconds: 300),
                     curve: Curves.easeInOut,
@@ -424,7 +412,6 @@ class _AuthScreenState extends State<AuthScreen> {
     );
   }
 
-  // ===== LAYOUT MOBILE =====
   Widget _buildMobileLayout() {
     return Stack(
       children: [
@@ -464,75 +451,20 @@ class _AuthScreenState extends State<AuthScreen> {
                       ],
                     ),
                     const SizedBox(height: 30),
-
-                    // Tabs Animadas (Mobile)
                     _buildAnimatedTabs(),
                     const SizedBox(height: 16),
-
-                    // Formulário com animação
                     AnimatedSwitcher(
                       duration: const Duration(milliseconds: 500),
                       child: _selectedIndex == 0
                           ? LoginScreen(
                               key: const ValueKey('login'),
-                              onForgotPassword: () {
-                                Navigator.push(
-                                  context,
-                                  PageRouteBuilder(
-                                    pageBuilder:
-                                        (
-                                          context,
-                                          animation,
-                                          secondaryAnimation,
-                                        ) => ForgotPasswordScreen(
-                                          onBackToLogin: () =>
-                                              Navigator.pop(context),
-                                        ),
-                                    transitionsBuilder:
-                                        (
-                                          context,
-                                          animation,
-                                          secondaryAnimation,
-                                          child,
-                                        ) {
-                                          const begin = Offset(
-                                            0.0,
-                                            0.1,
-                                          ); // Leve slide de baixo para cima
-                                          const end = Offset.zero;
-                                          const curve = Curves.easeOutCubic;
-
-                                          var tween = Tween(
-                                            begin: begin,
-                                            end: end,
-                                          ).chain(CurveTween(curve: curve));
-                                          var slideAnimation = animation.drive(
-                                            tween,
-                                          );
-                                          var fadeAnimation = CurvedAnimation(
-                                            parent: animation,
-                                            curve: Curves.easeOut,
-                                          );
-
-                                          return FadeTransition(
-                                            opacity: fadeAnimation,
-                                            child: SlideTransition(
-                                              position: slideAnimation,
-                                              child: child,
-                                            ),
-                                          );
-                                        },
-                                    transitionDuration: const Duration(
-                                      milliseconds: 350,
-                                    ), // Duração suave
-                                  ),
-                                );
-                              },
+                              onForgotPassword: _goToForgotPassword,
                               onGoToRegister: () => _changeTab(1),
                             )
-                          : RegisterScreen(key: const ValueKey('register'),
-                          onGoToLogin: () => _changeTab(0),
-                          ),
+                          : RegisterScreen(
+                              key: const ValueKey('register'),
+                              onGoToLogin: () => _changeTab(0),
+                            ),
                     ),
                   ],
                 ),
