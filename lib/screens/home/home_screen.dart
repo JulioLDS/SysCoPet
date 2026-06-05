@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
-import '../auth/login_screen.dart';
+import '../auth/auth_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -405,17 +405,15 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Função de Logout
-  Future<void> _logout(
-    BuildContext context,
-    AuthProvider authProvider,)
-    async {
+  Future<void> _logout(BuildContext context, AuthProvider authProvider) async {
     await authProvider.logout();
 
-    Navigator.pushNamedAndRemoveUntil(
+    if (!context.mounted) return;
+
+    // ✅ Usa pushReplacement em vez de pushAndRemoveUntil
+    Navigator.pushReplacement(
       context,
-      '/',
-      (route) => false,
+      MaterialPageRoute(builder: (context) => const AuthScreen()),
     );
   }
 
