@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/auth/register_form_widget.dart';
+import '../../widgets/common/custom_snackbar.dart';
 
 class RegisterScreen extends StatefulWidget {
   final VoidCallback onGoToLogin;
@@ -24,6 +25,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final confirmPasswordFocusNode = FocusNode();
   final checkboxFocusNode = FocusNode();
 
+  // ✅ Use RegisterFormWidgetState (sem o _)
+  final GlobalKey<RegisterFormWidgetState> _formKey = GlobalKey();
+
   @override
   void dispose() {
     nameController.dispose();
@@ -39,24 +43,27 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Future<void> _handleRegister() async {
-    if (nameController.text.isEmpty ||
-        emailController.text.isEmpty ||
-        passwordController.text.isEmpty) {
-      ScaffoldMessenger.of(
+    // ✅ Validação dos termos
+    if (_formKey.currentState?.isTermsAccepted == false) {
+      CustomSnackbar.showWarning(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Preencha todos os campos')));
-      return;
-    }
-    if (passwordController.text.length < 6) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Senha mínima de 6 caracteres')),
+        'Você precisa aceitar os termos de uso',
       );
       return;
     }
+
+    if (nameController.text.isEmpty ||
+        emailController.text.isEmpty ||
+        passwordController.text.isEmpty) {
+      CustomSnackbar.showWarning(context, 'Preencha todos os campos');
+      return;
+    }
+    if (passwordController.text.length < 6) {
+      CustomSnackbar.showWarning(context, 'Senha mínima de 6 caracteres');
+      return;
+    }
     if (passwordController.text != confirmPasswordController.text) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Senhas não coincidem')));
+      CustomSnackbar.showError(context, 'Senhas não coincidem');
       return;
     }
 
@@ -70,19 +77,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (!mounted) return;
 
     if (result != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(result), backgroundColor: Colors.red),
-      );
+      CustomSnackbar.showError(context, result);
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Usuário criado com sucesso! Faça login para continuar.'),
-        backgroundColor: Colors.green,
-      ),
+    CustomSnackbar.showSuccess(
+      context,
+      'Usuário criado com sucesso! Faça login para continuar.',
     );
-
     widget.onGoToLogin();
   }
 
@@ -91,6 +93,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final authProvider = Provider.of<AuthProvider>(context);
 
     return RegisterFormWidget(
+      key: _formKey, // ✅ Passa a key para o widget
       nameController: nameController,
       emailController: emailController,
       passwordController: passwordController,

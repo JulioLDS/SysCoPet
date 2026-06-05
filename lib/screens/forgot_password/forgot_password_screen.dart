@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'dart:math';
 import 'dart:async';
-import 'package:flutter_svg/flutter_svg.dart';
 import '../../widgets/forgot_password/email_form_widget.dart';
 import '../../widgets/forgot_password/code_verification_widget.dart';
 import '../../widgets/forgot_password/reset_password_widget.dart';
 import '../../services/auth_service.dart';
+import '../../widgets/common/custom_snackbar.dart'; // ✅ Adicione
 
 class ForgotPasswordScreen extends StatefulWidget {
   final VoidCallback onBackToLogin;
@@ -37,7 +36,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   @override
   void initState() {
     super.initState();
-    // ✅ Pré-carregar assets críticos
     WidgetsBinding.instance.addPostFrameCallback((_) {
       precacheImage(const AssetImage('assets/images/background2.png'), context);
       precacheImage(const AssetImage('assets/images/pets.png'), context);
@@ -51,14 +49,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
     _resendTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_secondsRemaining > 0) {
-        setState(() {
-          _secondsRemaining--;
-        });
+        setState(() => _secondsRemaining--);
       } else {
         timer.cancel();
-        setState(() {
-          _canResend = true;
-        });
+        setState(() => _canResend = true);
       }
     });
   }
@@ -80,12 +74,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
   Future<void> _handleSendEmail() async {
     if (emailController.text.isEmpty || !emailController.text.contains('@')) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Por favor, digite um e-mail válido'),
-          backgroundColor: Colors.orange,
-        ),
-      );
+      CustomSnackbar.showWarning(context, 'Por favor, digite um e-mail válido');
       return;
     }
 
@@ -95,57 +84,37 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
     if (result['sucesso'] == true) {
       _startResendTimer();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(result['mensagem']),
-          backgroundColor: const Color(0xFF0D9488),
-        ),
-      );
-
-      setState(() {
-        _currentStep = 1;
-      });
+      CustomSnackbar.showSuccess(context, result['mensagem']);
+      setState(() => _currentStep = 1);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(result['erro']), backgroundColor: Colors.red),
-      );
+      CustomSnackbar.showError(context, result['erro']);
     }
   }
 
   void _handleVerifyCode() {
     final code = _codeControllers.map((c) => c.text).join();
     if (code.length != 6) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Por favor, digite o código de 6 dígitos'),
-          backgroundColor: Colors.orange,
-        ),
+      CustomSnackbar.showWarning(
+        context,
+        'Por favor, digite o código de 6 dígitos',
       );
       return;
     }
-
     setState(() => _currentStep = 2);
   }
 
   Future<void> _handleResetPassword() async {
     if (newPasswordController.text.isEmpty ||
         newPasswordController.text.length < 6) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('A senha deve ter pelo menos 6 caracteres'),
-          backgroundColor: Colors.orange,
-        ),
+      CustomSnackbar.showWarning(
+        context,
+        'A senha deve ter pelo menos 6 caracteres',
       );
       return;
     }
 
     if (newPasswordController.text != confirmPasswordController.text) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('As senhas não coincidem'),
-          backgroundColor: Colors.orange,
-        ),
-      );
+      CustomSnackbar.showError(context, 'As senhas não coincidem');
       return;
     }
 
@@ -158,19 +127,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     );
 
     if (result['sucesso'] == true) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(result['mensagem']),
-          backgroundColor: const Color(0xFF0D9488),
-        ),
-      );
-
-      // ✅ Navegação instantânea sem animação
+      CustomSnackbar.showSuccess(context, result['mensagem']);
       Navigator.pop(context);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(result['erro']), backgroundColor: Colors.red),
-      );
+      CustomSnackbar.showError(context, result['erro']);
     }
   }
 
@@ -181,16 +141,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
     if (result['sucesso'] == true) {
       _startResendTimer();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Código reenviado com sucesso!'),
-          backgroundColor: Color(0xFF0D9488),
-        ),
-      );
+      CustomSnackbar.showSuccess(context, 'Código reenviado com sucesso!');
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(result['erro']), backgroundColor: Colors.red),
-      );
+      CustomSnackbar.showError(context, result['erro']);
     }
   }
 

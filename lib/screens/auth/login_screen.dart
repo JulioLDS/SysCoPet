@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../home/home_screen.dart';
 import '../../widgets/auth/login_form_widget.dart';
+import '../../widgets/common/custom_snackbar.dart'; // ✅ Adicione
 
 class LoginScreen extends StatefulWidget {
   final VoidCallback onForgotPassword;
@@ -43,13 +44,11 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!mounted) return;
 
     if (errorMessage != null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(errorMessage)));
+      // ✅ Substituído por CustomSnackbar
+      CustomSnackbar.showError(context, errorMessage);
       return;
     }
 
-    // ✅ Navegação instantânea sem animação
     Navigator.pushReplacement(
       context,
       PageRouteBuilder(

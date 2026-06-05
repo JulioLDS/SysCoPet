@@ -34,13 +34,18 @@ class RegisterFormWidget extends StatefulWidget {
   });
 
   @override
-  State<RegisterFormWidget> createState() => _RegisterFormWidgetState();
+  // ✅ Mude de _RegisterFormWidgetState para RegisterFormWidgetState
+  State<RegisterFormWidget> createState() => RegisterFormWidgetState();
 }
 
-class _RegisterFormWidgetState extends State<RegisterFormWidget> {
+// ✅ Classe pública (sem o _)
+class RegisterFormWidgetState extends State<RegisterFormWidget> {
   bool _agreeTerms = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+
+  // ✅ Getter público para verificar se os termos foram aceitos
+  bool get isTermsAccepted => _agreeTerms;
 
   Route _buildLightRoute(Widget page) {
     return PageRouteBuilder(
@@ -398,6 +403,4 @@ class _RegisterFormWidgetState extends State<RegisterFormWidget> {
       ],
     );
   }
-
-  bool get _isTermsAgreed => _agreeTerms;
 }
