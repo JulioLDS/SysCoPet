@@ -436,20 +436,17 @@ class _AuthScreenState extends State<AuthScreen> {
                     const SizedBox(height: 30),
                     Row(
                       children: [
-                        Icon(
-                          Icons.pets,
-                          color: const Color(0xFF0D9488),
-                          size: 32,
-                        ),
-                        const SizedBox(width: 8),
-                        const Text(
-                          'PetSaúde',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF0D9488),
+                        Container(
+                          margin: const EdgeInsets.only(left:70.0), // Margem na esquerda
+                          child: RotatedBox(
+                            quarterTurns: 1,
+                            child: Image.asset(
+                              'assets/images/Logo_PI (1).png',
+                              height: 200,
+                            ),
                           ),
                         ),
+                        const SizedBox(width: 8),
                       ],
                     ),
                     const SizedBox(height: 30),
