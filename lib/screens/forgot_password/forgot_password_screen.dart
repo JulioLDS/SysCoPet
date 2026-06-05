@@ -4,7 +4,7 @@ import '../../widgets/forgot_password/email_form_widget.dart';
 import '../../widgets/forgot_password/code_verification_widget.dart';
 import '../../widgets/forgot_password/reset_password_widget.dart';
 import '../../services/auth_service.dart';
-import '../../widgets/common/custom_snackbar.dart'; // ✅ Adicione
+import '../../widgets/common/custom_snackbar.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   final VoidCallback onBackToLogin;
