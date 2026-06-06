@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:syscopet/providers/pet_provider.dart';
+
 import '../../providers/auth_provider.dart';
 import '../auth/auth_screen.dart';
+import '../pets/pet_form_screen.dart';
+
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -13,9 +17,26 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
 
+   @override
+  void initState() {
+    super.initState();
+
+    Future.microtask(() async {
+      final auth =
+          Provider.of<AuthProvider>(context,listen: false,);
+
+      final petProvider =
+          Provider.of<PetProvider>(context,listen: false,);
+
+      await petProvider.carregarPets(auth.currentUser!.id,);
+    }
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
+    final petProvider = Provider.of<PetProvider>(context);
     final user = authProvider.currentUser;
 
     return Scaffold(
@@ -174,29 +195,23 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: ListView(
                       scrollDirection: Axis.horizontal,
                       children: [
+                        //botao adicionar pet
                         _buildAddPetCard(),
+                        
                         const SizedBox(width: 15),
-                        _buildPetCard(
-                          name: 'Mel',
-                          breed: 'Golden Retriever',
-                          age: '3 anos',
-                          color: const Color(0xFFD4A373),
-                        ),
-                        const SizedBox(width: 15),
-                        _buildPetCard(
-                          name: 'Luna',
-                          breed: 'Siamês',
-                          age: '2 anos',
-                          color: const Color(0xFF9CA3AF),
-                        ),
-                        const SizedBox(width: 15),
-                        _buildPetCard(
-                          name: 'Thor',
-                          breed: 'Shih Tzu',
-                          age: '4 anos',
-                          color: const Color(0xFFE2E8F0),
-                        ),
-                      ],
+                        //pets vindo da API
+                        ...petProvider.pets.map(
+                          (pet) => Padding(
+                            padding: const EdgeInsets.only(right: 15),
+                            child:  _buildPetCard(
+                              name: pet.nome,
+                              breed: pet.especie,
+                              age: calcularIdade(pet.dataNascimento),
+                              color: const Color(0xFFD4A373),
+                              ),
+                            ),
+                          ),
+                        ],
                     ),
                   ),
                   const SizedBox(height: 30),
@@ -434,7 +449,13 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () {},
+          onTap: () {
+            Navigator.push(context,
+             MaterialPageRoute(
+              builder:(_) => const PetFormScreen(),
+               ),
+               );
+          },
           borderRadius: BorderRadius.circular(20),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -640,4 +661,24 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
+}
+
+String calcularIdade(DateTime? nascimento) {
+  if (nascimento == null) {
+    return 'Sem idade';
+  }
+
+  final hoje = DateTime.now();
+
+  int anos = hoje.year - nascimento.year;
+
+  if (
+    hoje.month < nascimento.month ||
+    (hoje.month == nascimento.month &&
+     hoje.day < nascimento.day)
+  ) {
+    anos--;
+  }
+
+  return '$anos anos';
 }

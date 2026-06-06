@@ -56,6 +56,7 @@ class AuthService {
     return {
       'sucesso': true,
       'user': UserModel(
+        id: data['user']['id'],
         nome: data['user']['nome'],
         email: data['user']['email'],
       ),

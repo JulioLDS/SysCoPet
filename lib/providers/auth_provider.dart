@@ -65,6 +65,7 @@ class AuthProvider extends ChangeNotifier {
       final data = jsonDecode(session);
 
       currentUser = UserModel(
+        id: data['id'],
         nome: data['nome'],
         email: data['email'],
       );
