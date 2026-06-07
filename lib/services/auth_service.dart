@@ -56,7 +56,7 @@ class AuthService {
     return {
       'sucesso': true,
       'user': UserModel(
-        id: data['user']['id'],
+        id: int.parse(data['user']['id'].toString()),
         nome: data['user']['nome'],
         email: data['user']['email'],
       ),
