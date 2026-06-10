@@ -3,7 +3,7 @@ class PetModel {
   final int idUsuario;
   final String nome;
   final String especie;
-  final DateTime? dataNascimento;
+  final String? dataNascimento;
   final double peso;
   final double? altura;
   final String porte;
@@ -21,18 +21,16 @@ class PetModel {
 
   factory PetModel.fromJson(Map<String, dynamic> json) {
     return PetModel(
-      idPet: json['id_pet'],
-      idUsuario: json['id_usuario'],
+      idPet: int.parse(json['id'].toString()),
+      idUsuario: int.parse(json['id_usuario'].toString()),
       nome: json['nome'],
       especie: json['especie'],
-      dataNascimento: json['data_nascimento'] != null
-          ? DateTime.parse(json['data_nascimento'])
-          : null,
+      dataNascimento: json['data_nascimento'],
       peso: double.parse(json['peso'].toString()),
       altura: json['altura'] != null
           ? double.parse(json['altura'].toString())
           : null,
-      porte: json['porte'],
+      porte: json['porte'] ?? '',
     );
   }
 
@@ -41,9 +39,15 @@ class PetModel {
       'id_usuario': idUsuario,
       'nome': nome,
       'especie': especie,
-      'data_nascimento': dataNascimento?.toIso8601String(),
+      'data_nascimento': dataNascimento,
       'peso': peso,
       'altura': altura,
     };
+  }
+
+  String? get dataNascimentoFormatada {
+    if (dataNascimento == null) return null;
+
+    return dataNascimento!.split('T').first;
   }
 }

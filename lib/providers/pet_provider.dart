@@ -10,21 +10,21 @@ class PetProvider extends ChangeNotifier {
   bool isLoading = false;
 
   Future<String?> cadastrarPet(PetModel pet) async {
-    isLoading = true;
-    notifyListeners();
-
-    final result = await _petService.addPet(pet);
-
-    isLoading = false;
-    notifyListeners();
-
-    return result;
+    return await _petService.addPet(pet);
   }
-  
+
   Future<void> carregarPets(int usuarioId) async {
   pets = await _petService.buscarPetsUsuario(usuarioId);
 
   notifyListeners();
   }
+
+  Future<String?> atualizarPet(PetModel pet) async {
+  return await _petService.atualizarPet(pet);
+  }
+
+  Future<String?> deletarPet(int idPet) async {
+  return await _petService.deletarPet(idPet);
+}
 
 }

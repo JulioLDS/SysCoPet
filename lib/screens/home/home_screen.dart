@@ -4,6 +4,7 @@ import 'package:syscopet/providers/pet_provider.dart';
 
 import '../../providers/auth_provider.dart';
 import '../auth/auth_screen.dart';
+import '../pets/pet_details_screen.dart';
 import '../pets/pet_form_screen.dart';
 
 
@@ -27,8 +28,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
       final petProvider =
           Provider.of<PetProvider>(context,listen: false,);
+          
 
       await petProvider.carregarPets(auth.currentUser!.id,);
+      print("Pets carregados: ${petProvider.pets.length}");
     }
     );
   }
@@ -201,13 +204,39 @@ class _HomeScreenState extends State<HomeScreen> {
                         const SizedBox(width: 15),
                         //pets vindo da API
                         ...petProvider.pets.map(
+                          
                           (pet) => Padding(
                             padding: const EdgeInsets.only(right: 15),
-                            child:  _buildPetCard(
-                              name: pet.nome,
-                              breed: pet.especie,
-                              age: calcularIdade(pet.dataNascimento),
-                              color: const Color(0xFFD4A373),
+                            child:GestureDetector(
+                              onTap: () async {
+                                final atualizou = await Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => PetDetailsScreen(
+                                      pet: pet,
+                                    ),
+                                  ),
+                                );
+
+                                if(atualizou == true){
+                                  final auth =
+                                      Provider.of<AuthProvider>(
+                                        context,
+                                        listen: false,
+                                      );
+                                  await Provider.of<PetProvider>(
+                                    context,
+                                    listen: false,
+                                    ).carregarPets(auth.currentUser!.id,
+                                  );
+                                }
+                              },
+                              child:  _buildPetCard(
+                                name: pet.nome,
+                                breed: pet.especie,
+                                age: calcularIdade(pet.dataNascimento),
+                                color: const Color(0xFFD4A373),
+                                ),
                               ),
                             ),
                           ),
@@ -663,10 +692,24 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-String calcularIdade(DateTime? nascimento) {
-  if (nascimento == null) {
+String calcularIdade(String? dataNascimento) {
+  if (dataNascimento == null || dataNascimento.isEmpty) {
     return 'Sem idade';
   }
+
+  String dataCompleta = dataNascimento;
+
+  // Se veio só ano
+  if (RegExp(r'^\d{4}$').hasMatch(dataNascimento)) {
+    dataCompleta = '$dataNascimento-01-01';
+  }
+
+  // Se veio ano-mês
+  else if (RegExp(r'^\d{4}-\d{2}$').hasMatch(dataNascimento)) {
+    dataCompleta = '$dataNascimento-01';
+  }
+
+  final nascimento = DateTime.parse(dataCompleta);
 
   final hoje = DateTime.now();
 
@@ -675,7 +718,7 @@ String calcularIdade(DateTime? nascimento) {
   if (
     hoje.month < nascimento.month ||
     (hoje.month == nascimento.month &&
-     hoje.day < nascimento.day)
+        hoje.day < nascimento.day)
   ) {
     anos--;
   }

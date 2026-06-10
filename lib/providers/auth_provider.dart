@@ -48,6 +48,7 @@ class AuthProvider extends ChangeNotifier {
     await prefs.setString(
       'user_session',
       jsonEncode({
+        'id' : currentUser!.id,
         'nome': currentUser!.nome,
         'email': currentUser!.email,
       }),

@@ -5,37 +5,31 @@ import '../config/api_config.dart';
 import '../models/pet_model.dart';
 
 class PetService {
+  //Adicionar pet
   Future<String?> addPet(PetModel pet) async {
-    try {
-      final response = await http.post(
-        Uri.parse('${ApiConfig.baseUrl}/pets'),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({
-          'id_usuario': pet.idUsuario,
-          'nome': pet.nome,
-          'especie': pet.especie,
-          'data_nascimento':
-              pet.dataNascimento?.toIso8601String(),
-          'peso': pet.peso,
-          'altura': pet.altura,
-        }),
-      );
+  final response = await http.post(
+      Uri.parse('${ApiConfig.baseUrl}/pets'),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(pet.toJson()),
+    );
 
-      final data = jsonDecode(response.body);
+  final data = jsonDecode(response.body);
 
-      if (response.statusCode != 201) {
-        return data['erro'] ??
-            'Erro ao cadastrar pet';
+  if (response.statusCode != 201) {
+
+      if (data['erros'] != null) {
+        return (data['erros']as List).join('\n');
       }
 
-      return null;
-    } catch (e) {
-      return 'Erro de conexão';
-    }
+      return data['erro'] ?? 'Erro desconhecido';
   }
 
+    return null;
+  }
+
+//Buscar pet
   Future<List<PetModel>> buscarPetsUsuario(int idUsuario) async {
     final response = await http.get(
       Uri.parse(
@@ -50,5 +44,44 @@ class PetService {
         .toList();
   }
 
-  
+//Editar pet
+  Future<String?> atualizarPet(PetModel pet) async {
+    final response = await http.put(
+      Uri.parse('${ApiConfig.baseUrl}/pets/${pet.idPet}'),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(pet.toJson()),
+    );
+
+    final data = jsonDecode(response.body);
+
+    if (response.statusCode != 200) {
+      if (data['erros'] != null) {
+        return (data['erros'] as List).join('\n');
+      }
+
+      return data['erro'] ?? 'Erro desconhecido';
+    }
+
+    return null;
+  }
+
+  //Deletar pet
+  Future<String?> deletarPet(int idPet) async {
+    final response = await http.delete(
+      Uri.parse(
+        '${ApiConfig.baseUrl}/pets/$idPet',
+      ),
+    );
+
+    final data = jsonDecode(response.body);
+
+    if (response.statusCode != 200) {
+      return data['erro'] ?? 'Erro ao excluir pet';
+    }
+
+    return null;
+  }
+
 }

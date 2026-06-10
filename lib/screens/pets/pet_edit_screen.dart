@@ -5,14 +5,21 @@ import '../../models/pet_model.dart';
 import '../../providers/pet_provider.dart';
 import '../../providers/auth_provider.dart';
 
-class PetFormScreen extends StatefulWidget {
-  const PetFormScreen({super.key});
+class EditPetFormScreen extends StatefulWidget {
+  final PetModel pet;
+
+  const EditPetFormScreen({
+    super.key,
+    required this.pet,
+  });
+
 
   @override
-  State<PetFormScreen> createState() => _PetFormScreenState();
+  State<EditPetFormScreen> createState() => _PetFormScreenState();
 }
 
-class _PetFormScreenState extends State<PetFormScreen> {
+class _PetFormScreenState extends State<EditPetFormScreen> {
+
   final _formKey = GlobalKey<FormState>();
 
   final nomeController = TextEditingController();
@@ -38,6 +45,37 @@ class _PetFormScreenState extends State<PetFormScreen> {
     super.dispose();
   }
 
+  @override
+  void initState() {
+    super.initState();
+
+    nomeController.text = widget.pet.nome;
+    pesoController.text = widget.pet.peso.toString();
+
+    if (widget.pet.altura != null) {
+      alturaController.text = widget.pet.altura.toString();
+    }
+
+    especieSelecionada = widget.pet.especie;
+
+    if (widget.pet.dataNascimento != null) {
+      final data = widget.pet.dataNascimento!.split('T').first;
+
+      final partes = data.split('-');
+
+      if (partes.isNotEmpty) {
+        anoController.text = partes[0];
+      }
+
+      if (partes.length >= 2) {
+        mesController.text = partes[1];
+      }
+
+      if (partes.length >= 3) {
+        diaController.text = partes[2];
+      }
+    }
+  }
 
   Future<void> _salvarPet() async {
     if (!_formKey.currentState!.validate()) {
@@ -71,6 +109,7 @@ class _PetFormScreenState extends State<PetFormScreen> {
     }
 
     final pet = PetModel(
+      idPet: widget.pet.idPet,
       nome: nomeController.text.trim(),
       especie: especieSelecionada!,
       dataNascimento: dataNascimento,
@@ -82,7 +121,7 @@ class _PetFormScreenState extends State<PetFormScreen> {
       idUsuario: usuario!.id,
     );
 
-    final erro = await petProvider.cadastrarPet(pet);
+    final erro = await petProvider.atualizarPet(pet);
 
     if (!mounted) return;
 
@@ -106,11 +145,13 @@ class _PetFormScreenState extends State<PetFormScreen> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Pet cadastrado com sucesso!'),
+        content: Text('Pet alterado com sucesso!'),
       ),
     );
 
-    Navigator.pop(context);
+    await petProvider.carregarPets(usuario.id);
+    if(!mounted) return;
+    Navigator.pop(context, true);
   }
 
   @override
@@ -119,7 +160,7 @@ class _PetFormScreenState extends State<PetFormScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Cadastrar Pet'),
+        title: const Text('Editar Pet'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(20),
@@ -253,7 +294,7 @@ class _PetFormScreenState extends State<PetFormScreen> {
                     : _salvarPet,
                 child: petProvider.isLoading
                     ? const CircularProgressIndicator()
-                    : const Text('Cadastrar'),
+                    : const Text('Salvar alterações'),
               ),
             ],
           ),
