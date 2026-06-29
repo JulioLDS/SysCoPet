@@ -13,4 +13,11 @@ class UserModel {
       email: json['email'],
     );
   }
+
+  Map<String, dynamic> toJson(){
+    return{
+      'nome': nome,
+      'email': email,
+    };
+  }
 }
