@@ -191,7 +191,7 @@ class RegisterFormWidgetState extends State<RegisterFormWidget> {
             fillColor: Colors.grey.shade50,
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 5),
 
         // Checkbox dos Termos
         Focus(
@@ -336,7 +336,7 @@ class RegisterFormWidgetState extends State<RegisterFormWidget> {
             ),
           ),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 5),
 
         // Botão Cadastrar
         SizedBox(
@@ -365,7 +365,7 @@ class RegisterFormWidgetState extends State<RegisterFormWidget> {
                   ),
           ),
         ),
-        const SizedBox(height: 15),
+        const SizedBox(height: 5),
 
         Row(
           children: [
@@ -377,7 +377,7 @@ class RegisterFormWidgetState extends State<RegisterFormWidget> {
             Expanded(child: Divider(color: Colors.grey.shade300)),
           ],
         ),
-        const SizedBox(height: 15),
+        const SizedBox(height: 5),
 
         OutlinedButton.icon(
           onPressed: widget.onGoogleRegister,
@@ -392,10 +392,13 @@ class RegisterFormWidgetState extends State<RegisterFormWidget> {
           ),
           label: const Text('Continuar com Google'),
           style: OutlinedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            minimumSize: const Size(double.infinity, 48),
-            side: const BorderSide(color: Color(0xFF0D9488)),
-            shape: RoundedRectangleBorder(
+             backgroundColor: Colors.white.withValues(alpha: 0.85),
+             padding: const EdgeInsets.symmetric(vertical: 12),
+             minimumSize: const Size(double.infinity, 48),
+             side: const BorderSide(
+               color: Color(0xFF0D9488),
+             ),
+             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
           ),

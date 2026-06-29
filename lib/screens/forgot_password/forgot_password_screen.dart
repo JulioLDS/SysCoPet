@@ -249,42 +249,67 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
   Widget _buildMobileLayout() {
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            children: [
-              const SizedBox(height: 20),
-              IndexedStack(
-                index: _currentStep,
+      body: Stack(
+        children: [
+          Container(
+            decoration: const BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage('assets/images/background_mobile.png'),
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
+          SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
                 children: [
-                  EmailFormWidget(
-                    key: const ValueKey('email-form-mobile'),
-                    emailController: emailController,
-                    onSendEmail: _handleSendEmail,
+                  const SizedBox(height: 100),
+                  Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.9),
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.08),
+                          blurRadius: 20,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: IndexedStack(
+                      index: _currentStep,
+                      children: [
+                        EmailFormWidget(
+                          key: const ValueKey('email-form-mobile'),
+                          emailController: emailController,
+                          onSendEmail: _handleSendEmail,
+                        ),
+                        CodeVerificationWidget(
+                          key: const ValueKey('code-verification-mobile'),
+                          controllers: _codeControllers,
+                          focusNodes: _codeFocusNodes,
+                          onVerify: _handleVerifyCode,
+                          onResend: _handleResendCode,
+                          canResend: _canResend,
+                          secondsRemaining: _secondsRemaining,
+                        ),
+                        ResetPasswordWidget(
+                          key: const ValueKey('reset-password-mobile'),
+                          newPasswordController: newPasswordController,
+                          confirmPasswordController: confirmPasswordController,
+                          onReset: _handleResetPassword,
+                        ),
+                      ],
+                    ),
                   ),
-                  CodeVerificationWidget(
-                    key: const ValueKey('code-verification-mobile'),
-                    controllers: _codeControllers,
-                    focusNodes: _codeFocusNodes,
-                    onVerify: _handleVerifyCode,
-                    onResend: _handleResendCode,
-                    canResend: _canResend,
-                    secondsRemaining: _secondsRemaining,
-                  ),
-                  ResetPasswordWidget(
-                    key: const ValueKey('reset-password-mobile'),
-                    newPasswordController: newPasswordController,
-                    confirmPasswordController: confirmPasswordController,
-                    onReset: _handleResetPassword,
-                  ),
+                  const SizedBox(height: 20),
                 ],
               ),
-              const SizedBox(height: 20),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
