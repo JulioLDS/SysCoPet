@@ -16,19 +16,22 @@ class _AuthScreenState extends State<AuthScreen> {
   final PageController _pageController = PageController();
   int _selectedIndex = 0;
   bool _isAnimating = false;
-
-  // ✅ Cache para pré-carregar a tela de ForgotPassword
   bool _isForgotPasswordPreloaded = false;
 
   @override
   void initState() {
     super.initState();
-    // ✅ Pré-carregar TODOS os assets críticos na inicialização
+    // ✅ NÃO chamar precacheImage aqui - move para didChangeDependencies
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // ✅ Pré-carregar assets DEPOIS que o contexto está pronto
     _preloadAllAssets();
   }
 
   Future<void> _preloadAllAssets() async {
-    // Pré-carregar imagens PNG
     await Future.wait([
       precacheImage(const AssetImage('assets/images/background2.png'), context),
       precacheImage(const AssetImage('assets/images/pets.png'), context),
@@ -37,30 +40,37 @@ class _AuthScreenState extends State<AuthScreen> {
         context,
       ),
       precacheImage(const AssetImage('assets/icons/google.png'), context),
+      precacheImage(const AssetImage('assets/icons/Logo_PI.png'), context),
     ]);
 
-    // ✅ SVGs são automaticamente cacheados pelo flutter_svg
-    // Não precisamos pré-carregá-los manualmente
-
-    setState(() {
-      _isForgotPasswordPreloaded = true;
-    });
+    if (mounted) {
+      setState(() {
+        _isForgotPasswordPreloaded = true;
+      });
+    }
   }
 
   void _changeTab(int newIndex) {
-    if (_isAnimating || _selectedIndex == newIndex) return;
+    // ✅ Bloqueio imediato
+    if (_isAnimating || _selectedIndex == newIndex) {
+      return;
+    }
 
     setState(() {
       _isAnimating = true;
       _selectedIndex = newIndex;
     });
 
+    // ✅ Verifica se o PageController está attached antes de animar
+    if (_pageController.hasClients) {
       _pageController.animateToPage(
-      newIndex,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-    );
+        newIndex,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    }
 
+    // ✅ Desbloqueia após 1 segundo (1000ms)
     Future.delayed(const Duration(milliseconds: 1000), () {
       if (mounted) {
         setState(() => _isAnimating = false);
@@ -68,9 +78,7 @@ class _AuthScreenState extends State<AuthScreen> {
     });
   }
 
-  // ✅ Navegação otimizada para ForgotPassword
   void _goToForgotPassword() {
-    // Se já estiver pré-carregado, navega instantaneamente
     if (_isForgotPasswordPreloaded) {
       Navigator.push(
         context,
@@ -82,7 +90,6 @@ class _AuthScreenState extends State<AuthScreen> {
         ),
       );
     } else {
-      // Mostra loading enquanto carrega
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -91,10 +98,9 @@ class _AuthScreenState extends State<AuthScreen> {
         ),
       );
 
-      // Pré-carrega e navega
       _preloadAllAssets().then((_) {
         if (mounted) {
-          Navigator.pop(context); // Fecha loading
+          Navigator.pop(context);
           Navigator.push(
             context,
             PageRouteBuilder(
@@ -159,8 +165,8 @@ class _AuthScreenState extends State<AuthScreen> {
                           child: Center(
                             child: Transform.rotate(
                               angle: pi / 2,
-                              child: SvgPicture.asset(
-                                'assets/icons/logo.svg',
+                              child: Image.asset(
+                                'assets/icons/Logo_PI.png',
                                 height: 300,
                               ),
                             ),
@@ -453,7 +459,6 @@ class _AuthScreenState extends State<AuthScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 30),
-
                     Row(
                       children: [
                         Container(
@@ -468,13 +473,9 @@ class _AuthScreenState extends State<AuthScreen> {
                         ),
                       ],
                     ),
-
                     const SizedBox(height: 30),
-
                     _buildAnimatedTabs(),
-
                     const SizedBox(height: 16),
-                    
                     SizedBox(
                       height: 650,
                       child: PageView(
@@ -488,26 +489,12 @@ class _AuthScreenState extends State<AuthScreen> {
                         children: [
                           LoginScreen(
                             onForgotPassword: _goToForgotPassword,
-                            onGoToRegister: () {
-                              _pageController.animateToPage(
-                                1,
-                                duration: const Duration(milliseconds: 300),
-                                curve: Curves.easeInOut,
-                              );
-                            },
+                            onGoToRegister: () => _changeTab(1),
                           ),
-                          RegisterScreen(
-                            onGoToLogin: () {
-                              _pageController.animateToPage(
-                                0,
-                                duration: const Duration(milliseconds: 300),
-                                curve: Curves.easeInOut,
-                              );
-                            },
-                          ),
+                          RegisterScreen(onGoToLogin: () => _changeTab(0)),
                         ],
                       ),
-                    )
+                    ),
                   ],
                 ),
               ),
