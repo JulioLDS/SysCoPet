@@ -103,14 +103,15 @@ class _PetFormScreenState extends State<PetFormScreen> {
 
       return;
     }
-
+    
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Pet cadastrado com sucesso!'),
       ),
     );
-
-    Navigator.pop(context);
+ 
+    await petProvider.carregarPets(usuario.id);
+    Navigator.pop(context, true);
   }
 
   @override
