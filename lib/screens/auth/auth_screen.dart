@@ -13,6 +13,7 @@ class AuthScreen extends StatefulWidget {
 }
 
 class _AuthScreenState extends State<AuthScreen> {
+  final PageController _pageController = PageController();
   int _selectedIndex = 0;
   bool _isAnimating = false;
 
@@ -53,6 +54,12 @@ class _AuthScreenState extends State<AuthScreen> {
       _isAnimating = true;
       _selectedIndex = newIndex;
     });
+
+      _pageController.animateToPage(
+      newIndex,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
 
     Future.delayed(const Duration(milliseconds: 1000), () {
       if (mounted) {
@@ -107,6 +114,7 @@ class _AuthScreenState extends State<AuthScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       backgroundColor: Colors.white,
       body: LayoutBuilder(
         builder: (context, constraints) {
@@ -423,66 +431,84 @@ class _AuthScreenState extends State<AuthScreen> {
             ),
           ),
         ),
+        Positioned(
+          bottom: -190,
+          left: 0,
+          right: 0,
+          child: IgnorePointer(
+            child: Image.asset(
+              'assets/images/pets.png',
+              width: double.infinity,
+              fit: BoxFit.fitWidth,
+            ),
+          ),
+        ),
         Column(
           children: [
             Expanded(
               child: SingleChildScrollView(
+                physics: const NeverScrollableScrollPhysics(),
                 padding: const EdgeInsets.all(24),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 30),
+
                     Row(
                       children: [
-                        Icon(
-                          Icons.pets,
-                          color: const Color(0xFF0D9488),
-                          size: 32,
-                        ),
-                        const SizedBox(width: 8),
-                        const Text(
-                          'PetSaúde',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF0D9488),
+                        Container(
+                          margin: const EdgeInsets.only(left: 70),
+                          child: RotatedBox(
+                            quarterTurns: 1,
+                            child: Image.asset(
+                              'assets/icons/Logo_PI.png',
+                              height: 200,
+                            ),
                           ),
                         ),
                       ],
                     ),
+
                     const SizedBox(height: 30),
+
                     _buildAnimatedTabs(),
+
                     const SizedBox(height: 16),
-                    AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 500),
-                      child: _selectedIndex == 0
-                          ? LoginScreen(
-                              key: const ValueKey('login'),
-                              onForgotPassword: _goToForgotPassword,
-                              onGoToRegister: () => _changeTab(1),
-                            )
-                          : RegisterScreen(
-                              key: const ValueKey('register'),
-                              onGoToLogin: () => _changeTab(0),
-                            ),
-                    ),
+                    
+                    SizedBox(
+                      height: 650,
+                      child: PageView(
+                        onPageChanged: (index) {
+                          setState(() {
+                            _selectedIndex = index;
+                          });
+                        },
+                        controller: _pageController,
+                        physics: const NeverScrollableScrollPhysics(),
+                        children: [
+                          LoginScreen(
+                            onForgotPassword: _goToForgotPassword,
+                            onGoToRegister: () {
+                              _pageController.animateToPage(
+                                1,
+                                duration: const Duration(milliseconds: 300),
+                                curve: Curves.easeInOut,
+                              );
+                            },
+                          ),
+                          RegisterScreen(
+                            onGoToLogin: () {
+                              _pageController.animateToPage(
+                                0,
+                                duration: const Duration(milliseconds: 300),
+                                curve: Curves.easeInOut,
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    )
                   ],
-                ),
-              ),
-            ),
-            SizedBox(
-              height: 180,
-              child: ClipRect(
-                clipBehavior: Clip.none,
-                child: Align(
-                  alignment: Alignment.bottomCenter,
-                  child: Transform.translate(
-                    offset: const Offset(0, 30),
-                    child: Image.asset(
-                      'assets/images/pets.png',
-                      fit: BoxFit.contain,
-                    ),
-                  ),
                 ),
               ),
             ),
