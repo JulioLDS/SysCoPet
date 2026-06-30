@@ -236,6 +236,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 breed: pet.especie,
                                 age: calcularIdade(pet.dataNascimento),
                                 color: const Color(0xFFD4A373),
+                                fotoUrl: pet.urlFoto,
                                 ),
                               ),
                             ),
@@ -525,6 +526,7 @@ class _HomeScreenState extends State<HomeScreen> {
     required String breed,
     required String age,
     required Color color,
+    String? fotoUrl,
   }) {
     return Container(
       width: 130,
@@ -549,7 +551,19 @@ class _HomeScreenState extends State<HomeScreen> {
               color: color.withOpacity(0.3),
               shape: BoxShape.circle,
             ),
-            child: Icon(Icons.pets, size: 35, color: color),
+            child:CircleAvatar(
+              radius: 35,
+              backgroundColor: color.withOpacity(0.3),
+              backgroundImage:
+                  fotoUrl != null && fotoUrl.isNotEmpty? NetworkImage(fotoUrl): null,
+                  child: (fotoUrl == null || fotoUrl.isEmpty)
+                  ? Icon(
+                      Icons.pets,
+                      size: 35,
+                      color: color,
+                    )
+                  : null,
+            )
           ),
           const SizedBox(height: 12),
           Text(

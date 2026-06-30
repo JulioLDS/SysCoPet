@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../config/api_config.dart';
 import '../models/pet_model.dart';
@@ -84,4 +86,64 @@ class PetService {
     return null;
   }
 
+  //Upload de foto
+  Future<String?> uploadFotoPet(int idPet, XFile imagem,) async {
+
+    final bytes = await imagem.readAsBytes();
+
+    //debugagem
+    print(imagem.mimeType);
+    print(imagem.name);
+
+    final request = http.MultipartRequest(
+      'POST',
+      Uri.parse(
+        '${ApiConfig.baseUrl}/pets/$idPet/photo',
+      ),
+    );
+
+    final mime = imagem.mimeType ?? 'image/jpeg';
+
+    request.files.add(
+      await http.MultipartFile.fromBytes(
+        'photo',
+        bytes,
+        filename: imagem.name,
+        contentType: MediaType.parse(mime),
+      ),
+    );
+
+    final response = await request.send();
+
+    final body = await response.stream.bytesToString();
+
+    if (response.statusCode != 200) {
+      print(body);
+
+      try {
+        final data = jsonDecode(body);
+        return data['error'];
+      } catch (_) {
+        return body;
+      }
+    }
+  }
+
+    //Deletar foto
+Future<String?> removerFotoPet(int idPet) async {
+    final response = await http.delete(
+      Uri.parse(
+        '${ApiConfig.baseUrl}/pets/$idPet/photo',
+      ),
+    );
+
+    final data = jsonDecode(response.body);
+
+    if (response.statusCode != 200) {
+      return data['error'];
+    }
+
+    return null;
+  }
 }
+

@@ -7,6 +7,7 @@ class PetModel {
   final double peso;
   final double? altura;
   final String porte;
+  final String? urlFoto;
 
   PetModel({
     this.idPet,
@@ -17,6 +18,7 @@ class PetModel {
     required this.peso,
     this.altura,
     required this.porte,
+    this.urlFoto,
   });
 
   factory PetModel.fromJson(Map<String, dynamic> json) {
@@ -31,6 +33,7 @@ class PetModel {
           ? double.parse(json['altura'].toString())
           : null,
       porte: json['porte'] ?? '',
+      urlFoto: json['url_foto'],
     );
   }
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../models/pet_model.dart';
 import '../services/pet_service.dart';
@@ -25,6 +26,14 @@ class PetProvider extends ChangeNotifier {
 
   Future<String?> deletarPet(int idPet) async {
   return await _petService.deletarPet(idPet);
+}
+
+  Future<String?> uploadFotoPet(int idPet,XFile imagem,) async {
+   return await _petService.uploadFotoPet(idPet,imagem,);
+}
+
+  Future<String?> removerFotoPet(int idPet,) async
+   {return await _petService.removerFotoPet(idPet,);
 }
 
 }

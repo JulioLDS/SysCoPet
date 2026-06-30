@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:syscopet/providers/pet_provider.dart';
 import 'package:syscopet/screens/pets/pet_edit_screen.dart';
@@ -20,6 +21,44 @@ class PetDetailsScreen extends StatefulWidget {
 }
 
 class _PetDetailsScreenState extends State<PetDetailsScreen> {
+
+  final ImagePicker _picker = ImagePicker();
+  Future<void> _selecionarFoto() async {
+    final imagem = await _picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 80,
+    );
+
+    if (imagem == null) return;
+
+    final provider = Provider.of<PetProvider>(
+      context,
+      listen: false,
+    );
+
+    final erro = await provider.uploadFotoPet(
+      widget.pet.idPet!,
+      imagem,
+    );
+
+    if (!mounted) return;
+
+    if (erro != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(erro)),
+      );
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Foto enviada!"),
+      ),
+    );
+
+    setState(() {});
+}
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -34,26 +73,57 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
           children: [
 
             // FOTO
-
+   
             CircleAvatar(
               radius: 60,
-              child: const Icon(
-                Icons.pets,
-                size: 60,
-              ),
+              backgroundImage: widget.pet.urlFoto != null
+                  ? NetworkImage(widget.pet.urlFoto!)
+                  : null,
+              child: widget.pet.urlFoto == null
+                  ? const Icon(Icons.pets, size: 60)
+                  : null,
             ),
 
             const SizedBox(height: 16),
-
+            
+            //upload
             ElevatedButton.icon(
-              onPressed: () {
-                // futuramente upload
-              },
+              onPressed: _selecionarFoto,
               icon: const Icon(Icons.photo_camera),
-              label: const Text(
-                'Adicionar foto',
+              label: Text(
+                widget.pet.urlFoto == null
+                    ? "Adicionar foto"
+                    : "Alterar foto",
               ),
             ),
+
+            //Deletar foto
+            if (widget.pet.urlFoto != null)
+              TextButton.icon(
+                onPressed: () async {
+                  final provider = Provider.of<PetProvider>(
+                    context,
+                    listen: false,
+                  );
+
+                  final erro = await provider.removerFotoPet(
+                    widget.pet.idPet!,
+                  );
+
+                  if (!mounted) return;
+
+                  if (erro != null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(erro)),
+                    );
+                    return;
+                  }
+
+                  setState(() {});
+                },
+                icon: const Icon(Icons.delete),
+                label: const Text("Remover foto"),
+              ),
 
             const SizedBox(height: 30),
 
