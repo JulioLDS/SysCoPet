@@ -350,7 +350,7 @@ class _AuthScreenState extends State<AuthScreen> {
                             child: _buildAnimatedTabs(),
                           ),
                           Positioned(
-                            top: 60,
+                            top: 40,
                             left: 0,
                             right: 0,
                             child: SizedBox(

@@ -120,6 +120,7 @@ class _LoginFormWidgetState extends State<LoginFormWidget> {
                 onPressed: () {
                   setState(() => _obscurePassword = !_obscurePassword);
                 },
+                focusNode: FocusNode(skipTraversal: true),
               ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -204,9 +205,7 @@ class _LoginFormWidgetState extends State<LoginFormWidget> {
               backgroundColor: Colors.white.withValues(alpha: 0.85),
               padding: const EdgeInsets.symmetric(vertical: 12),
               minimumSize: const Size(double.infinity, 48),
-              side: const BorderSide(
-                color: Color(0xFF0D9488),
-              ),
+              side: const BorderSide(color: Color(0xFF0D9488)),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -216,10 +215,7 @@ class _LoginFormWidgetState extends State<LoginFormWidget> {
 
           Center(
             child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 8,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.9),
                 borderRadius: BorderRadius.circular(12),
@@ -227,10 +223,7 @@ class _LoginFormWidgetState extends State<LoginFormWidget> {
               child: Text.rich(
                 TextSpan(
                   text: 'Ainda não tem uma conta? ',
-                  style: TextStyle(
-                    color: Colors.grey.shade500,
-                    fontSize: 14,
-                  ),
+                  style: TextStyle(color: Colors.grey.shade500, fontSize: 14),
                   children: [
                     TextSpan(
                       text: 'Cadastre-se',

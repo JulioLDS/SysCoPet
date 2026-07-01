@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter/services.dart';
 import '../../screens/auth/legal_screen.dart';
 
 class RegisterFormWidget extends StatefulWidget {
@@ -146,6 +147,7 @@ class RegisterFormWidgetState extends State<RegisterFormWidget> {
               onPressed: () {
                 setState(() => _obscurePassword = !_obscurePassword);
               },
+              focusNode: FocusNode(skipTraversal: true), // ✅ ADICIONE ISSO
             ),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             filled: true,
@@ -198,6 +200,16 @@ class RegisterFormWidgetState extends State<RegisterFormWidget> {
           focusNode: widget.checkboxFocusNode,
           canRequestFocus: true,
           skipTraversal: false,
+          onKeyEvent: (node, event) {
+            // ✅ Captura Enter ou Espaço para marcar/desmarcar
+            if (event is KeyDownEvent &&
+                (event.logicalKey == LogicalKeyboardKey.enter ||
+                    event.logicalKey == LogicalKeyboardKey.space)) {
+              setState(() => _agreeTerms = !_agreeTerms);
+              return KeyEventResult.handled;
+            }
+            return KeyEventResult.ignored;
+          },
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: () => setState(() => _agreeTerms = !_agreeTerms),
@@ -392,13 +404,11 @@ class RegisterFormWidgetState extends State<RegisterFormWidget> {
           ),
           label: const Text('Continuar com Google'),
           style: OutlinedButton.styleFrom(
-             backgroundColor: Colors.white.withValues(alpha: 0.85),
-             padding: const EdgeInsets.symmetric(vertical: 12),
-             minimumSize: const Size(double.infinity, 48),
-             side: const BorderSide(
-               color: Color(0xFF0D9488),
-             ),
-             shape: RoundedRectangleBorder(
+            backgroundColor: Colors.white.withValues(alpha: 0.85),
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            minimumSize: const Size(double.infinity, 48),
+            side: const BorderSide(color: Color(0xFF0D9488)),
+            shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
           ),
