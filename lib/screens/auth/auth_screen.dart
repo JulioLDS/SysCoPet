@@ -344,13 +344,13 @@ class _AuthScreenState extends State<AuthScreen> {
                         clipBehavior: Clip.none,
                         children: [
                           Positioned(
-                            top: 0,
+                            top: -5,
                             left: 0,
                             right: 0,
                             child: _buildAnimatedTabs(),
                           ),
                           Positioned(
-                            top: 40,
+                            top: 15,
                             left: 0,
                             right: 0,
                             child: SizedBox(
@@ -428,7 +428,7 @@ class _AuthScreenState extends State<AuthScreen> {
                       onTap: () => _changeTab(0),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                          vertical: 20,
+                          vertical: 12,
                           horizontal: 8,
                         ),
                         alignment: Alignment.center,
@@ -456,7 +456,7 @@ class _AuthScreenState extends State<AuthScreen> {
                       onTap: () => _changeTab(1),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                          vertical: 20,
+                          vertical: 12,
                           horizontal: 8,
                         ),
                         alignment: Alignment.center,
