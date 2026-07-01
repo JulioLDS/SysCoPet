@@ -147,7 +147,7 @@ class RegisterFormWidgetState extends State<RegisterFormWidget> {
               onPressed: () {
                 setState(() => _obscurePassword = !_obscurePassword);
               },
-              focusNode: FocusNode(skipTraversal: true), // ✅ ADICIONE ISSO
+              focusNode: FocusNode(skipTraversal: true),
             ),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             filled: true,

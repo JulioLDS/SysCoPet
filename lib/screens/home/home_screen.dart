@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:syscopet/providers/pet_provider.dart';
-
+import '../pets/pet_form_dialog.dart';
 import '../../providers/auth_provider.dart';
 import '../auth/auth_screen.dart';
 import '../pets/pet_details_screen.dart';
 import '../pets/pet_form_screen.dart';
-
+import '../pets/pet_details_dialog.dart';
+import '../pets/pet_edit_dialog.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -18,22 +19,18 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
 
-   @override
+  @override
   void initState() {
     super.initState();
 
     Future.microtask(() async {
-      final auth =
-          Provider.of<AuthProvider>(context,listen: false,);
+      final auth = Provider.of<AuthProvider>(context, listen: false);
 
-      final petProvider =
-          Provider.of<PetProvider>(context,listen: false,);
-          
+      final petProvider = Provider.of<PetProvider>(context, listen: false);
 
-      await petProvider.carregarPets(auth.currentUser!.id,);
+      await petProvider.carregarPets(auth.currentUser!.id);
       print("Pets carregados: ${petProvider.pets.length}");
-    }
-    );
+    });
   }
 
   @override
@@ -200,48 +197,50 @@ class _HomeScreenState extends State<HomeScreen> {
                       children: [
                         //botao adicionar pet
                         _buildAddPetCard(),
-                        
+
                         const SizedBox(width: 15),
                         //pets vindo da API
                         ...petProvider.pets.map(
-                          
                           (pet) => Padding(
                             padding: const EdgeInsets.only(right: 15),
-                            child:GestureDetector(
-                              onTap: () async {
-                                final atualizou = await Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => PetDetailsScreen(
-                                      pet: pet,
-                                    ),
-                                  ),
-                                );
+                            child: MouseRegion(
+                              cursor: SystemMouseCursors.click,
+                              child: GestureDetector(
+                                behavior: HitTestBehavior.opaque,
+                                onTap: () async {
+                                  print('🔵 Clicou no pet: ${pet.nome}');
 
-                                if(atualizou == true){
-                                  final auth =
-                                      Provider.of<AuthProvider>(
-                                        context,
-                                        listen: false,
-                                      );
-                                  await Provider.of<PetProvider>(
-                                    context,
-                                    listen: false,
-                                    ).carregarPets(auth.currentUser!.id,
+                                  final atualizou = await showDialog<bool>(
+                                    context: context,
+                                    builder: (context) =>
+                                        PetDetailsDialog(pet: pet),
                                   );
-                                }
-                              },
-                              child:  _buildPetCard(
-                                name: pet.nome,
-                                breed: pet.especie,
-                                age: calcularIdade(pet.dataNascimento),
-                                color: const Color(0xFFD4A373),
-                                fotoUrl: pet.urlFoto,
+
+                                  print('🟢 Resultado: $atualizou');
+
+                                  if (atualizou == true) {
+                                    final auth = Provider.of<AuthProvider>(
+                                      context,
+                                      listen: false,
+                                    );
+                                    await Provider.of<PetProvider>(
+                                      context,
+                                      listen: false,
+                                    ).carregarPets(auth.currentUser!.id);
+                                  }
+                                },
+                                child: _buildPetCard(
+                                  name: pet.nome,
+                                  breed: pet.especie,
+                                  age: calcularIdade(pet.dataNascimento),
+                                  color: const Color(0xFFD4A373),
+                                  fotoUrl: pet.urlFoto,
                                 ),
                               ),
                             ),
                           ),
-                        ],
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 30),
@@ -479,12 +478,21 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () {
-            Navigator.push(context,
-             MaterialPageRoute(
-              builder:(_) => const PetFormScreen(),
-               ),
-               );
+          onTap: () async {
+            // ✅ Abre o dialog em vez de navegar para tela inteira
+            final result = await showDialog<bool>(
+              context: context,
+              builder: (context) => const PetFormDialog(),
+            );
+
+            // ✅ Se retornou true, recarrega os pets
+            if (result == true) {
+              final auth = Provider.of<AuthProvider>(context, listen: false);
+              await Provider.of<PetProvider>(
+                context,
+                listen: false,
+              ).carregarPets(auth.currentUser!.id);
+            }
           },
           borderRadius: BorderRadius.circular(20),
           child: Column(
@@ -551,19 +559,16 @@ class _HomeScreenState extends State<HomeScreen> {
               color: color.withOpacity(0.3),
               shape: BoxShape.circle,
             ),
-            child:CircleAvatar(
+            child: CircleAvatar(
               radius: 35,
               backgroundColor: color.withOpacity(0.3),
-              backgroundImage:
-                  fotoUrl != null && fotoUrl.isNotEmpty? NetworkImage(fotoUrl): null,
-                  child: (fotoUrl == null || fotoUrl.isEmpty)
-                  ? Icon(
-                      Icons.pets,
-                      size: 35,
-                      color: color,
-                    )
+              backgroundImage: fotoUrl != null && fotoUrl.isNotEmpty
+                  ? NetworkImage(fotoUrl)
                   : null,
-            )
+              child: (fotoUrl == null || fotoUrl.isEmpty)
+                  ? Icon(Icons.pets, size: 35, color: color)
+                  : null,
+            ),
           ),
           const SizedBox(height: 12),
           Text(
@@ -717,7 +722,6 @@ String calcularIdade(String? dataNascimento) {
   if (RegExp(r'^\d{4}$').hasMatch(dataNascimento)) {
     dataCompleta = '$dataNascimento-01-01';
   }
-
   // Se veio ano-mês
   else if (RegExp(r'^\d{4}-\d{2}$').hasMatch(dataNascimento)) {
     dataCompleta = '$dataNascimento-01';
@@ -729,11 +733,8 @@ String calcularIdade(String? dataNascimento) {
 
   int anos = hoje.year - nascimento.year;
 
-  if (
-    hoje.month < nascimento.month ||
-    (hoje.month == nascimento.month &&
-        hoje.day < nascimento.day)
-  ) {
+  if (hoje.month < nascimento.month ||
+      (hoje.month == nascimento.month && hoje.day < nascimento.day)) {
     anos--;
   }
 

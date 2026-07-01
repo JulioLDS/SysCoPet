@@ -6,22 +6,16 @@ import 'package:syscopet/screens/pets/pet_edit_screen.dart';
 
 import '../../models/pet_model.dart';
 
-
-
 class PetDetailsScreen extends StatefulWidget {
   final PetModel pet;
 
-  const PetDetailsScreen({
-    super.key,
-    required this.pet,
-  });
+  const PetDetailsScreen({super.key, required this.pet});
 
   @override
   State<PetDetailsScreen> createState() => _PetDetailsScreenState();
 }
 
 class _PetDetailsScreenState extends State<PetDetailsScreen> {
-
   final ImagePicker _picker = ImagePicker();
   Future<void> _selecionarFoto() async {
     final imagem = await _picker.pickImage(
@@ -31,49 +25,35 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
 
     if (imagem == null) return;
 
-    final provider = Provider.of<PetProvider>(
-      context,
-      listen: false,
-    );
+    final provider = Provider.of<PetProvider>(context, listen: false);
 
-    final erro = await provider.uploadFotoPet(
-      widget.pet.idPet!,
-      imagem,
-    );
+    final erro = await provider.uploadFotoPet(widget.pet.idPet!, imagem);
 
     if (!mounted) return;
 
     if (erro != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(erro)),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(erro)));
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Foto enviada!"),
-      ),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text("Foto enviada!")));
 
     setState(() {});
-}
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.pet.nome),
-      ),
+      appBar: AppBar(title: Text(widget.pet.nome)),
 
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
 
         child: Column(
           children: [
-
             // FOTO
-   
             CircleAvatar(
               radius: 60,
               backgroundImage: widget.pet.urlFoto != null
@@ -85,15 +65,13 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
             ),
 
             const SizedBox(height: 16),
-            
+
             //upload
             ElevatedButton.icon(
               onPressed: _selecionarFoto,
               icon: const Icon(Icons.photo_camera),
               label: Text(
-                widget.pet.urlFoto == null
-                    ? "Adicionar foto"
-                    : "Alterar foto",
+                widget.pet.urlFoto == null ? "Adicionar foto" : "Alterar foto",
               ),
             ),
 
@@ -106,16 +84,14 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
                     listen: false,
                   );
 
-                  final erro = await provider.removerFotoPet(
-                    widget.pet.idPet!,
-                  );
+                  final erro = await provider.removerFotoPet(widget.pet.idPet!);
 
                   if (!mounted) return;
 
                   if (erro != null) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(erro)),
-                    );
+                    ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(SnackBar(content: Text(erro)));
                     return;
                   }
 
@@ -127,36 +103,22 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
 
             const SizedBox(height: 30),
 
-            _infoTile(
-              'Nome',
-              widget.pet.nome,
-            ),
+            _infoTile('Nome', widget.pet.nome),
 
-            _infoTile(
-              'Espécie',
-              widget.pet.especie,
-            ),
+            _infoTile('Espécie', widget.pet.especie),
 
-            _infoTile(
-              'Peso',
-              '${widget.pet.peso} kg',
-            ),
+            _infoTile('Peso', '${widget.pet.peso} kg'),
 
-            _infoTile(
-              'Altura',
-              widget.pet.altura?.toString() ?? '-',
-            ),
+            _infoTile('Altura', widget.pet.altura?.toString() ?? '-'),
 
             _infoTile(
               'Porte',
-              widget.pet.porte.isEmpty
-                  ? '-'
-                  : widget.pet.porte,
+              widget.pet.porte.isEmpty ? '-' : widget.pet.porte,
             ),
 
             _infoTile(
               'Nascimento',
-             formatarData(widget.pet.dataNascimento) ?? '-',
+              formatarData(widget.pet.dataNascimento) ?? '-',
             ),
 
             const SizedBox(height: 30),
@@ -168,17 +130,15 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
                 label: const Text('Editar pet'),
                 onPressed: () async {
                   // abrir tela edição
-                 final atualizou = await Navigator.push(
+                  final atualizou = await Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder:(_) => EditPetFormScreen(
-                        pet: widget.pet,
-                        ),
-                      ),
-                    );
-                    if(atualizou == true){
-                      Navigator.pop(context, true);
-                    }
+                      builder: (_) => EditPetFormScreen(pet: widget.pet),
+                    ),
+                  );
+                  if (atualizou == true) {
+                    Navigator.pop(context, true);
+                  }
                 },
               ),
             ),
@@ -190,9 +150,7 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
               child: ElevatedButton.icon(
                 icon: const Icon(Icons.delete),
                 label: const Text('Excluir pet'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                ),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
                 onPressed: () => _confirmarExclusao(context),
               ),
             ),
@@ -203,9 +161,7 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
               child: ListTile(
                 leading: const Icon(Icons.notifications),
                 title: const Text('Lembretes'),
-                subtitle: const Text(
-                  'Em desenvolvimento',
-                ),
+                subtitle: const Text('Em desenvolvimento'),
               ),
             ),
 
@@ -215,9 +171,7 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
               child: ListTile(
                 leading: const Icon(Icons.vaccines),
                 title: const Text('Vacinas'),
-                subtitle: const Text(
-                  'Em desenvolvimento',
-                ),
+                subtitle: const Text('Em desenvolvimento'),
               ),
             ),
           ],
@@ -226,74 +180,47 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
     );
   }
 
-  Widget _infoTile(
-    String titulo,
-    String valor,
-  ) {
+  Widget _infoTile(String titulo, String valor) {
     return Card(
-      child: ListTile(
-        title: Text(titulo),
-        subtitle: Text(valor),
-      ),
+      child: ListTile(title: Text(titulo), subtitle: Text(valor)),
     );
   }
 
-  void _confirmarExclusao(
-    BuildContext context,
-  ) {
+  void _confirmarExclusao(BuildContext context) {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
         title: const Text('Excluir pet'),
-        content: const Text(
-          'Deseja excluir este pet?',
-        ),
+        content: const Text('Deseja excluir este pet?'),
         actions: [
           TextButton(
-            onPressed: () =>
-                Navigator.pop(context),
+            onPressed: () => Navigator.pop(context),
             child: const Text('Cancelar'),
           ),
           ElevatedButton(
             onPressed: () async {
-
               Navigator.pop(context);
 
               final petProvider = Provider.of<PetProvider>(
                 context,
                 listen: false,
               );
-              final erro =
-                await petProvider.deletarPet(
-                  widget.pet.idPet!,
-                );
+              final erro = await petProvider.deletarPet(widget.pet.idPet!);
 
               if (!context.mounted) return;
 
               if (erro != null) {
-                ScaffoldMessenger.of(context)
-                    .showSnackBar(
-                  SnackBar(
-                    content: Text(erro),
-                  ),
-                );
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text(erro)));
                 return;
               }
 
-              ScaffoldMessenger.of(context)
-                .showSnackBar(
-                const SnackBar(
-                  content: Text(
-                    'Pet excluído com sucesso',
-                  ),
-                ),
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Pet excluído com sucesso')),
               );
 
-              Navigator.pop(
-                context,
-                true,
-            );
-
+              Navigator.pop(context, true);
             },
             child: const Text('Excluir'),
           ),
