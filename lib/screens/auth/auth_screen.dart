@@ -138,197 +138,251 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   Widget _buildDesktopLayout(double screenHeight) {
-    return Stack(
-      children: [
-        Container(
-          decoration: const BoxDecoration(
-            image: DecorationImage(
-              image: AssetImage('assets/images/background2.png'),
-              fit: BoxFit.cover,
-            ),
-          ),
-        ),
-        Row(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        double screenWidth = constraints.maxWidth;
+
+        // ✅ Fatores de escala baseados na altura da tela
+        double scaleFactor = screenHeight / 1080;
+
+        // ✅ Tamanhos proporcionais
+        double logoHeight = 400 * scaleFactor;
+        double titleFontSize = 45 * scaleFactor;
+        double subtitleFontSize = 22 * scaleFactor;
+        double descriptionWidth = 540 * scaleFactor;
+        double petsTopPosition = screenHeight * 0.2;
+        double petsHeight = screenHeight * 1;
+
+        // ✅ Espaçamentos proporcionais
+        double logoOffsetX = 0 * scaleFactor;
+        double logoOffsetY = -100 * scaleFactor;
+        double textOffsetX = 300 * scaleFactor;
+        // ✅ AJUSTE: Reduzir o offset negativo para os textos ficarem mais abaixo
+        double textOffsetY = -175 * scaleFactor;
+        // ✅ AJUSTE: Aumentar espaçamento entre logo e textos
+        double topSpacing = 0;
+        double textSpacing = 20 * scaleFactor;
+        double iconSize = 36 * scaleFactor;
+
+        return Stack(
           children: [
-            Expanded(
-              child: Stack(
-                children: [
-                  Positioned(
-                    top: 60,
-                    left: 120,
-                    right: 40,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Transform.translate(
-                          offset: const Offset(-120, -100),
-                          child: Center(
-                            child: Transform.rotate(
-                              angle: pi / 2,
-                              child: Image.asset(
-                                'assets/icons/Logo_PI.png',
-                                height: 300,
-                              ),
-                            ),
-                          ),
-                        ),
-                        Transform.translate(
-                          offset: Offset(
-                            50,
-                            screenHeight < 800
-                                ? -(screenHeight * 0.31)
-                                : -(screenHeight * 0.22),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const SizedBox(height: 45),
-                              Text.rich(
-                                TextSpan(
-                                  text: 'A saúde do seu pet\n',
-                                  style: const TextStyle(
-                                    fontSize: 38,
-                                    fontWeight: FontWeight.w800,
-                                    color: Color(0xFF1E293B),
-                                    height: 1.2,
-                                  ),
-                                  children: [
-                                    TextSpan(
-                                      text: 'em boas patas ',
-                                      style: const TextStyle(
-                                        fontSize: 38,
-                                        fontWeight: FontWeight.w800,
-                                        color: Color(0xFF0D9488),
-                                      ),
-                                    ),
-                                    const WidgetSpan(
-                                      alignment: PlaceholderAlignment.middle,
-                                      child: Icon(
-                                        Icons.favorite_border,
-                                        color: Color(0xFF0D9488),
-                                        size: 36,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(height: 20),
-                              SizedBox(
-                                width: 420,
-                                child: Text(
-                                  'Gerencie consultas, vacinas, medicamentos e muito mais. Tudo para o bem-estar do seu melhor amigo.',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color: Colors.grey[600],
-                                    height: 1.5,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Positioned(
-                    top: screenHeight * 0.20,
-                    left: 100,
-                    right: 0,
-                    height: screenHeight * 1.05,
-                    child: Image.asset(
-                      'assets/images/pets.png',
-                      fit: BoxFit.contain,
-                      alignment: Alignment.topCenter,
-                    ),
-                  ),
-                ],
+            Container(
+              decoration: const BoxDecoration(
+                image: DecorationImage(
+                  image: AssetImage('assets/images/background2.png'),
+                  fit: BoxFit.cover,
+                ),
               ),
             ),
-            Expanded(
-              child: Center(
-                child: Container(
-                  constraints: const BoxConstraints(
-                    maxWidth: 480,
-                    maxHeight: 670,
-                  ),
-                  margin: const EdgeInsets.symmetric(
-                    horizontal: 40,
-                    vertical: 40,
-                  ),
-                  padding: const EdgeInsets.fromLTRB(40, 10, 40, 0),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(24),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.08),
-                        blurRadius: 25,
-                        offset: const Offset(0, 12),
-                      ),
-                    ],
-                  ),
+            Row(
+              children: [
+                Expanded(
                   child: Stack(
-                    clipBehavior: Clip.none,
                     children: [
+                      // ✅ CONTAINER PRINCIPAL (Logo + Texto)
                       Positioned(
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        child: _buildAnimatedTabs(),
-                      ),
-                      Positioned(
-                        top: 60,
-                        left: 0,
-                        right: 0,
-                        child: SizedBox(
-                          height: 580,
-                          child: ClipRect(
-                            child: AnimatedSwitcher(
-                              duration: const Duration(milliseconds: 1000),
-                              transitionBuilder:
-                                  (Widget child, Animation<double> animation) {
-                                    final bool isLogin =
-                                        child.key == const ValueKey('login');
-                                    final Offset startOffset = isLogin
-                                        ? const Offset(-1.5, 0.0)
-                                        : const Offset(1.5, 0.0);
-
-                                    return SlideTransition(
-                                      position:
-                                          Tween<Offset>(
-                                            begin: startOffset,
-                                            end: Offset.zero,
-                                          ).animate(
-                                            CurvedAnimation(
-                                              parent: animation,
-                                              curve: Curves.easeInOutCubic,
+                        top: 0 * scaleFactor,
+                        left: 0 * scaleFactor,
+                        right: 40 * scaleFactor,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Logo
+                            Transform.translate(
+                              offset: Offset(logoOffsetX, logoOffsetY),
+                              child: Center(
+                                child: Transform.rotate(
+                                  angle: pi / 2,
+                                  child: Image.asset(
+                                    'assets/icons/Logo_PI.png',
+                                    height: logoHeight,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return SizedBox(
+                                        width: logoHeight,
+                                        height: logoHeight,
+                                        child: ColoredBox(
+                                          color: Colors.grey[300]!,
+                                          child: Center(
+                                            child: Text(
+                                              'Logo',
+                                              style: TextStyle(
+                                                color: Colors.grey[700],
+                                                fontSize: 12 * scaleFactor,
+                                              ),
                                             ),
                                           ),
-                                      child: child,
-                                    );
-                                  },
-                              child: _selectedIndex == 0
-                                  ? LoginScreen(
-                                      key: const ValueKey('login'),
-                                      onForgotPassword: _goToForgotPassword,
-                                      onGoToRegister: () => _changeTab(1),
-                                    )
-                                  : RegisterScreen(
-                                      key: const ValueKey('register'),
-                                      onGoToLogin: () => _changeTab(0),
-                                    ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ),
                             ),
-                          ),
+
+                            // Textos
+                            Transform.translate(
+                              offset: Offset(textOffsetX, textOffsetY),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  SizedBox(height: topSpacing),
+                                  Text.rich(
+                                    TextSpan(
+                                      text: 'A saúde do seu pet\n',
+                                      style: TextStyle(
+                                        fontSize: titleFontSize,
+                                        fontWeight: FontWeight.w800,
+                                        color: const Color(0xFF1E293B),
+                                        height: 1.2,
+                                      ),
+                                      children: [
+                                        TextSpan(
+                                          text: 'em boas patas ',
+                                          style: TextStyle(
+                                            fontSize: titleFontSize,
+                                            fontWeight: FontWeight.w800,
+                                            color: const Color(0xFF0D9488),
+                                          ),
+                                        ),
+                                        WidgetSpan(
+                                          alignment:
+                                              PlaceholderAlignment.middle,
+                                          child: Icon(
+                                            Icons.favorite_border,
+                                            color: const Color(0xFF0D9488),
+                                            size: iconSize,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  SizedBox(height: textSpacing),
+                                  SizedBox(
+                                    width: descriptionWidth,
+                                    child: Text(
+                                      'Gerencie consultas, vacinas, medicamentos e muito mais. Tudo para o bem-estar do seu melhor amigo.',
+                                      style: TextStyle(
+                                        fontSize: subtitleFontSize,
+                                        color: Colors.grey[600],
+                                        height: 1.5,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // ✅ PETS
+                      Positioned(
+                        top: petsTopPosition,
+                        left: 100 * scaleFactor,
+                        right: 0,
+                        height: petsHeight,
+                        child: Image.asset(
+                          'assets/images/pets.png',
+                          fit: BoxFit.contain,
+                          alignment: Alignment.topCenter,
                         ),
                       ),
                     ],
                   ),
                 ),
-              ),
+
+                // ✅ LADO DIREITO (Card) - INALTERADO
+                Expanded(
+                  child: Center(
+                    child: Container(
+                      constraints: const BoxConstraints(
+                        maxWidth: 480,
+                        maxHeight: 670,
+                      ),
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 40,
+                        vertical: 40,
+                      ),
+                      padding: const EdgeInsets.fromLTRB(40, 10, 40, 0),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(24),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.08),
+                            blurRadius: 25,
+                            offset: const Offset(0, 12),
+                          ),
+                        ],
+                      ),
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          Positioned(
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            child: _buildAnimatedTabs(),
+                          ),
+                          Positioned(
+                            top: 60,
+                            left: 0,
+                            right: 0,
+                            child: SizedBox(
+                              height: 580,
+                              child: ClipRect(
+                                child: AnimatedSwitcher(
+                                  duration: const Duration(milliseconds: 1000),
+                                  transitionBuilder:
+                                      (
+                                        Widget child,
+                                        Animation<double> animation,
+                                      ) {
+                                        final bool isLogin =
+                                            child.key ==
+                                            const ValueKey('login');
+                                        final Offset startOffset = isLogin
+                                            ? const Offset(-1.5, 0.0)
+                                            : const Offset(1.5, 0.0);
+
+                                        return SlideTransition(
+                                          position:
+                                              Tween<Offset>(
+                                                begin: startOffset,
+                                                end: Offset.zero,
+                                              ).animate(
+                                                CurvedAnimation(
+                                                  parent: animation,
+                                                  curve: Curves.easeInOutCubic,
+                                                ),
+                                              ),
+                                          child: child,
+                                        );
+                                      },
+                                  child: _selectedIndex == 0
+                                      ? LoginScreen(
+                                          key: const ValueKey('login'),
+                                          onForgotPassword: _goToForgotPassword,
+                                          onGoToRegister: () => _changeTab(1),
+                                        )
+                                      : RegisterScreen(
+                                          key: const ValueKey('register'),
+                                          onGoToLogin: () => _changeTab(0),
+                                        ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
-        ),
-      ],
+        );
+      },
     );
   }
 
