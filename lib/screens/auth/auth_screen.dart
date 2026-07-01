@@ -142,10 +142,8 @@ class _AuthScreenState extends State<AuthScreen> {
       builder: (context, constraints) {
         double screenWidth = constraints.maxWidth;
 
-        // ✅ Fatores de escala baseados na altura da tela
         double scaleFactor = screenHeight / 1080;
 
-        // ✅ Tamanhos proporcionais
         double logoHeight = 400 * scaleFactor;
         double titleFontSize = 45 * scaleFactor;
         double subtitleFontSize = 22 * scaleFactor;
@@ -153,13 +151,10 @@ class _AuthScreenState extends State<AuthScreen> {
         double petsTopPosition = screenHeight * 0.2;
         double petsHeight = screenHeight * 1;
 
-        // ✅ Espaçamentos proporcionais
         double logoOffsetX = 0 * scaleFactor;
         double logoOffsetY = -100 * scaleFactor;
         double textOffsetX = 300 * scaleFactor;
-        // ✅ AJUSTE: Reduzir o offset negativo para os textos ficarem mais abaixo
         double textOffsetY = -175 * scaleFactor;
-        // ✅ AJUSTE: Aumentar espaçamento entre logo e textos
         double topSpacing = 0;
         double textSpacing = 20 * scaleFactor;
         double iconSize = 36 * scaleFactor;
@@ -174,12 +169,46 @@ class _AuthScreenState extends State<AuthScreen> {
                 ),
               ),
             ),
+
+            // ✅ BOTÃO DE VOLTAR — COM TAMANHO FIXO DEFINIDO
+            Positioned(
+              top: 30,
+              left: 30,
+              width: 46, // ✅ Força largura exata (22 ícone + 12 padding * 2)
+              height: 46, // ✅ Força altura exata
+              child: MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: GestureDetector(
+                  onTap: () =>
+                      Navigator.pushReplacementNamed(context, '/onboarding'),
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0D9488),
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF0D9488).withOpacity(0.4),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.arrow_back_ios_new,
+                      size: 22,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
             Row(
               children: [
                 Expanded(
                   child: Stack(
                     children: [
-                      // ✅ CONTAINER PRINCIPAL (Logo + Texto)
                       Positioned(
                         top: 0 * scaleFactor,
                         left: 0 * scaleFactor,
@@ -187,7 +216,6 @@ class _AuthScreenState extends State<AuthScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Logo
                             Transform.translate(
                               offset: Offset(logoOffsetX, logoOffsetY),
                               child: Center(
@@ -219,7 +247,6 @@ class _AuthScreenState extends State<AuthScreen> {
                               ),
                             ),
 
-                            // Textos
                             Transform.translate(
                               offset: Offset(textOffsetX, textOffsetY),
                               child: Column(
@@ -275,7 +302,6 @@ class _AuthScreenState extends State<AuthScreen> {
                         ),
                       ),
 
-                      // ✅ PETS
                       Positioned(
                         top: petsTopPosition,
                         left: 100 * scaleFactor,
@@ -291,7 +317,6 @@ class _AuthScreenState extends State<AuthScreen> {
                   ),
                 ),
 
-                // ✅ LADO DIREITO (Card) - INALTERADO
                 Expanded(
                   child: Center(
                     child: Container(
