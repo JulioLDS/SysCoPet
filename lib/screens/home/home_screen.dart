@@ -4,11 +4,90 @@ import 'package:syscopet/providers/pet_provider.dart';
 import '../pets/pet_form_dialog.dart';
 import '../../providers/auth_provider.dart';
 import '../auth/auth_screen.dart';
-import '../pets/pet_details_screen.dart';
-import '../pets/pet_form_screen.dart';
-import '../pets/pet_details_dialog.dart';
 import '../pets/pet_edit_dialog.dart';
+import '../pets/pet_details_screen.dart';
 
+// ✅ Widget helper para hover
+class HoverBuilder extends StatefulWidget {
+  final Widget Function(BuildContext context, bool isHovered) builder;
+
+  const HoverBuilder({super.key, required this.builder});
+
+  @override
+  State<HoverBuilder> createState() => _HoverBuilderState();
+}
+
+class _HoverBuilderState extends State<HoverBuilder> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: widget.builder(context, _isHovered),
+    );
+  }
+}
+
+// ✅ Painter para borda tracejada
+class DashedBorderPainter extends CustomPainter {
+  final Color color;
+  final double strokeWidth;
+  final double dashLength;
+  final double gapLength;
+
+  DashedBorderPainter({
+    required this.color,
+    required this.strokeWidth,
+    this.dashLength = 6,
+    this.gapLength = 4,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = strokeWidth
+      ..style = PaintingStyle.stroke;
+
+    // ✅ Ajuste: margem maior para dentro
+    final margin = strokeWidth + 2;
+
+    final rect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(
+        margin,
+        margin,
+        size.width - (margin * 2),
+        size.height - (margin * 2),
+      ),
+      const Radius.circular(20),
+    );
+
+    final path = Path();
+    path.addRRect(rect);
+
+    final metrics = path.computeMetrics();
+
+    for (final metric in metrics) {
+      double distance = 0.0;
+      while (distance < metric.length) {
+        final start = distance;
+        final end = (distance + dashLength).clamp(0.0, metric.length);
+
+        final extractPath = metric.extractPath(start, end);
+        canvas.drawPath(extractPath, paint);
+
+        distance += dashLength + gapLength;
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+// ✅ Tela principal
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -25,7 +104,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
     Future.microtask(() async {
       final auth = Provider.of<AuthProvider>(context, listen: false);
-
       final petProvider = Provider.of<PetProvider>(context, listen: false);
 
       await petProvider.carregarPets(auth.currentUser!.id);
@@ -41,13 +119,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
-
       body: Column(
         children: [
           // 1. HEADER FIXO
           Container(
             color: const Color(0xFF0D9488),
-            // Padding ajustado para 15 conforme seu pedido
             padding: const EdgeInsets.only(
               top: 15,
               left: 20,
@@ -56,25 +132,19 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             child: Row(
               children: [
-                // AVATAR: Fundo verde, borda branca, texto branco
                 Container(
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: const Color(
-                      0xFF0D9488,
-                    ), // Fundo verde (mesma cor do header)
+                    color: const Color(0xFF0D9488),
                     shape: BoxShape.circle,
-                    border: Border.all(
-                      color: Colors.white,
-                      width: 2,
-                    ), // Borda branca
+                    border: Border.all(color: Colors.white, width: 2),
                   ),
                   child: Center(
                     child: Text(
                       user?.nome?.substring(0, 2).toUpperCase() ?? 'U',
                       style: const TextStyle(
-                        color: Colors.white, // Texto branco
+                        color: Colors.white,
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
                       ),
@@ -106,14 +176,13 @@ class _HomeScreenState extends State<HomeScreen> {
                     ],
                   ),
                 ),
-                // ENGRENAGEM COM MENU DE OPÇÕES
                 PopupMenuButton<String>(
                   icon: const Icon(
                     Icons.settings_outlined,
                     color: Colors.white,
                     size: 26,
                   ),
-                  offset: const Offset(0, 40), // Posição do menu
+                  offset: const Offset(0, 40),
                   onSelected: (value) {
                     if (value == 'logout') {
                       _logout(context, authProvider);
@@ -143,7 +212,6 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Saudação
                   Text(
                     'Olá, ${user?.nome?.split(' ').first ?? 'Usuário'}! 👋',
                     style: const TextStyle(
@@ -163,7 +231,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(height: 30),
 
-                  // Título da Seção
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -189,54 +256,19 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(height: 15),
 
-                  // Lista Horizontal de Pets
                   SizedBox(
-                    height: 160,
+                    height: 240,
                     child: ListView(
                       scrollDirection: Axis.horizontal,
                       children: [
-                        //botao adicionar pet
                         _buildAddPetCard(),
-
                         const SizedBox(width: 15),
-                        //pets vindo da API
                         ...petProvider.pets.map(
                           (pet) => Padding(
                             padding: const EdgeInsets.only(right: 15),
-                            child: MouseRegion(
-                              cursor: SystemMouseCursors.click,
-                              child: GestureDetector(
-                                behavior: HitTestBehavior.opaque,
-                                onTap: () async {
-                                  print('🔵 Clicou no pet: ${pet.nome}');
-
-                                  final atualizou = await showDialog<bool>(
-                                    context: context,
-                                    builder: (context) =>
-                                        PetDetailsDialog(pet: pet),
-                                  );
-
-                                  print('🟢 Resultado: $atualizou');
-
-                                  if (atualizou == true) {
-                                    final auth = Provider.of<AuthProvider>(
-                                      context,
-                                      listen: false,
-                                    );
-                                    await Provider.of<PetProvider>(
-                                      context,
-                                      listen: false,
-                                    ).carregarPets(auth.currentUser!.id);
-                                  }
-                                },
-                                child: _buildPetCard(
-                                  name: pet.nome,
-                                  breed: pet.especie,
-                                  age: calcularIdade(pet.dataNascimento),
-                                  color: const Color(0xFFD4A373),
-                                  fotoUrl: pet.urlFoto,
-                                ),
-                              ),
+                            child: _buildPetCard(
+                              pet: pet,
+                              age: calcularIdade(pet.dataNascimento),
                             ),
                           ),
                         ),
@@ -245,7 +277,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(height: 30),
 
-                  // Ações Rápidas
                   const Text(
                     'Ações rápidas',
                     style: TextStyle(
@@ -283,7 +314,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(height: 30),
 
-                  // Próximos Lembretes
                   const Text(
                     'Próximos lembretes',
                     style: TextStyle(
@@ -352,7 +382,6 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
 
-      // 3. BOTTOM NAVIGATION BAR (COM BORDAS ARREDONDADAS)
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
           color: Colors.white,
@@ -371,7 +400,6 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // LINHA INDICADORA - Versão Simplificada
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -419,7 +447,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ],
             ),
-            // BARRA DE NAVEGAÇÃO
             BottomNavigationBar(
               currentIndex: _selectedIndex,
               onTap: (index) => setState(() => _selectedIndex = index),
@@ -454,7 +481,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (!context.mounted) return;
 
-    // ✅ Usa pushReplacement em vez de pushAndRemoveUntil
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => const AuthScreen()),
@@ -465,138 +491,263 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildAddPetCard() {
     return Container(
-      width: 130,
-      decoration: BoxDecoration(
-        color: const Color(0xFFECFDF5),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
+      width: 150,
+      child: CustomPaint(
+        foregroundPainter: DashedBorderPainter(
+          // ✅ TROQUE AQUI
           color: const Color(0xFF0D9488),
-          width: 1.5,
-          style: BorderStyle.solid,
+          strokeWidth: 2.5,
+          dashLength: 8,
+          gapLength: 6,
         ),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () async {
-            // ✅ Abre o dialog em vez de navegar para tela inteira
-            final result = await showDialog<bool>(
-              context: context,
-              builder: (context) => const PetFormDialog(),
-            );
+        child: Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFFECFDF5),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () async {
+                final result = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => const PetFormDialog(),
+                );
 
-            // ✅ Se retornou true, recarrega os pets
-            if (result == true) {
-              final auth = Provider.of<AuthProvider>(context, listen: false);
-              await Provider.of<PetProvider>(
-                context,
-                listen: false,
-              ).carregarPets(auth.currentUser!.id);
-            }
-          },
-          borderRadius: BorderRadius.circular(20),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: const Color(0xFF0D9488), width: 1),
-                ),
-                child: const Icon(
-                  Icons.add,
-                  color: Color(0xFF0D9488),
-                  size: 30,
-                ),
+                if (result == true) {
+                  final auth = Provider.of<AuthProvider>(
+                    context,
+                    listen: false,
+                  );
+                  await Provider.of<PetProvider>(
+                    context,
+                    listen: false,
+                  ).carregarPets(auth.currentUser!.id);
+                }
+              },
+              borderRadius: BorderRadius.circular(20),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: const Color(0xFF0D9488),
+                        width: 1,
+                      ),
+                    ),
+                    child: const Icon(
+                      Icons.add,
+                      color: Color(0xFF0D9488),
+                      size: 30,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    'Adicionar\nnovo pet',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Color(0xFF0D9488),
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                      height: 1.2,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 10),
-              const Text(
-                'Adicionar\nnovo pet',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Color(0xFF0D9488),
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13,
-                  height: 1.2,
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildPetCard({
-    required String name,
-    required String breed,
-    required String age,
-    required Color color,
-    String? fotoUrl,
-  }) {
-    return Container(
-      width: 130,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 70,
-            height: 70,
+  Widget _buildPetCard({required dynamic pet, required String age}) {
+    String especieFormatada;
+    switch (pet.especie.toLowerCase()) {
+      case 'cao':
+        especieFormatada = 'Cão';
+        break;
+      case 'gato':
+        especieFormatada = 'Gato';
+        break;
+      default:
+        especieFormatada = pet.especie;
+    }
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () async {
+          final atualizou = await Navigator.push<bool>(
+            context,
+            MaterialPageRoute(builder: (context) => PetDetailsScreen(pet: pet)),
+          );
+
+          if (atualizou == true) {
+            final auth = Provider.of<AuthProvider>(context, listen: false);
+            await Provider.of<PetProvider>(
+              context,
+              listen: false,
+            ).carregarPets(auth.currentUser!.id);
+          }
+        },
+        borderRadius: BorderRadius.circular(16),
+        hoverColor: Colors.transparent,
+        splashColor: Colors.transparent,
+        highlightColor: Colors.transparent,
+        child: MouseRegion(
+          cursor: SystemMouseCursors.click,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            width: 160,
             decoration: BoxDecoration(
-              color: color.withOpacity(0.3),
-              shape: BoxShape.circle,
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.08),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+              border: Border.all(color: Colors.grey.shade200, width: 1),
             ),
-            child: CircleAvatar(
-              radius: 35,
-              backgroundColor: color.withOpacity(0.3),
-              backgroundImage: fotoUrl != null && fotoUrl.isNotEmpty
-                  ? NetworkImage(fotoUrl)
-                  : null,
-              child: (fotoUrl == null || fotoUrl.isEmpty)
-                  ? Icon(Icons.pets, size: 35, color: color)
-                  : null,
+            child: Builder(
+              builder: (context) {
+                return GestureDetector(
+                  onPanDown: (_) {},
+                  child: HoverBuilder(
+                    builder: (context, isHovered) {
+                      return AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.08),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                            if (isHovered)
+                              BoxShadow(
+                                color: const Color(0xFF0D9488).withOpacity(0.3),
+                                blurRadius: 12,
+                                spreadRadius: 1,
+                                offset: const Offset(0, 0),
+                              ),
+                          ],
+                          border: Border.all(
+                            color: Colors.grey.shade200,
+                            width: 1,
+                          ),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 20,
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Stack(
+                                alignment: Alignment.bottomRight,
+                                children: [
+                                  CircleAvatar(
+                                    radius: 50,
+                                    backgroundColor: Colors.grey.shade100,
+                                    backgroundImage:
+                                        pet.urlFoto != null &&
+                                            pet.urlFoto.isNotEmpty
+                                        ? NetworkImage(pet.urlFoto!)
+                                        : null,
+                                    child:
+                                        (pet.urlFoto == null ||
+                                            pet.urlFoto.isEmpty)
+                                        ? Icon(
+                                            Icons.pets,
+                                            size: 50,
+                                            color: Colors.grey.shade400,
+                                          )
+                                        : null,
+                                  ),
+                                  Positioned(
+                                    bottom: 0,
+                                    right: 0,
+                                    child: Container(
+                                      padding: const EdgeInsets.all(6),
+                                      decoration: BoxDecoration(
+                                        color: Color(0xFF0D9488),
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: Colors.white,
+                                          width: 2,
+                                        ),
+                                      ),
+                                      child: const Icon(
+                                        Icons.edit,
+                                        size: 16,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 14),
+                              Text(
+                                pet.nome,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                  color: Color(0xFF1E293B),
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                especieFormatada,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.grey.shade600,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 10),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFECFDF5),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  age,
+                                  style: const TextStyle(
+                                    color: Color(0xFF059669),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                );
+              },
             ),
           ),
-          const SizedBox(height: 12),
-          Text(
-            name,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-              color: Color(0xFF1E293B),
-            ),
-          ),
-          Text(breed, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: const Color(0xFFECFDF5),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Text(
-              age,
-              style: const TextStyle(
-                color: Color(0xFF059669),
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -718,17 +869,13 @@ String calcularIdade(String? dataNascimento) {
 
   String dataCompleta = dataNascimento;
 
-  // Se veio só ano
   if (RegExp(r'^\d{4}$').hasMatch(dataNascimento)) {
     dataCompleta = '$dataNascimento-01-01';
-  }
-  // Se veio ano-mês
-  else if (RegExp(r'^\d{4}-\d{2}$').hasMatch(dataNascimento)) {
+  } else if (RegExp(r'^\d{4}-\d{2}$').hasMatch(dataNascimento)) {
     dataCompleta = '$dataNascimento-01';
   }
 
   final nascimento = DateTime.parse(dataCompleta);
-
   final hoje = DateTime.now();
 
   int anos = hoje.year - nascimento.year;

@@ -87,7 +87,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
     double descriptionOffsetX = 0 * scaleFactor;
     double descriptionOffsetY = -150 * scaleFactor;
 
-    double cardsOffsetX = -285 * scaleFactor;
+    double cardsOffsetX = -250 * scaleFactor;
     double cardsOffsetY = 125 * scaleFactor;
     double cardSpacing = 20 * scaleFactor;
 
