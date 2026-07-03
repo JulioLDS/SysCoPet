@@ -1,13 +1,93 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:syscopet/providers/pet_provider.dart';
-
+import '../pets/pet_form_dialog.dart';
 import '../../providers/auth_provider.dart';
 import '../auth/auth_screen.dart';
+import '../pets/pet_edit_dialog.dart';
 import '../pets/pet_details_screen.dart';
-import '../pets/pet_form_screen.dart';
 
+// ✅ Widget helper para hover
+class HoverBuilder extends StatefulWidget {
+  final Widget Function(BuildContext context, bool isHovered) builder;
 
+  const HoverBuilder({super.key, required this.builder});
+
+  @override
+  State<HoverBuilder> createState() => _HoverBuilderState();
+}
+
+class _HoverBuilderState extends State<HoverBuilder> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: widget.builder(context, _isHovered),
+    );
+  }
+}
+
+// ✅ Painter para borda tracejada
+class DashedBorderPainter extends CustomPainter {
+  final Color color;
+  final double strokeWidth;
+  final double dashLength;
+  final double gapLength;
+
+  DashedBorderPainter({
+    required this.color,
+    required this.strokeWidth,
+    this.dashLength = 6,
+    this.gapLength = 4,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = strokeWidth
+      ..style = PaintingStyle.stroke;
+
+    // ✅ Ajuste: margem maior para dentro
+    final margin = strokeWidth + 2;
+
+    final rect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(
+        margin,
+        margin,
+        size.width - (margin * 2),
+        size.height - (margin * 2),
+      ),
+      const Radius.circular(20),
+    );
+
+    final path = Path();
+    path.addRRect(rect);
+
+    final metrics = path.computeMetrics();
+
+    for (final metric in metrics) {
+      double distance = 0.0;
+      while (distance < metric.length) {
+        final start = distance;
+        final end = (distance + dashLength).clamp(0.0, metric.length);
+
+        final extractPath = metric.extractPath(start, end);
+        canvas.drawPath(extractPath, paint);
+
+        distance += dashLength + gapLength;
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+// ✅ Tela principal
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -18,22 +98,17 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
 
-   @override
+  @override
   void initState() {
     super.initState();
 
     Future.microtask(() async {
-      final auth =
-          Provider.of<AuthProvider>(context,listen: false,);
+      final auth = Provider.of<AuthProvider>(context, listen: false);
+      final petProvider = Provider.of<PetProvider>(context, listen: false);
 
-      final petProvider =
-          Provider.of<PetProvider>(context,listen: false,);
-          
-
-      await petProvider.carregarPets(auth.currentUser!.id,);
+      await petProvider.carregarPets(auth.currentUser!.id);
       print("Pets carregados: ${petProvider.pets.length}");
-    }
-    );
+    });
   }
 
   @override
@@ -44,308 +119,551 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
-
-      body: Column(
+      body: Stack(
         children: [
-          // 1. HEADER FIXO
-          Container(
-            color: const Color(0xFF0D9488),
-            // Padding ajustado para 15 conforme seu pedido
-            padding: const EdgeInsets.only(
-              top: 15,
-              left: 20,
-              right: 20,
-              bottom: 15,
-            ),
-            child: Row(
-              children: [
-                // AVATAR: Fundo verde, borda branca, texto branco
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: const Color(
-                      0xFF0D9488,
-                    ), // Fundo verde (mesma cor do header)
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: Colors.white,
-                      width: 2,
-                    ), // Borda branca
-                  ),
-                  child: Center(
-                    child: Text(
-                      user?.nome?.substring(0, 2).toUpperCase() ?? 'U',
-                      style: const TextStyle(
-                        color: Colors.white, // Texto branco
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        user?.nome ?? 'Usuário',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        user?.email ?? '',
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.8),
-                          fontSize: 12,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-                // ENGRENAGEM COM MENU DE OPÇÕES
-                PopupMenuButton<String>(
-                  icon: const Icon(
-                    Icons.settings_outlined,
-                    color: Colors.white,
-                    size: 26,
-                  ),
-                  offset: const Offset(0, 40), // Posição do menu
-                  onSelected: (value) {
-                    if (value == 'logout') {
-                      _logout(context, authProvider);
-                    }
-                  },
-                  itemBuilder: (context) => [
-                    const PopupMenuItem<String>(
-                      value: 'logout',
-                      child: Row(
-                        children: [
-                          Icon(Icons.logout, color: Colors.red, size: 20),
-                          SizedBox(width: 8),
-                          Text('Sair da conta'),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-
-          // 2. CONTEÚDO COM ROLAGEM
-          Expanded(
+          // ✅ CONTEÚDO SCROLLÁVEL (por baixo)
+          Positioned.fill(
+            top: 78, // ✅ Altura do header
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Saudação
-                  Text(
-                    'Olá, ${user?.nome?.split(' ').first ?? 'Usuário'}! 👋',
-                    style: const TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1E293B),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Que bom te ver por aqui! Veja como estão os cuidados dos seus pets hoje.',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[600],
-                      height: 1.4,
-                    ),
-                  ),
-                  const SizedBox(height: 30),
-
-                  // Título da Seção
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Meus Pets',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF1E293B),
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: () {},
-                        child: const Text(
-                          'Ver todos',
-                          style: TextStyle(
-                            color: Color(0xFF0D9488),
-                            fontWeight: FontWeight.w600,
+                  // ✅ SEÇÃO 1: BOAS-VINDAS
+                  Container(
+                    width: double.infinity,
+                    child: Stack(
+                      clipBehavior: Clip.hardEdge,
+                      children: [
+                        // ✅ Background2 como fundo da seção
+                        Positioned.fill(
+                          child: Image.asset(
+                            'assets/images/background2.png',
+                            fit: BoxFit.cover,
+                            alignment: Alignment.topCenter,
+                            errorBuilder: (context, error, stackTrace) {
+                              return const SizedBox.shrink();
+                            },
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 15),
 
-                  // Lista Horizontal de Pets
-                  SizedBox(
-                    height: 160,
-                    child: ListView(
-                      scrollDirection: Axis.horizontal,
-                      children: [
-                        //botao adicionar pet
-                        _buildAddPetCard(),
-                        
-                        const SizedBox(width: 15),
-                        //pets vindo da API
-                        ...petProvider.pets.map(
-                          
-                          (pet) => Padding(
-                            padding: const EdgeInsets.only(right: 15),
-                            child:GestureDetector(
-                              onTap: () async {
-                                final atualizou = await Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => PetDetailsScreen(
-                                      pet: pet,
-                                    ),
-                                  ),
-                                );
+                        // ✅ Pets grandes
+                        Positioned(
+                          right: 300,
+                          bottom: -220,
+                          child: Image.asset(
+                            'assets/images/pets_lado_esquerdo.png',
+                            height: 600,
+                            fit: BoxFit.contain,
+                            errorBuilder: (context, error, stackTrace) {
+                              return const SizedBox.shrink();
+                            },
+                          ),
+                        ),
 
-                                if(atualizou == true){
-                                  final auth =
-                                      Provider.of<AuthProvider>(
-                                        context,
-                                        listen: false,
-                                      );
-                                  await Provider.of<PetProvider>(
-                                    context,
-                                    listen: false,
-                                    ).carregarPets(auth.currentUser!.id,
-                                  );
-                                }
-                              },
-                              child:  _buildPetCard(
-                                name: pet.nome,
-                                breed: pet.especie,
-                                age: calcularIdade(pet.dataNascimento),
-                                color: const Color(0xFFD4A373),
-                                fotoUrl: pet.urlFoto,
+                        // ✅ Conteúdo de texto com card suave
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(200, 50, 40, 60),
+                          child: Container(
+                            padding: const EdgeInsets.all(30),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.85),
+                              borderRadius: BorderRadius.circular(30),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.08),
+                                  blurRadius: 20,
+                                  offset: const Offset(0, 8),
                                 ),
-                              ),
+                              ],
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text.rich(
+                                  TextSpan(
+                                    children: [
+                                      const TextSpan(
+                                        text:
+                                            'Que alegria ter\nvocê por aqui, ',
+                                        style: TextStyle(
+                                          fontSize: 32,
+                                          fontWeight: FontWeight.w800,
+                                          color: Color(0xFF1E293B),
+                                          height: 1.2,
+                                        ),
+                                      ),
+                                      TextSpan(
+                                        text:
+                                            '${user?.nome?.split(' ').first ?? 'Usuário'}!',
+                                        style: const TextStyle(
+                                          fontSize: 32,
+                                          fontWeight: FontWeight.w800,
+                                          color: Color(0xFF0D9488),
+                                          height: 1.2,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                Text(
+                                  'Aqui, cada detalhe é pensado para o\nbem-estar e a saúde do seu pet.',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    color: Colors.grey[600],
+                                    height: 1.5,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        ],
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 30),
 
-                  // Ações Rápidas
-                  const Text(
-                    'Ações rápidas',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1E293B),
-                    ),
-                  ),
-                  const SizedBox(height: 15),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _buildQuickActionCard(
-                        title: 'Vacinas',
-                        subtitle: 'Ver e agendar',
-                        icon: Icons.vaccines_outlined,
-                        color: const Color(0xFFD1FAE5),
-                        iconColor: const Color(0xFF059669),
-                      ),
-                      _buildQuickActionCard(
-                        title: 'Consultas',
-                        subtitle: 'Agendar visita',
-                        icon: Icons.calendar_month_outlined,
-                        color: const Color(0xFFDBEAFE),
-                        iconColor: const Color(0xFF2563EB),
-                      ),
-                      _buildQuickActionCard(
-                        title: 'Lembretes',
-                        subtitle: 'Ver lembretes',
-                        icon: Icons.notifications_outlined,
-                        color: const Color(0xFFFFEDD5),
-                        iconColor: const Color(0xFFEA580C),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 30),
-
-                  // Próximos Lembretes
-                  const Text(
-                    'Próximos lembretes',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1E293B),
-                    ),
-                  ),
-                  const SizedBox(height: 15),
+                  // ✅ SEÇÃO 2: MEUS PETS + AÇÕES + LEMBRETES
                   Container(
+                    width: double.infinity,
                     decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
+                      color: const Color(
+                        0xFFF8FAFC,
+                      ), // ✅ Volta a cor original do fundo
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(40),
+                        topRight: Radius.circular(40),
+                      ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.03),
-                          blurRadius: 10,
-                          offset: const Offset(0, 5),
+                          color: Colors.black.withOpacity(0.08),
+                          blurRadius: 20,
+                          offset: const Offset(0, -5),
                         ),
                       ],
                     ),
-                    child: Column(
+                    child: Stack(
+                      clipBehavior: Clip.none,
                       children: [
-                        _buildReminderItem(
-                          icon: Icons.vaccines_outlined,
-                          iconBg: const Color(0xFFD1FAE5),
-                          iconColor: const Color(0xFF059669),
-                          title: 'Vacina V8',
-                          pet: 'Mel',
-                          date: '24/05/2025',
-                          time: 'Sábado, 10:00',
-                        ),
-                        Divider(height: 1, color: Colors.grey[200]),
-                        _buildReminderItem(
-                          icon: Icons.calendar_today_outlined,
-                          iconBg: const Color(0xFFDBEAFE),
-                          iconColor: const Color(0xFF2563EB),
-                          title: 'Consulta veterinária',
-                          pet: 'Luna',
-                          date: '02/06/2025',
-                          time: 'Segunda, 14:30',
-                        ),
-                        Divider(height: 1, color: Colors.grey[200]),
-                        TextButton.icon(
-                          onPressed: () {},
-                          icon: const Icon(
-                            Icons.list_alt_outlined,
-                            color: Color(0xFF0D9488),
-                          ),
-                          label: const Text(
-                            'Ver todos os lembretes',
-                            style: TextStyle(
-                              color: Color(0xFF0D9488),
-                              fontWeight: FontWeight.w600,
-                            ),
+                        // ✅ Conteúdo da seção
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(60, 30, 40, 20),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.pets,
+                                    color: const Color(0xFF0D9488),
+                                    size: 24,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  const Text(
+                                    'Meus Pets',
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF1E293B),
+                                    ),
+                                  ),
+                                  const Spacer(),
+                                  TextButton(
+                                    onPressed: () {},
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Text(
+                                          'Ver todos',
+                                          style: TextStyle(
+                                            color: Color(0xFF14B8A6),
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 16,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        const Icon(
+                                          Icons.chevron_right,
+                                          color: Color(0xFF14B8A6),
+                                          size: 35,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 20),
+
+                              SizedBox(
+                                height: 240,
+                                child: ListView(
+                                  scrollDirection: Axis.horizontal,
+                                  children: [
+                                    _buildAddPetCard(),
+                                    const SizedBox(width: 15),
+                                    ...petProvider.pets.map(
+                                      (pet) => Padding(
+                                        padding: const EdgeInsets.only(
+                                          right: 15,
+                                        ),
+                                        child: _buildPetCard(
+                                          pet: pet,
+                                          age: calcularIdade(
+                                            pet.dataNascimento,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 30),
+
+                              // ✅ SEÇÃO AÇÕES RÁPIDAS - OPÇÃO 2
+                              Container(
+                                padding: const EdgeInsets.all(20),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(20),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.03),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: Row(
+                                  children: [
+                                    // ✅ Título à esquerda
+                                    Expanded(
+                                      flex: 1,
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              Icon(
+                                                Icons.bolt,
+                                                color: const Color(0xFF14B8A6),
+                                                size: 28,
+                                              ),
+                                              const SizedBox(width: 8),
+                                              const Text(
+                                                'Ações rápidas',
+                                                style: TextStyle(
+                                                  fontSize: 20,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Color(0xFF1E293B),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 8),
+                                          // ✅ Texto com padding left de 10
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                              left: 15,
+                                            ),
+                                            child: Text(
+                                              'Acesso fácil ao que\nimporta para o seu pet',
+                                              style: TextStyle(
+                                                fontSize: 13,
+                                                color: Colors.grey[600],
+                                                height: 1.4,
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 12),
+                                          Icon(
+                                            Icons.pets,
+                                            color: const Color(
+                                              0xFF14B8A6,
+                                            ).withOpacity(0.15),
+                                            size: 40,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+
+                                    const SizedBox(width: 20),
+
+                                    // ✅ Cards à direita
+                                    Expanded(
+                                      flex: 3,
+                                      child: Row(
+                                        children: [
+                                          _buildQuickActionCard(
+                                            title: 'Vacinas',
+                                            subtitle: 'Ver e agendar vacinas',
+                                            icon: Icons.vaccines,
+                                            color: const Color(0xFFD1FAE5),
+                                            iconColor: const Color(0xFF059669),
+                                          ),
+                                          const SizedBox(width: 12),
+                                          _buildQuickActionCard(
+                                            title: 'Consultas',
+                                            subtitle: 'Agendar visita',
+                                            icon: Icons.calendar_month,
+                                            color: const Color(0xFFE9D5FF),
+                                            iconColor: const Color(0xFF9333EA),
+                                          ),
+                                          const SizedBox(width: 12),
+                                          _buildQuickActionCard(
+                                            title: 'Lembretes',
+                                            subtitle: 'Ver lembretes e alertas',
+                                            icon: Icons.notifications_active,
+                                            color: const Color(0xFFFED7AA),
+                                            iconColor: const Color(0xFFEA580C),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 30),
+
+                              // ✅ SEÇÃO PRÓXIMOS LEMBRETES - OPÇÃO 1 + TIMELINE
+                              Container(
+                                padding: const EdgeInsets.all(20),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(20),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.03),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    // ✅ Header
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          Icons.calendar_today_outlined,
+                                          color: const Color(0xFF14B8A6),
+                                          size: 28,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        const Text(
+                                          'Próximos lembretes',
+                                          style: TextStyle(
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.bold,
+                                            color: Color(0xFF1E293B),
+                                          ),
+                                        ),
+                                        const Spacer(),
+                                        Icon(
+                                          Icons.pets,
+                                          color: const Color(
+                                            0xFF14B8A6,
+                                          ).withOpacity(0.15),
+                                          size: 32,
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Padding(
+                                      padding: const EdgeInsets.only(left: 36),
+                                      child: Text(
+                                        'Fique por dentro dos próximos cuidados do seu pet.',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color: Colors.grey[600],
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 20),
+
+                                    // ✅ Lista de lembretes com timeline
+                                    _buildReminderWithTimeline(
+                                      icon: Icons.vaccines,
+                                      iconBg: const Color(0xFFD1FAE5),
+                                      iconColor: const Color(0xFF059669),
+                                      title: 'Vacina V8',
+                                      pet: 'Mel',
+                                      badge: 'Vacina',
+                                      badgeColor: const Color(0xFFD1FAE5),
+                                      badgeTextColor: const Color(0xFF059669),
+                                      date: '24/05/2025',
+                                      time: 'Sábado, 10:00',
+                                      isFirst: true,
+                                    ),
+                                    const SizedBox(height: 16),
+
+                                    _buildReminderWithTimeline(
+                                      icon: Icons.calendar_month,
+                                      iconBg: const Color(0xFFDBEAFE),
+                                      iconColor: const Color(0xFF2563EB),
+                                      title: 'Consulta veterinária',
+                                      pet: 'Luna',
+                                      badge: 'Consulta',
+                                      badgeColor: const Color(0xFFDBEAFE),
+                                      badgeTextColor: const Color(0xFF2563EB),
+                                      date: '02/06/2025',
+                                      time: 'Segunda, 14:30',
+                                      isFirst: false,
+                                    ),
+                                    const SizedBox(height: 16),
+
+                                    Container(
+                                      width: double.infinity,
+                                      height: 50, // ✅ Altura fixa maior
+                                      margin: const EdgeInsets.only(top: 8),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFECFDF5),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Material(
+                                        color: Colors.transparent,
+                                        child: InkWell(
+                                          onTap: () {
+                                            print('Ver todos os lembretes');
+                                          },
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                          splashColor: const Color(
+                                            0xFF0D9488,
+                                          ).withOpacity(0.1),
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              Icon(
+                                                Icons.list_alt_outlined,
+                                                color: const Color(0xFF0D9488),
+                                                size: 20,
+                                              ),
+                                              const SizedBox(width: 8),
+                                              const Text(
+                                                'Ver todos os lembretes',
+                                                style: TextStyle(
+                                                  color: Color(0xFF0D9488),
+                                                  fontWeight: FontWeight.w600,
+                                                  fontSize: 14,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                            ],
                           ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 20),
+                ],
+              ),
+            ),
+          ),
+
+          // ✅ HEADER FIXO (por cima de tudo, com sombra)
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: Container(
+              decoration: BoxDecoration(
+                color: const Color(0xFF0D9488),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF0D9488).withOpacity(0.3),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              padding: const EdgeInsets.only(
+                top: 15,
+                left: 20,
+                right: 20,
+                bottom: 15,
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0D9488),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2),
+                    ),
+                    child: Center(
+                      child: Text(
+                        user?.nome?.substring(0, 2).toUpperCase() ?? 'U',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          user?.nome ?? 'Usuário',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          user?.email ?? '',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.8),
+                            fontSize: 12,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                  PopupMenuButton<String>(
+                    icon: const Icon(
+                      Icons.settings_outlined,
+                      color: Colors.white,
+                      size: 26,
+                    ),
+                    offset: const Offset(0, 40),
+                    onSelected: (value) {
+                      if (value == 'logout') {
+                        _logout(context, authProvider);
+                      }
+                    },
+                    itemBuilder: (context) => [
+                      const PopupMenuItem<String>(
+                        value: 'logout',
+                        child: Row(
+                          children: [
+                            Icon(Icons.logout, color: Colors.red, size: 20),
+                            SizedBox(width: 8),
+                            Text('Sair da conta'),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -353,7 +671,6 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
 
-      // 3. BOTTOM NAVIGATION BAR (COM BORDAS ARREDONDADAS)
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
           color: Colors.white,
@@ -372,7 +689,6 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // LINHA INDICADORA - Versão Simplificada
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -420,7 +736,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ],
             ),
-            // BARRA DE NAVEGAÇÃO
             BottomNavigationBar(
               currentIndex: _selectedIndex,
               onTap: (index) => setState(() => _selectedIndex = index),
@@ -455,7 +770,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (!context.mounted) return;
 
-    // ✅ Usa pushReplacement em vez de pushAndRemoveUntil
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => const AuthScreen()),
@@ -466,132 +780,263 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildAddPetCard() {
     return Container(
-      width: 130,
-      decoration: BoxDecoration(
-        color: const Color(0xFFECFDF5),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
+      width: 150,
+      child: CustomPaint(
+        foregroundPainter: DashedBorderPainter(
+          // ✅ TROQUE AQUI
           color: const Color(0xFF0D9488),
-          width: 1.5,
-          style: BorderStyle.solid,
+          strokeWidth: 2.5,
+          dashLength: 8,
+          gapLength: 6,
         ),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () {
-            Navigator.push(context,
-             MaterialPageRoute(
-              builder:(_) => const PetFormScreen(),
-               ),
-               );
-          },
-          borderRadius: BorderRadius.circular(20),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: const Color(0xFF0D9488), width: 1),
-                ),
-                child: const Icon(
-                  Icons.add,
-                  color: Color(0xFF0D9488),
-                  size: 30,
-                ),
+        child: Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFFECFDF5),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () async {
+                final result = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => const PetFormDialog(),
+                );
+
+                if (result == true) {
+                  final auth = Provider.of<AuthProvider>(
+                    context,
+                    listen: false,
+                  );
+                  await Provider.of<PetProvider>(
+                    context,
+                    listen: false,
+                  ).carregarPets(auth.currentUser!.id);
+                }
+              },
+              borderRadius: BorderRadius.circular(20),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: const Color(0xFF0D9488),
+                        width: 1,
+                      ),
+                    ),
+                    child: const Icon(
+                      Icons.add,
+                      color: Color(0xFF0D9488),
+                      size: 30,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    'Adicionar\nnovo pet',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Color(0xFF0D9488),
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                      height: 1.2,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 10),
-              const Text(
-                'Adicionar\nnovo pet',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Color(0xFF0D9488),
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13,
-                  height: 1.2,
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildPetCard({
-    required String name,
-    required String breed,
-    required String age,
-    required Color color,
-    String? fotoUrl,
-  }) {
-    return Container(
-      width: 130,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 70,
-            height: 70,
+  Widget _buildPetCard({required dynamic pet, required String age}) {
+    String especieFormatada;
+    switch (pet.especie.toLowerCase()) {
+      case 'cao':
+        especieFormatada = 'Cão';
+        break;
+      case 'gato':
+        especieFormatada = 'Gato';
+        break;
+      default:
+        especieFormatada = pet.especie;
+    }
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () async {
+          final atualizou = await Navigator.push<bool>(
+            context,
+            MaterialPageRoute(builder: (context) => PetDetailsScreen(pet: pet)),
+          );
+
+          if (atualizou == true) {
+            final auth = Provider.of<AuthProvider>(context, listen: false);
+            await Provider.of<PetProvider>(
+              context,
+              listen: false,
+            ).carregarPets(auth.currentUser!.id);
+          }
+        },
+        borderRadius: BorderRadius.circular(16),
+        hoverColor: Colors.transparent,
+        splashColor: Colors.transparent,
+        highlightColor: Colors.transparent,
+        child: MouseRegion(
+          cursor: SystemMouseCursors.click,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            width: 160,
             decoration: BoxDecoration(
-              color: color.withOpacity(0.3),
-              shape: BoxShape.circle,
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(30),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.08),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+              border: Border.all(color: Colors.grey.shade200, width: 1),
             ),
-            child:CircleAvatar(
-              radius: 35,
-              backgroundColor: color.withOpacity(0.3),
-              backgroundImage:
-                  fotoUrl != null && fotoUrl.isNotEmpty? NetworkImage(fotoUrl): null,
-                  child: (fotoUrl == null || fotoUrl.isEmpty)
-                  ? Icon(
-                      Icons.pets,
-                      size: 35,
-                      color: color,
-                    )
-                  : null,
-            )
+            child: Builder(
+              builder: (context) {
+                return GestureDetector(
+                  onPanDown: (_) {},
+                  child: HoverBuilder(
+                    builder: (context, isHovered) {
+                      return AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(25),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.08),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                            if (isHovered)
+                              BoxShadow(
+                                color: const Color(0xFF0D9488).withOpacity(0.3),
+                                blurRadius: 12,
+                                spreadRadius: 1,
+                                offset: const Offset(0, 0),
+                              ),
+                          ],
+                          border: Border.all(
+                            color: Colors.grey.shade200,
+                            width: 1,
+                          ),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 20,
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Stack(
+                                alignment: Alignment.bottomRight,
+                                children: [
+                                  CircleAvatar(
+                                    radius: 50,
+                                    backgroundColor: Colors.grey.shade100,
+                                    backgroundImage:
+                                        pet.urlFoto != null &&
+                                            pet.urlFoto.isNotEmpty
+                                        ? NetworkImage(pet.urlFoto!)
+                                        : null,
+                                    child:
+                                        (pet.urlFoto == null ||
+                                            pet.urlFoto.isEmpty)
+                                        ? Icon(
+                                            Icons.pets,
+                                            size: 50,
+                                            color: Colors.grey.shade400,
+                                          )
+                                        : null,
+                                  ),
+                                  Positioned(
+                                    bottom: 0,
+                                    right: 0,
+                                    child: Container(
+                                      padding: const EdgeInsets.all(6),
+                                      decoration: BoxDecoration(
+                                        color: Color(0xFF0D9488),
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: Colors.white,
+                                          width: 2,
+                                        ),
+                                      ),
+                                      child: const Icon(
+                                        Icons.edit,
+                                        size: 16,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 14),
+                              Text(
+                                pet.nome,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                  color: Color(0xFF1E293B),
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                especieFormatada,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.grey.shade600,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 10),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFECFDF5),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  age,
+                                  style: const TextStyle(
+                                    color: Color(0xFF059669),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                );
+              },
+            ),
           ),
-          const SizedBox(height: 12),
-          Text(
-            name,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-              color: Color(0xFF1E293B),
-            ),
-          ),
-          Text(breed, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: const Color(0xFFECFDF5),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Text(
-              age,
-              style: const TextStyle(
-                color: Color(0xFF059669),
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -604,104 +1049,313 @@ class _HomeScreenState extends State<HomeScreen> {
     required Color iconColor,
   }) {
     return Expanded(
-      child: Container(
-        height: 110,
-        margin: const EdgeInsets.symmetric(horizontal: 5),
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: () {},
-            borderRadius: BorderRadius.circular(16),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(icon, color: iconColor, size: 32),
-                const SizedBox(height: 8),
-                Text(
-                  title,
-                  style: TextStyle(
-                    color: iconColor,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                  ),
-                ),
-                Text(
-                  subtitle,
-                  style: TextStyle(
-                    color: iconColor.withOpacity(0.7),
-                    fontSize: 10,
-                  ),
+      child: HoverBuilder(
+        builder: (context, isHovered) {
+          return AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            height: 100,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: isHovered
+                  ? Color.lerp(
+                      color,
+                      Colors.black,
+                      0.05,
+                    )! // ✅ Escurece 5% no hover
+                  : color,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: isHovered
+                      ? iconColor.withOpacity(0.25)
+                      : iconColor.withOpacity(0.1),
+                  blurRadius: isHovered ? 12 : 8,
+                  offset: const Offset(0, 2),
                 ),
               ],
             ),
-          ),
-        ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () {},
+                borderRadius: BorderRadius.circular(16),
+                splashColor: iconColor.withOpacity(0.2),
+                highlightColor: Colors.transparent,
+                child: Row(
+                  children: [
+                    // ✅ Ícone maior em círculo colorido sólido
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: iconColor,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(icon, color: Colors.white, size: 28),
+                    ),
+                    const SizedBox(width: 12),
+                    // ✅ Texto
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            title,
+                            style: TextStyle(
+                              color: iconColor,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            subtitle,
+                            style: TextStyle(
+                              color: iconColor.withOpacity(0.7),
+                              fontSize: 11,
+                            ),
+                            maxLines: 2,
+                          ),
+                        ],
+                      ),
+                    ),
+                    // ✅ Seta em círculo branco com arrow_forward
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: iconColor.withOpacity(0.15),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        Icons.arrow_forward,
+                        color: iconColor,
+                        size: 18,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
 
-  Widget _buildReminderItem({
+  Widget _buildReminderWithTimeline({
     required IconData icon,
     required Color iconBg,
     required Color iconColor,
     required String title,
     required String pet,
+    required String badge,
+    required Color badgeColor,
+    required Color badgeTextColor,
     required String date,
     required String time,
+    required bool isFirst,
   }) {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: iconBg, shape: BoxShape.circle),
-            child: Icon(icon, color: iconColor, size: 20),
-          ),
-          const SizedBox(width: 15),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 15,
-                    color: Color(0xFF1E293B),
-                  ),
-                ),
-                Text(
-                  pet,
-                  style: TextStyle(color: Colors.grey[600], fontSize: 13),
-                ),
-              ],
-            ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
+    return HoverBuilder(
+      builder: (context, isHovered) {
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                date,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13,
-                  color: Color(0xFF475569),
+              // ✅ Timeline (linha + bolinha)
+              SizedBox(
+                width: 24,
+                child: Column(
+                  children: [
+                    // Bolinha
+                    Container(
+                      width: 12,
+                      height: 12,
+                      margin: const EdgeInsets.only(top: 20),
+                      decoration: BoxDecoration(
+                        color: iconColor,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 2),
+                        boxShadow: [
+                          BoxShadow(
+                            color: iconColor.withOpacity(0.3),
+                            blurRadius: 4,
+                            offset: const Offset(0, 1),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              Text(
-                time,
-                style: TextStyle(color: Colors.grey[500], fontSize: 12),
+              const SizedBox(width: 12),
+
+              // ✅ Card do lembrete com hover e clique
+              Expanded(
+                child: MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: GestureDetector(
+                    onTap: () {
+                      print('Clicou no lembrete: $title');
+                      // Aqui você pode navegar para a tela de detalhes
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: isHovered ? Colors.grey.shade50 : Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: isHovered
+                              ? iconColor.withOpacity(0.3)
+                              : Colors.grey.shade200,
+                          width: 1,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: isHovered
+                                ? iconColor.withOpacity(0.1)
+                                : Colors.black.withOpacity(0.03),
+                            blurRadius: isHovered ? 12 : 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          // Ícone
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: iconBg,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Icon(icon, color: iconColor, size: 24),
+                          ),
+                          const SizedBox(width: 16),
+
+                          // Texto
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  title,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                    color: Color(0xFF1E293B),
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.pets,
+                                      color: iconColor,
+                                      size: 14,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      pet,
+                                      style: TextStyle(
+                                        color: Colors.grey[600],
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          // Badge
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: badgeColor,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              badge,
+                              style: TextStyle(
+                                color: badgeTextColor,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+
+                          // Data/Hora
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.calendar_today,
+                                    color: Colors.grey[600],
+                                    size: 14,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    date,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 13,
+                                      color: Color(0xFF475569),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                time,
+                                style: TextStyle(
+                                  color: Colors.grey[500],
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(width: 12),
+
+                          // Seta
+                          AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: isHovered ? iconColor : iconBg,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.chevron_right,
+                              color: isHovered ? Colors.white : iconColor,
+                              size: 18,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
               ),
             ],
           ),
-          const Icon(Icons.chevron_right, color: Colors.grey),
-        ],
-      ),
+        );
+      },
     );
   }
 }
@@ -713,27 +1367,19 @@ String calcularIdade(String? dataNascimento) {
 
   String dataCompleta = dataNascimento;
 
-  // Se veio só ano
   if (RegExp(r'^\d{4}$').hasMatch(dataNascimento)) {
     dataCompleta = '$dataNascimento-01-01';
-  }
-
-  // Se veio ano-mês
-  else if (RegExp(r'^\d{4}-\d{2}$').hasMatch(dataNascimento)) {
+  } else if (RegExp(r'^\d{4}-\d{2}$').hasMatch(dataNascimento)) {
     dataCompleta = '$dataNascimento-01';
   }
 
   final nascimento = DateTime.parse(dataCompleta);
-
   final hoje = DateTime.now();
 
   int anos = hoje.year - nascimento.year;
 
-  if (
-    hoje.month < nascimento.month ||
-    (hoje.month == nascimento.month &&
-        hoje.day < nascimento.day)
-  ) {
+  if (hoje.month < nascimento.month ||
+      (hoje.month == nascimento.month && hoje.day < nascimento.day)) {
     anos--;
   }
 
