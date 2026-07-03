@@ -119,262 +119,398 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
-      body: Column(
+      body: Stack(
         children: [
-          // 1. HEADER FIXO
-          Container(
-            color: const Color(0xFF0D9488),
-            padding: const EdgeInsets.only(
-              top: 15,
-              left: 20,
-              right: 20,
-              bottom: 15,
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF0D9488),
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 2),
-                  ),
-                  child: Center(
-                    child: Text(
-                      user?.nome?.substring(0, 2).toUpperCase() ?? 'U',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        user?.nome ?? 'Usuário',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        user?.email ?? '',
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.8),
-                          fontSize: 12,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-                PopupMenuButton<String>(
-                  icon: const Icon(
-                    Icons.settings_outlined,
-                    color: Colors.white,
-                    size: 26,
-                  ),
-                  offset: const Offset(0, 40),
-                  onSelected: (value) {
-                    if (value == 'logout') {
-                      _logout(context, authProvider);
-                    }
-                  },
-                  itemBuilder: (context) => [
-                    const PopupMenuItem<String>(
-                      value: 'logout',
-                      child: Row(
-                        children: [
-                          Icon(Icons.logout, color: Colors.red, size: 20),
-                          SizedBox(width: 8),
-                          Text('Sair da conta'),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-
-          // 2. CONTEÚDO COM ROLAGEM
-          Expanded(
+          // ✅ CONTEÚDO SCROLLÁVEL (por baixo)
+          Positioned.fill(
+            top: 78, // ✅ Altura do header
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Olá, ${user?.nome?.split(' ').first ?? 'Usuário'}! 👋',
-                    style: const TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1E293B),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Que bom te ver por aqui! Veja como estão os cuidados dos seus pets hoje.',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[600],
-                      height: 1.4,
-                    ),
-                  ),
-                  const SizedBox(height: 30),
-
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Meus Pets',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF1E293B),
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: () {},
-                        child: const Text(
-                          'Ver todos',
-                          style: TextStyle(
-                            color: Color(0xFF0D9488),
-                            fontWeight: FontWeight.w600,
+                  // ✅ SEÇÃO 1: BOAS-VINDAS
+                  Container(
+                    width: double.infinity,
+                    child: Stack(
+                      clipBehavior: Clip.hardEdge,
+                      children: [
+                        // ✅ Background2 como fundo da seção
+                        Positioned.fill(
+                          child: Image.asset(
+                            'assets/images/background2.png',
+                            fit: BoxFit.cover,
+                            alignment: Alignment.topCenter,
+                            errorBuilder: (context, error, stackTrace) {
+                              return const SizedBox.shrink();
+                            },
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 15),
 
-                  SizedBox(
-                    height: 240,
-                    child: ListView(
-                      scrollDirection: Axis.horizontal,
-                      children: [
-                        _buildAddPetCard(),
-                        const SizedBox(width: 15),
-                        ...petProvider.pets.map(
-                          (pet) => Padding(
-                            padding: const EdgeInsets.only(right: 15),
-                            child: _buildPetCard(
-                              pet: pet,
-                              age: calcularIdade(pet.dataNascimento),
+                        // ✅ Pets grandes
+                        Positioned(
+                          right: 300,
+                          bottom: -210,
+                          child: Image.asset(
+                            'assets/images/pets_lado_esquerdo.png',
+                            height: 550,
+                            fit: BoxFit.contain,
+                            errorBuilder: (context, error, stackTrace) {
+                              return const SizedBox.shrink();
+                            },
+                          ),
+                        ),
+
+                        // ✅ Conteúdo de texto com card suave
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(150, 50, 40, 60),
+                          child: Container(
+                            padding: const EdgeInsets.all(30),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.85),
+                              borderRadius: BorderRadius.circular(24),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.08),
+                                  blurRadius: 20,
+                                  offset: const Offset(0, 8),
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text.rich(
+                                  TextSpan(
+                                    children: [
+                                      const TextSpan(
+                                        text:
+                                            'Que alegria ter\nvocê por aqui, ',
+                                        style: TextStyle(
+                                          fontSize: 32,
+                                          fontWeight: FontWeight.w800,
+                                          color: Color(0xFF1E293B),
+                                          height: 1.2,
+                                        ),
+                                      ),
+                                      TextSpan(
+                                        text:
+                                            '${user?.nome?.split(' ').first ?? 'Usuário'}!',
+                                        style: const TextStyle(
+                                          fontSize: 32,
+                                          fontWeight: FontWeight.w800,
+                                          color: Color(0xFF0D9488),
+                                          height: 1.2,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                Text(
+                                  'Aqui, cada detalhe é pensado para o\nbem-estar e a saúde do seu pet.',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    color: Colors.grey[600],
+                                    height: 1.5,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 30),
 
-                  const Text(
-                    'Ações rápidas',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1E293B),
-                    ),
-                  ),
-                  const SizedBox(height: 15),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _buildQuickActionCard(
-                        title: 'Vacinas',
-                        subtitle: 'Ver e agendar',
-                        icon: Icons.vaccines_outlined,
-                        color: const Color(0xFFD1FAE5),
-                        iconColor: const Color(0xFF059669),
-                      ),
-                      _buildQuickActionCard(
-                        title: 'Consultas',
-                        subtitle: 'Agendar visita',
-                        icon: Icons.calendar_month_outlined,
-                        color: const Color(0xFFDBEAFE),
-                        iconColor: const Color(0xFF2563EB),
-                      ),
-                      _buildQuickActionCard(
-                        title: 'Lembretes',
-                        subtitle: 'Ver lembretes',
-                        icon: Icons.notifications_outlined,
-                        color: const Color(0xFFFFEDD5),
-                        iconColor: const Color(0xFFEA580C),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 30),
-
-                  const Text(
-                    'Próximos lembretes',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1E293B),
-                    ),
-                  ),
-                  const SizedBox(height: 15),
+                  // ✅ SEÇÃO 2: MEUS PETS + AÇÕES + LEMBRETES
                   Container(
+                    width: double.infinity,
                     decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
+                      color: const Color(
+                        0xFFF8FAFC,
+                      ), // ✅ Volta a cor original do fundo
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(40),
+                        topRight: Radius.circular(40),
+                      ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.03),
-                          blurRadius: 10,
-                          offset: const Offset(0, 5),
+                          color: Colors.black.withOpacity(0.08),
+                          blurRadius: 20,
+                          offset: const Offset(0, -5),
                         ),
                       ],
                     ),
-                    child: Column(
+                    child: Stack(
+                      clipBehavior: Clip.none,
                       children: [
-                        _buildReminderItem(
-                          icon: Icons.vaccines_outlined,
-                          iconBg: const Color(0xFFD1FAE5),
-                          iconColor: const Color(0xFF059669),
-                          title: 'Vacina V8',
-                          pet: 'Mel',
-                          date: '24/05/2025',
-                          time: 'Sábado, 10:00',
-                        ),
-                        Divider(height: 1, color: Colors.grey[200]),
-                        _buildReminderItem(
-                          icon: Icons.calendar_today_outlined,
-                          iconBg: const Color(0xFFDBEAFE),
-                          iconColor: const Color(0xFF2563EB),
-                          title: 'Consulta veterinária',
-                          pet: 'Luna',
-                          date: '02/06/2025',
-                          time: 'Segunda, 14:30',
-                        ),
-                        Divider(height: 1, color: Colors.grey[200]),
-                        TextButton.icon(
-                          onPressed: () {},
-                          icon: const Icon(
-                            Icons.list_alt_outlined,
-                            color: Color(0xFF0D9488),
-                          ),
-                          label: const Text(
-                            'Ver todos os lembretes',
-                            style: TextStyle(
-                              color: Color(0xFF0D9488),
-                              fontWeight: FontWeight.w600,
-                            ),
+                        // ✅ Conteúdo da seção
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(60, 30, 40, 20),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.pets,
+                                    color: const Color(0xFF0D9488),
+                                    size: 24,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  const Text(
+                                    'Meus Pets',
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF1E293B),
+                                    ),
+                                  ),
+                                  const Spacer(),
+                                  TextButton(
+                                    onPressed: () {},
+                                    child: const Text(
+                                      'Ver todos',
+                                      style: TextStyle(
+                                        color: Color(0xFF0D9488),
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 20),
+
+                              SizedBox(
+                                height: 240,
+                                child: ListView(
+                                  scrollDirection: Axis.horizontal,
+                                  children: [
+                                    _buildAddPetCard(),
+                                    const SizedBox(width: 15),
+                                    ...petProvider.pets.map(
+                                      (pet) => Padding(
+                                        padding: const EdgeInsets.only(
+                                          right: 15,
+                                        ),
+                                        child: _buildPetCard(
+                                          pet: pet,
+                                          age: calcularIdade(
+                                            pet.dataNascimento,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 30),
+
+                              const Text(
+                                'Ações rápidas',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF1E293B),
+                                ),
+                              ),
+                              const SizedBox(height: 15),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  _buildQuickActionCard(
+                                    title: 'Vacinas',
+                                    subtitle: 'Ver e agendar',
+                                    icon: Icons.vaccines_outlined,
+                                    color: const Color(0xFFD1FAE5),
+                                    iconColor: const Color(0xFF059669),
+                                  ),
+                                  _buildQuickActionCard(
+                                    title: 'Consultas',
+                                    subtitle: 'Agendar visita',
+                                    icon: Icons.calendar_month_outlined,
+                                    color: const Color(0xFFDBEAFE),
+                                    iconColor: const Color(0xFF2563EB),
+                                  ),
+                                  _buildQuickActionCard(
+                                    title: 'Lembretes',
+                                    subtitle: 'Ver lembretes',
+                                    icon: Icons.notifications_outlined,
+                                    color: const Color(0xFFFFEDD5),
+                                    iconColor: const Color(0xFFEA580C),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 30),
+
+                              // Próximos Lembretes
+                              const Text(
+                                'Próximos lembretes',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF1E293B),
+                                ),
+                              ),
+                              const SizedBox(height: 15),
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(20),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.03),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 5),
+                                    ),
+                                  ],
+                                ),
+                                child: Column(
+                                  children: [
+                                    _buildReminderItem(
+                                      icon: Icons.vaccines_outlined,
+                                      iconBg: const Color(0xFFD1FAE5),
+                                      iconColor: const Color(0xFF059669),
+                                      title: 'Vacina V8',
+                                      pet: 'Mel',
+                                      date: '24/05/2025',
+                                      time: 'Sábado, 10:00',
+                                    ),
+                                    Divider(height: 1, color: Colors.grey[200]),
+                                    _buildReminderItem(
+                                      icon: Icons.calendar_today_outlined,
+                                      iconBg: const Color(0xFFDBEAFE),
+                                      iconColor: const Color(0xFF2563EB),
+                                      title: 'Consulta veterinária',
+                                      pet: 'Luna',
+                                      date: '02/06/2025',
+                                      time: 'Segunda, 14:30',
+                                    ),
+                                    Divider(height: 1, color: Colors.grey[200]),
+                                    TextButton.icon(
+                                      onPressed: () {},
+                                      icon: const Icon(
+                                        Icons.list_alt_outlined,
+                                        color: Color(0xFF0D9488),
+                                      ),
+                                      label: const Text(
+                                        'Ver todos os lembretes',
+                                        style: TextStyle(
+                                          color: Color(0xFF0D9488),
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                            ],
                           ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 20),
+                ],
+              ),
+            ),
+          ),
+
+          // ✅ HEADER FIXO (por cima de tudo, com sombra)
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: Container(
+              decoration: BoxDecoration(
+                color: const Color(0xFF0D9488),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF0D9488).withOpacity(0.3),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              padding: const EdgeInsets.only(
+                top: 15,
+                left: 20,
+                right: 20,
+                bottom: 15,
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0D9488),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2),
+                    ),
+                    child: Center(
+                      child: Text(
+                        user?.nome?.substring(0, 2).toUpperCase() ?? 'U',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          user?.nome ?? 'Usuário',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          user?.email ?? '',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.8),
+                            fontSize: 12,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                  PopupMenuButton<String>(
+                    icon: const Icon(
+                      Icons.settings_outlined,
+                      color: Colors.white,
+                      size: 26,
+                    ),
+                    offset: const Offset(0, 40),
+                    onSelected: (value) {
+                      if (value == 'logout') {
+                        _logout(context, authProvider);
+                      }
+                    },
+                    itemBuilder: (context) => [
+                      const PopupMenuItem<String>(
+                        value: 'logout',
+                        child: Row(
+                          children: [
+                            Icon(Icons.logout, color: Colors.red, size: 20),
+                            SizedBox(width: 8),
+                            Text('Sair da conta'),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
