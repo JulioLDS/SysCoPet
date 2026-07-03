@@ -149,10 +149,10 @@ class _HomeScreenState extends State<HomeScreen> {
                         // ✅ Pets grandes
                         Positioned(
                           right: 300,
-                          bottom: -210,
+                          bottom: -220,
                           child: Image.asset(
                             'assets/images/pets_lado_esquerdo.png',
-                            height: 550,
+                            height: 600,
                             fit: BoxFit.contain,
                             errorBuilder: (context, error, stackTrace) {
                               return const SizedBox.shrink();
@@ -162,12 +162,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
                         // ✅ Conteúdo de texto com card suave
                         Padding(
-                          padding: const EdgeInsets.fromLTRB(150, 50, 40, 60),
+                          padding: const EdgeInsets.fromLTRB(200, 50, 40, 60),
                           child: Container(
                             padding: const EdgeInsets.all(30),
                             decoration: BoxDecoration(
                               color: Colors.white.withOpacity(0.85),
-                              borderRadius: BorderRadius.circular(24),
+                              borderRadius: BorderRadius.circular(30),
                               boxShadow: [
                                 BoxShadow(
                                   color: Colors.black.withOpacity(0.08),
@@ -270,12 +270,24 @@ class _HomeScreenState extends State<HomeScreen> {
                                   const Spacer(),
                                   TextButton(
                                     onPressed: () {},
-                                    child: const Text(
-                                      'Ver todos',
-                                      style: TextStyle(
-                                        color: Color(0xFF0D9488),
-                                        fontWeight: FontWeight.w600,
-                                      ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Text(
+                                          'Ver todos',
+                                          style: TextStyle(
+                                            color: Color(0xFF14B8A6),
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 16,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        const Icon(
+                                          Icons.chevron_right,
+                                          color: Color(0xFF14B8A6),
+                                          size: 35,
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ],
@@ -307,55 +319,9 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                               const SizedBox(height: 30),
 
-                              const Text(
-                                'Ações rápidas',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF1E293B),
-                                ),
-                              ),
-                              const SizedBox(height: 15),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  _buildQuickActionCard(
-                                    title: 'Vacinas',
-                                    subtitle: 'Ver e agendar',
-                                    icon: Icons.vaccines_outlined,
-                                    color: const Color(0xFFD1FAE5),
-                                    iconColor: const Color(0xFF059669),
-                                  ),
-                                  _buildQuickActionCard(
-                                    title: 'Consultas',
-                                    subtitle: 'Agendar visita',
-                                    icon: Icons.calendar_month_outlined,
-                                    color: const Color(0xFFDBEAFE),
-                                    iconColor: const Color(0xFF2563EB),
-                                  ),
-                                  _buildQuickActionCard(
-                                    title: 'Lembretes',
-                                    subtitle: 'Ver lembretes',
-                                    icon: Icons.notifications_outlined,
-                                    color: const Color(0xFFFFEDD5),
-                                    iconColor: const Color(0xFFEA580C),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 30),
-
-                              // Próximos Lembretes
-                              const Text(
-                                'Próximos lembretes',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF1E293B),
-                                ),
-                              ),
-                              const SizedBox(height: 15),
+                              // ✅ SEÇÃO AÇÕES RÁPIDAS - OPÇÃO 2
                               Container(
+                                padding: const EdgeInsets.all(20),
                                 decoration: BoxDecoration(
                                   color: Colors.white,
                                   borderRadius: BorderRadius.circular(20),
@@ -363,43 +329,230 @@ class _HomeScreenState extends State<HomeScreen> {
                                     BoxShadow(
                                       color: Colors.black.withOpacity(0.03),
                                       blurRadius: 10,
-                                      offset: const Offset(0, 5),
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: Row(
+                                  children: [
+                                    // ✅ Título à esquerda
+                                    Expanded(
+                                      flex: 1,
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              Icon(
+                                                Icons.bolt,
+                                                color: const Color(0xFF14B8A6),
+                                                size: 28,
+                                              ),
+                                              const SizedBox(width: 8),
+                                              const Text(
+                                                'Ações rápidas',
+                                                style: TextStyle(
+                                                  fontSize: 20,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Color(0xFF1E293B),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 8),
+                                          // ✅ Texto com padding left de 10
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                              left: 15,
+                                            ),
+                                            child: Text(
+                                              'Acesso fácil ao que\nimporta para o seu pet',
+                                              style: TextStyle(
+                                                fontSize: 13,
+                                                color: Colors.grey[600],
+                                                height: 1.4,
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 12),
+                                          Icon(
+                                            Icons.pets,
+                                            color: const Color(
+                                              0xFF14B8A6,
+                                            ).withOpacity(0.15),
+                                            size: 40,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+
+                                    const SizedBox(width: 20),
+
+                                    // ✅ Cards à direita
+                                    Expanded(
+                                      flex: 3,
+                                      child: Row(
+                                        children: [
+                                          _buildQuickActionCard(
+                                            title: 'Vacinas',
+                                            subtitle: 'Ver e agendar vacinas',
+                                            icon: Icons.vaccines,
+                                            color: const Color(0xFFD1FAE5),
+                                            iconColor: const Color(0xFF059669),
+                                          ),
+                                          const SizedBox(width: 12),
+                                          _buildQuickActionCard(
+                                            title: 'Consultas',
+                                            subtitle: 'Agendar visita',
+                                            icon: Icons.calendar_month,
+                                            color: const Color(0xFFE9D5FF),
+                                            iconColor: const Color(0xFF9333EA),
+                                          ),
+                                          const SizedBox(width: 12),
+                                          _buildQuickActionCard(
+                                            title: 'Lembretes',
+                                            subtitle: 'Ver lembretes e alertas',
+                                            icon: Icons.notifications_active,
+                                            color: const Color(0xFFFED7AA),
+                                            iconColor: const Color(0xFFEA580C),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 30),
+
+                              // ✅ SEÇÃO PRÓXIMOS LEMBRETES - OPÇÃO 1 + TIMELINE
+                              Container(
+                                padding: const EdgeInsets.all(20),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(20),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.03),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 2),
                                     ),
                                   ],
                                 ),
                                 child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    _buildReminderItem(
-                                      icon: Icons.vaccines_outlined,
+                                    // ✅ Header
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          Icons.calendar_today_outlined,
+                                          color: const Color(0xFF14B8A6),
+                                          size: 28,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        const Text(
+                                          'Próximos lembretes',
+                                          style: TextStyle(
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.bold,
+                                            color: Color(0xFF1E293B),
+                                          ),
+                                        ),
+                                        const Spacer(),
+                                        Icon(
+                                          Icons.pets,
+                                          color: const Color(
+                                            0xFF14B8A6,
+                                          ).withOpacity(0.15),
+                                          size: 32,
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Padding(
+                                      padding: const EdgeInsets.only(left: 36),
+                                      child: Text(
+                                        'Fique por dentro dos próximos cuidados do seu pet.',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color: Colors.grey[600],
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 20),
+
+                                    // ✅ Lista de lembretes com timeline
+                                    _buildReminderWithTimeline(
+                                      icon: Icons.vaccines,
                                       iconBg: const Color(0xFFD1FAE5),
                                       iconColor: const Color(0xFF059669),
                                       title: 'Vacina V8',
                                       pet: 'Mel',
+                                      badge: 'Vacina',
+                                      badgeColor: const Color(0xFFD1FAE5),
+                                      badgeTextColor: const Color(0xFF059669),
                                       date: '24/05/2025',
                                       time: 'Sábado, 10:00',
+                                      isFirst: true,
                                     ),
-                                    Divider(height: 1, color: Colors.grey[200]),
-                                    _buildReminderItem(
-                                      icon: Icons.calendar_today_outlined,
+                                    const SizedBox(height: 16),
+
+                                    _buildReminderWithTimeline(
+                                      icon: Icons.calendar_month,
                                       iconBg: const Color(0xFFDBEAFE),
                                       iconColor: const Color(0xFF2563EB),
                                       title: 'Consulta veterinária',
                                       pet: 'Luna',
+                                      badge: 'Consulta',
+                                      badgeColor: const Color(0xFFDBEAFE),
+                                      badgeTextColor: const Color(0xFF2563EB),
                                       date: '02/06/2025',
                                       time: 'Segunda, 14:30',
+                                      isFirst: false,
                                     ),
-                                    Divider(height: 1, color: Colors.grey[200]),
-                                    TextButton.icon(
-                                      onPressed: () {},
-                                      icon: const Icon(
-                                        Icons.list_alt_outlined,
-                                        color: Color(0xFF0D9488),
+                                    const SizedBox(height: 16),
+
+                                    Container(
+                                      width: double.infinity,
+                                      height: 50, // ✅ Altura fixa maior
+                                      margin: const EdgeInsets.only(top: 8),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFECFDF5),
+                                        borderRadius: BorderRadius.circular(12),
                                       ),
-                                      label: const Text(
-                                        'Ver todos os lembretes',
-                                        style: TextStyle(
-                                          color: Color(0xFF0D9488),
-                                          fontWeight: FontWeight.w600,
+                                      child: Material(
+                                        color: Colors.transparent,
+                                        child: InkWell(
+                                          onTap: () {
+                                            print('Ver todos os lembretes');
+                                          },
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                          splashColor: const Color(
+                                            0xFF0D9488,
+                                          ).withOpacity(0.1),
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              Icon(
+                                                Icons.list_alt_outlined,
+                                                color: const Color(0xFF0D9488),
+                                                size: 20,
+                                              ),
+                                              const SizedBox(width: 8),
+                                              const Text(
+                                                'Ver todos os lembretes',
+                                                style: TextStyle(
+                                                  color: Color(0xFF0D9488),
+                                                  fontWeight: FontWeight.w600,
+                                                  fontSize: 14,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
                                         ),
                                       ),
                                     ),
@@ -742,7 +895,7 @@ class _HomeScreenState extends State<HomeScreen> {
             width: 160,
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(30),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.08),
@@ -762,7 +915,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         duration: const Duration(milliseconds: 200),
                         decoration: BoxDecoration(
                           color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(25),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withOpacity(0.08),
@@ -896,104 +1049,313 @@ class _HomeScreenState extends State<HomeScreen> {
     required Color iconColor,
   }) {
     return Expanded(
-      child: Container(
-        height: 110,
-        margin: const EdgeInsets.symmetric(horizontal: 5),
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: () {},
-            borderRadius: BorderRadius.circular(16),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(icon, color: iconColor, size: 32),
-                const SizedBox(height: 8),
-                Text(
-                  title,
-                  style: TextStyle(
-                    color: iconColor,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                  ),
-                ),
-                Text(
-                  subtitle,
-                  style: TextStyle(
-                    color: iconColor.withOpacity(0.7),
-                    fontSize: 10,
-                  ),
+      child: HoverBuilder(
+        builder: (context, isHovered) {
+          return AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            height: 100,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: isHovered
+                  ? Color.lerp(
+                      color,
+                      Colors.black,
+                      0.05,
+                    )! // ✅ Escurece 5% no hover
+                  : color,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: isHovered
+                      ? iconColor.withOpacity(0.25)
+                      : iconColor.withOpacity(0.1),
+                  blurRadius: isHovered ? 12 : 8,
+                  offset: const Offset(0, 2),
                 ),
               ],
             ),
-          ),
-        ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () {},
+                borderRadius: BorderRadius.circular(16),
+                splashColor: iconColor.withOpacity(0.2),
+                highlightColor: Colors.transparent,
+                child: Row(
+                  children: [
+                    // ✅ Ícone maior em círculo colorido sólido
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: iconColor,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(icon, color: Colors.white, size: 28),
+                    ),
+                    const SizedBox(width: 12),
+                    // ✅ Texto
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            title,
+                            style: TextStyle(
+                              color: iconColor,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            subtitle,
+                            style: TextStyle(
+                              color: iconColor.withOpacity(0.7),
+                              fontSize: 11,
+                            ),
+                            maxLines: 2,
+                          ),
+                        ],
+                      ),
+                    ),
+                    // ✅ Seta em círculo branco com arrow_forward
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: iconColor.withOpacity(0.15),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        Icons.arrow_forward,
+                        color: iconColor,
+                        size: 18,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
 
-  Widget _buildReminderItem({
+  Widget _buildReminderWithTimeline({
     required IconData icon,
     required Color iconBg,
     required Color iconColor,
     required String title,
     required String pet,
+    required String badge,
+    required Color badgeColor,
+    required Color badgeTextColor,
     required String date,
     required String time,
+    required bool isFirst,
   }) {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: iconBg, shape: BoxShape.circle),
-            child: Icon(icon, color: iconColor, size: 20),
-          ),
-          const SizedBox(width: 15),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 15,
-                    color: Color(0xFF1E293B),
-                  ),
-                ),
-                Text(
-                  pet,
-                  style: TextStyle(color: Colors.grey[600], fontSize: 13),
-                ),
-              ],
-            ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
+    return HoverBuilder(
+      builder: (context, isHovered) {
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                date,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13,
-                  color: Color(0xFF475569),
+              // ✅ Timeline (linha + bolinha)
+              SizedBox(
+                width: 24,
+                child: Column(
+                  children: [
+                    // Bolinha
+                    Container(
+                      width: 12,
+                      height: 12,
+                      margin: const EdgeInsets.only(top: 20),
+                      decoration: BoxDecoration(
+                        color: iconColor,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 2),
+                        boxShadow: [
+                          BoxShadow(
+                            color: iconColor.withOpacity(0.3),
+                            blurRadius: 4,
+                            offset: const Offset(0, 1),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              Text(
-                time,
-                style: TextStyle(color: Colors.grey[500], fontSize: 12),
+              const SizedBox(width: 12),
+
+              // ✅ Card do lembrete com hover e clique
+              Expanded(
+                child: MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: GestureDetector(
+                    onTap: () {
+                      print('Clicou no lembrete: $title');
+                      // Aqui você pode navegar para a tela de detalhes
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: isHovered ? Colors.grey.shade50 : Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: isHovered
+                              ? iconColor.withOpacity(0.3)
+                              : Colors.grey.shade200,
+                          width: 1,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: isHovered
+                                ? iconColor.withOpacity(0.1)
+                                : Colors.black.withOpacity(0.03),
+                            blurRadius: isHovered ? 12 : 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          // Ícone
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: iconBg,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Icon(icon, color: iconColor, size: 24),
+                          ),
+                          const SizedBox(width: 16),
+
+                          // Texto
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  title,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                    color: Color(0xFF1E293B),
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.pets,
+                                      color: iconColor,
+                                      size: 14,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      pet,
+                                      style: TextStyle(
+                                        color: Colors.grey[600],
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          // Badge
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: badgeColor,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              badge,
+                              style: TextStyle(
+                                color: badgeTextColor,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+
+                          // Data/Hora
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.calendar_today,
+                                    color: Colors.grey[600],
+                                    size: 14,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    date,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 13,
+                                      color: Color(0xFF475569),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                time,
+                                style: TextStyle(
+                                  color: Colors.grey[500],
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(width: 12),
+
+                          // Seta
+                          AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: isHovered ? iconColor : iconBg,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.chevron_right,
+                              color: isHovered ? Colors.white : iconColor,
+                              size: 18,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
               ),
             ],
           ),
-          const Icon(Icons.chevron_right, color: Colors.grey),
-        ],
-      ),
+        );
+      },
     );
   }
 }
