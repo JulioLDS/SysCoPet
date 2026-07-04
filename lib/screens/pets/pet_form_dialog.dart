@@ -229,13 +229,22 @@ class _PetFormDialogState extends State<PetFormDialog> {
                                 if (value == null || value.trim().isEmpty) {
                                   return 'Obrigatório';
                                 }
+                                final ano = int.tryParse(value.trim());
+
+                                if (ano==null){
+                                  return 'Digite apenas números';
+                                }
+                                if (ano < 0){
+                                  return 'O ano não pode ser negativo';
+                                }
+
                                 return null;
                               },
                             ),
                           ),
                           const SizedBox(width: 10),
                           Expanded(
-                            child: TextField(
+                            child: TextFormField(
                               controller: mesController,
                               keyboardType: TextInputType.number,
                               decoration: InputDecoration(
@@ -246,11 +255,28 @@ class _PetFormDialogState extends State<PetFormDialog> {
                                 filled: true,
                                 fillColor: Colors.grey.shade50,
                               ),
+                              validator: (value) {
+                                if (value == null || value.trim().isEmpty) {
+                                  return null;
+                                }
+
+                                final mes = int.tryParse(value.trim());
+
+                                if (mes == null) {
+                                  return 'Digite apenas números';
+                                }
+
+                                if (mes < 0 || mes > 11) {
+                                  return 'Informe um mês entre 1 e 12';
+                                }
+
+                                return null;
+                              },
                             ),
                           ),
                           const SizedBox(width: 10),
                           Expanded(
-                            child: TextField(
+                            child: TextFormField(
                               controller: diaController,
                               keyboardType: TextInputType.number,
                               decoration: InputDecoration(
@@ -261,6 +287,23 @@ class _PetFormDialogState extends State<PetFormDialog> {
                                 filled: true,
                                 fillColor: Colors.grey.shade50,
                               ),
+                              validator: (value) {
+                                if (value == null || value.trim().isEmpty) {
+                                  return null;
+                                }
+
+                                final dia = int.tryParse(value.trim());
+
+                                if (dia == null) {
+                                  return 'Digite apenas números';
+                                }
+
+                                if (dia < 1 || dia > 31) {
+                                  return 'Informe um dia entre 1 e 31';
+                                }
+
+                                return null;
+                              },
                             ),
                           ),
                         ],
@@ -288,6 +331,15 @@ class _PetFormDialogState extends State<PetFormDialog> {
                           if (value == null || value.trim().isEmpty) {
                             return 'Digite o peso';
                           }
+
+                          final peso = int.tryParse(value.trim());
+                          if (peso==null){
+                            return 'Digite apenas números';
+                            }
+                          if (peso < 0){
+                            return 'O peso não pode ser negativo';
+                            }
+
                           return null;
                         },
                       ),
@@ -310,6 +362,24 @@ class _PetFormDialogState extends State<PetFormDialog> {
                           filled: true,
                           fillColor: Colors.grey.shade50,
                         ),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return null;
+                          }
+
+                          final altura = int.tryParse(value.trim());
+
+                          if (altura == null) {
+                             return 'Digite apenas números';
+                          }
+
+                          if (altura < 0) {
+                            return 'Altura não pode ser negativa';
+                          }
+
+                                return null;
+                              },
+
                       ),
 
                       const SizedBox(height: 24),
