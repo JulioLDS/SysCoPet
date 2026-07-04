@@ -3,6 +3,7 @@ class PetModel {
   final int idUsuario;
   final String nome;
   final String especie;
+  final int? idRaca;
   final String? dataNascimento;
   final double peso;
   final double? altura;
@@ -14,6 +15,7 @@ class PetModel {
     required this.idUsuario,
     required this.nome,
     required this.especie,
+    this.idRaca,
     this.dataNascimento,
     required this.peso,
     this.altura,
@@ -27,6 +29,7 @@ class PetModel {
       idUsuario: int.parse(json['id_usuario'].toString()),
       nome: json['nome'],
       especie: json['especie'],
+      idRaca: json['id_raca'],
       dataNascimento: json['data_nascimento'],
       peso: double.parse(json['peso'].toString()),
       altura: json['altura'] != null
@@ -42,6 +45,7 @@ class PetModel {
       'id_usuario': idUsuario,
       'nome': nome,
       'especie': especie,
+      'id_raca' : idRaca,
       'data_nascimento': dataNascimento,
       'peso': peso,
       'altura': altura,

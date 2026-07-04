@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:syscopet/models/raca_model.dart';
+import 'package:syscopet/services/pet_service.dart';
 
 import '../../models/pet_model.dart';
 import '../../providers/pet_provider.dart';
@@ -24,6 +26,12 @@ class _PetFormDialogState extends State<PetFormDialog> {
   final diaController = TextEditingController();
 
   String? especieSelecionada;
+  int? racaSelecionadaId;
+
+  List<RacaModel> racas = [];
+  bool carregandoRacas = false;
+
+  final PetService petService = PetService();
 
   @override
   void dispose() {
@@ -35,6 +43,31 @@ class _PetFormDialogState extends State<PetFormDialog> {
     diaController.dispose();
     super.dispose();
   }
+
+  Future<void> carregarRacas(String especie) async {
+    setState(() {
+      carregandoRacas = true;
+      racas = [];
+      racaSelecionadaId = null;
+    });
+
+    try {
+      final resultado = await petService.listarRacas(especie);
+
+      setState(() {
+        racas = resultado;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erro ao carregar raças: $e')),
+      );
+    } finally {
+      if(!mounted) return;
+      setState(() {
+        carregandoRacas = false;
+      });
+    }
+}
 
   Future<void> _salvarPet() async {
     if (!_formKey.currentState!.validate()) {
@@ -63,6 +96,7 @@ class _PetFormDialogState extends State<PetFormDialog> {
     final pet = PetModel(
       nome: nomeController.text.trim(),
       especie: especieSelecionada!,
+      idRaca: racaSelecionadaId,
       dataNascimento: dataNascimento,
       peso: double.parse(pesoController.text),
       altura: alturaController.text.isEmpty
@@ -198,7 +232,16 @@ class _PetFormDialogState extends State<PetFormDialog> {
                           ),
                         ],
                         onChanged: (value) {
-                          setState(() => especieSelecionada = value);
+                          setState(() { 
+                            especieSelecionada = value;
+                            racaSelecionadaId = null;
+                            racas = [];
+                          });
+                          
+                          if(value == 'cao' || value == 'gato'){
+                            carregarRacas(value!);
+                          }
+
                         },
                         validator: (value) {
                           if (value == null) {
@@ -208,6 +251,48 @@ class _PetFormDialogState extends State<PetFormDialog> {
                         },
                       ),
 
+                      const SizedBox(height: 16),
+
+                        // Raça
+                        DropdownButtonFormField<int>(
+                          value: racaSelecionadaId,
+                          decoration: InputDecoration(
+                            labelText: carregandoRacas ? 'Carregando raças...' : 'Raça',
+                            prefixIcon: const Icon(
+                              Icons.pets_outlined,
+                              color: Color(0xFF0D9488),
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            filled: true,
+                            fillColor: Colors.grey.shade50,
+                          ),
+                          items: racas.map((raca) {
+                            return DropdownMenuItem<int>(
+                              value: raca.idRaca,
+                              child: Text(raca.nome),
+                            );
+                          }).toList(),
+                          onChanged: especieSelecionada == null || especieSelecionada == 'outro' ||
+                                  carregandoRacas
+                              ? null
+                              : (value) {
+                                  setState(() {
+                                    racaSelecionadaId = value;
+                                  });
+                                },
+                          validator: (value) {
+                            if (especieSelecionada == 'cao' || especieSelecionada == 'gato') {
+                              if (value == null) {
+                                return 'Selecione uma raça';
+                              }
+                            }
+
+                            return null;
+                          },
+                        ),
+ 
                       const SizedBox(height: 16),
 
                       // Data de nascimento

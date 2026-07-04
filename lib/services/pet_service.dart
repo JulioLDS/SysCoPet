@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:syscopet/models/raca_model.dart';
 
 import '../config/api_config.dart';
 import '../models/pet_model.dart';
@@ -84,6 +85,21 @@ class PetService {
     }
 
     return null;
+  }
+
+  //Carregar raças
+  Future<List<RacaModel>> listarRacas(String especie) async {
+    final url = Uri.parse('${ApiConfig.baseUrl}/racas?especie=$especie');
+
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      final List<dynamic> dados = jsonDecode(response.body);
+
+      return dados.map((item) => RacaModel.fromJson(item)).toList();
+    }
+
+    throw Exception('Erro ao carregar raças');
   }
 
   //Upload de foto
