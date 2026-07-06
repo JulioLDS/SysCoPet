@@ -11,7 +11,7 @@ class RacaModel {
 
   factory RacaModel.fromJson(Map<String, dynamic> json) {
     return RacaModel(
-      idRaca: json['id_raca'],
+      idRaca: int.parse(json['id'].toString()),
       nome: json['nome'],
       especie: json['especie'],
     );
