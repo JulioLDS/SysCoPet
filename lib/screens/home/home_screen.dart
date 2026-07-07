@@ -1009,6 +1009,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                               const SizedBox(height: 10),
                               Container(
+                                width: double.infinity,
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 12,
                                   vertical: 4,
@@ -1017,7 +1018,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                   color: const Color(0xFFECFDF5),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
-                                child: Text(
+                                child: FittedBox(
+                                 fit: BoxFit.scaleDown,
+                                 child: Text(
                                   age,
                                   style: const TextStyle(
                                     color: Color(0xFF059669),
@@ -1025,6 +1028,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
+                              ),
                               ),
                             ],
                           ),
@@ -1365,23 +1369,120 @@ String calcularIdade(String? dataNascimento) {
     return 'Sem idade';
   }
 
-  String dataCompleta = dataNascimento;
+  String data = dataNascimento.trim();
 
-  if (RegExp(r'^\d{4}$').hasMatch(dataNascimento)) {
-    dataCompleta = '$dataNascimento-01-01';
-  } else if (RegExp(r'^\d{4}-\d{2}$').hasMatch(dataNascimento)) {
-    dataCompleta = '$dataNascimento-01';
+  String dataCompleta = data;
+  bool temMes = false;
+  bool temDia = false;
+
+  // Caso venha só o ano: 2024
+  if (RegExp(r'^\d{4}$').hasMatch(data)) {
+    dataCompleta = '$data-01-01';
   }
 
-  final nascimento = DateTime.parse(dataCompleta);
+  // Caso venha ano e mês: 2024-05
+  else if (RegExp(r'^\d{4}-\d{1,2}$').hasMatch(data)) {
+    final partes = data.split('-');
+    final ano = partes[0];
+    final mes = partes[1].padLeft(2, '0');
+
+    dataCompleta = '$ano-$mes-01';
+    temMes = true;
+  }
+
+  // Caso venha data no formato ISO: 2024-05-20 ou 2024-05-20T00:00:00.000Z
+  else if (RegExp(r'^\d{4}-\d{1,2}-\d{1,2}').hasMatch(data)) {
+    final match = RegExp(r'^(\d{4})-(\d{1,2})-(\d{1,2})').firstMatch(data);
+
+    if (match == null) {
+      return 'Data inválida';
+    }
+
+    final ano = match.group(1)!;
+    final mes = match.group(2)!.padLeft(2, '0');
+    final dia = match.group(3)!.padLeft(2, '0');
+
+    dataCompleta = '$ano-$mes-$dia';
+    temMes = true;
+    temDia = true;
+  }
+
+  // Caso venha no formato brasileiro: 20/05/2024
+  else if (RegExp(r'^\d{1,2}/\d{1,2}/\d{4}$').hasMatch(data)) {
+    final partes = data.split('/');
+
+    final dia = partes[0].padLeft(2, '0');
+    final mes = partes[1].padLeft(2, '0');
+    final ano = partes[2];
+
+    dataCompleta = '$ano-$mes-$dia';
+    temMes = true;
+    temDia = true;
+  } else {
+    return 'Data inválida';
+  }
+
+  final nascimento = DateTime.tryParse(dataCompleta);
+
+  if (nascimento == null) {
+    return 'Data inválida';
+  }
+
   final hoje = DateTime.now();
 
-  int anos = hoje.year - nascimento.year;
-
-  if (hoje.month < nascimento.month ||
-      (hoje.month == nascimento.month && hoje.day < nascimento.day)) {
-    anos--;
+  if (nascimento.isAfter(hoje)) {
+    return 'Data inválida';
   }
 
-  return '$anos anos';
+  int anos = hoje.year - nascimento.year;
+  int meses = hoje.month - nascimento.month;
+  int dias = hoje.day - nascimento.day;
+
+  if (dias < 0) {
+    meses--;
+
+    final ultimoDiaMesAnterior = DateTime(hoje.year, hoje.month, 0);
+    dias += ultimoDiaMesAnterior.day;
+  }
+
+  if (meses < 0) {
+    anos--;
+    meses += 12;
+  }
+
+  final partesIdade = <String>[];
+
+  // Se tiver 1 ano ou mais, mostra apenas anos e meses
+  if (anos > 0) {
+    partesIdade.add('$anos ${anos == 1 ? 'ano' : 'anos'}');
+
+    if (temMes && meses > 0) {
+      partesIdade.add('$meses ${meses == 1 ? 'mês' : 'meses'}');
+    }
+
+    return partesIdade.join(' e ');
+  }
+
+  // Se tiver menos de 1 ano, mostra meses e dias
+  if (temMes && meses > 0) {
+    partesIdade.add('$meses ${meses == 1 ? 'mês' : 'meses'}');
+  }
+
+  if (temDia && dias > 0) {
+    partesIdade.add('$dias ${dias == 1 ? 'dia' : 'dias'}');
+  }
+
+  if (partesIdade.isEmpty) {
+    if (temDia) {
+      return 'Menos de 1 dia';
+    }
+
+    if (temMes) {
+      return 'Menos de 1 mês';
+    }
+
+    return 'Menos de 1 ano';
+  }
+
+  return partesIdade.join(' e ');
 }
