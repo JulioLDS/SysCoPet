@@ -89,7 +89,7 @@ class PetService {
 
   //Carregar raças
   Future<List<RacaModel>> listarRacas(String especie) async {
-    final url = Uri.parse('${ApiConfig.baseUrl}/racas?especie=$especie');
+    final url = Uri.parse('${ApiConfig.baseUrl}/pets/raca?especie=$especie');
 
     final response = await http.get(url);
 
