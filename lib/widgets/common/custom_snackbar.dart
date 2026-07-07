@@ -1,30 +1,42 @@
 import 'package:flutter/material.dart';
 
 class CustomSnackbar {
-  static void showSuccess(BuildContext context, String message) {
-    _show(context, message, SnackbarType.success);
+  static void showSuccess(
+    BuildContext context,
+    String message, {
+    Color? color,
+  }) {
+    _show(context, message, SnackbarType.success, customColor: color);
   }
 
-  static void showError(BuildContext context, String message) {
-    _show(context, message, SnackbarType.error);
+  static void showError(BuildContext context, String message, {Color? color}) {
+    _show(context, message, SnackbarType.error, customColor: color);
   }
 
-  static void showWarning(BuildContext context, String message) {
-    _show(context, message, SnackbarType.warning);
+  static void showWarning(
+    BuildContext context,
+    String message, {
+    Color? color,
+  }) {
+    _show(context, message, SnackbarType.warning, customColor: color);
   }
 
-  static void _show(BuildContext context, String message, SnackbarType type) {
+  static void _show(
+    BuildContext context,
+    String message,
+    SnackbarType type, {
+    Color? customColor,
+  }) {
     final overlay = Overlay.of(context);
     bool isRemoved = false;
 
-    // ✅ Declara a variável primeiro
     late OverlayEntry overlayEntry;
 
-    // ✅ Depois cria o OverlayEntry
     overlayEntry = OverlayEntry(
       builder: (context) => _SnackbarWidget(
         message: message,
         type: type,
+        customColor: customColor,
         onDismiss: () {
           if (!isRemoved) {
             isRemoved = true;
@@ -36,7 +48,6 @@ class CustomSnackbar {
 
     overlay.insert(overlayEntry);
 
-    // Auto-dismiss após 3 segundos
     Future.delayed(const Duration(seconds: 3), () {
       if (!isRemoved) {
         isRemoved = true;
@@ -51,12 +62,14 @@ enum SnackbarType { success, error, warning }
 class _SnackbarWidget extends StatefulWidget {
   final String message;
   final SnackbarType type;
+  final Color? customColor;
   final VoidCallback onDismiss;
 
   const _SnackbarWidget({
     required this.message,
     required this.type,
     required this.onDismiss,
+    this.customColor,
   });
 
   @override
@@ -92,7 +105,6 @@ class _SnackbarWidgetState extends State<_SnackbarWidget>
 
     _animationController.forward();
 
-    // Inicia animação de saída após 2.5s
     Future.delayed(const Duration(milliseconds: 2500), () {
       if (mounted) {
         _animationController.reverse().then((_) {
@@ -109,6 +121,12 @@ class _SnackbarWidgetState extends State<_SnackbarWidget>
   }
 
   Color get _backgroundColor {
+    // ✅ Se tiver cor customizada, usa ela PRIMEIRO
+    if (widget.customColor != null) {
+      return widget.customColor!;
+    }
+
+    // ✅ Senão, usa a cor padrão do tipo
     switch (widget.type) {
       case SnackbarType.success:
         return const Color(0xFF0D9488);
@@ -146,7 +164,6 @@ class _SnackbarWidgetState extends State<_SnackbarWidget>
               child: Material(
                 color: Colors.transparent,
                 child: Center(
-                  // ✅ Centraliza o container
                   child: Container(
                     width: 420,
                     padding: const EdgeInsets.symmetric(
@@ -154,7 +171,8 @@ class _SnackbarWidgetState extends State<_SnackbarWidget>
                       vertical: 18,
                     ),
                     decoration: BoxDecoration(
-                      color: _backgroundColor,
+                      color:
+                          _backgroundColor, // ✅ Usa o getter que verifica customColor
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(

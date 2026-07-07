@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:syscopet/models/raca_model.dart';
 import 'package:syscopet/services/pet_service.dart';
 
+import '../../widgets/common/custom_snackbar.dart';
 import '../../models/pet_model.dart';
 import '../../providers/pet_provider.dart';
 import '../../providers/auth_provider.dart';
@@ -132,9 +133,7 @@ class _PetEditDialogState extends State<PetEditDialog> {
       }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Erro ao carregar raças: $e')));
+      CustomSnackbar.showError(context, 'Erro ao carregar raças: $e');
     } finally {
       if (!mounted) return;
       setState(() {
@@ -155,14 +154,8 @@ class _PetEditDialogState extends State<PetEditDialog> {
     final ano = anoController.text.trim();
     final mes = mesController.text.trim();
     final dia = diaController.text.trim();
-
     if (ano.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('O ano de nascimento é obrigatório'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      CustomSnackbar.showError(context, 'O ano de nascimento é obrigatório');
       return;
     }
 
@@ -199,22 +192,15 @@ class _PetEditDialogState extends State<PetEditDialog> {
     if (!mounted) return;
 
     if (erro != null) {
-      showDialog(
-        context: context,
-        builder: (_) => AlertDialog(
-          title: const Text('Erro'),
-          content: Text(erro),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('OK'),
-            ),
-          ],
-        ),
-      );
+      CustomSnackbar.showError(context, erro);
       return;
     }
 
+    CustomSnackbar.showSuccess(
+      context,
+      'Mudanças salvas com sucesso!',
+      color: const Color(0xFF047857),
+    );
     Navigator.pop(context, true);
   }
 
