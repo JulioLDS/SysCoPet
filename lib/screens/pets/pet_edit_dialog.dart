@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:syscopet/models/raca_model.dart';
+import 'package:syscopet/services/pet_service.dart';
 
 import '../../models/pet_model.dart';
 import '../../providers/pet_provider.dart';
@@ -17,15 +19,30 @@ class PetEditDialog extends StatefulWidget {
 class _PetEditDialogState extends State<PetEditDialog> {
   final _formKey = GlobalKey<FormState>();
 
+  // ✅ FocusNodes para navegação
+  final FocusNode _nomeFocus = FocusNode();
+  final FocusNode _especieFocus = FocusNode();
+  final FocusNode _racaFocus = FocusNode();
+  final FocusNode _anoFocus = FocusNode();
+  final FocusNode _mesFocus = FocusNode();
+  final FocusNode _diaFocus = FocusNode();
+  final FocusNode _pesoFocus = FocusNode();
+  final FocusNode _alturaFocus = FocusNode();
+
   final nomeController = TextEditingController();
   final pesoController = TextEditingController();
   final alturaController = TextEditingController();
-
   final anoController = TextEditingController();
   final mesController = TextEditingController();
   final diaController = TextEditingController();
 
   String? especieSelecionada;
+  int? racaSelecionadaId;
+
+  List<RacaModel> racas = [];
+  bool carregandoRacas = false;
+
+  final PetService petService = PetService();
 
   @override
   void initState() {
@@ -40,6 +57,7 @@ class _PetEditDialogState extends State<PetEditDialog> {
     }
 
     especieSelecionada = widget.pet.especie;
+    racaSelecionadaId = widget.pet.idRaca;
 
     if (widget.pet.dataNascimento != null) {
       final data = widget.pet.dataNascimento!.split('T').first;
@@ -57,6 +75,11 @@ class _PetEditDialogState extends State<PetEditDialog> {
         diaController.text = partes[2];
       }
     }
+
+    // ✅ Carrega raças se for cão ou gato (SEM focar automaticamente)
+    if (especieSelecionada == 'cao' || especieSelecionada == 'gato') {
+      carregarRacas(especieSelecionada!, focarAposCarregar: false);
+    }
   }
 
   @override
@@ -67,7 +90,57 @@ class _PetEditDialogState extends State<PetEditDialog> {
     anoController.dispose();
     mesController.dispose();
     diaController.dispose();
+
+    // ✅ Dispose dos FocusNodes
+    _nomeFocus.dispose();
+    _especieFocus.dispose();
+    _racaFocus.dispose();
+    _anoFocus.dispose();
+    _mesFocus.dispose();
+    _diaFocus.dispose();
+    _pesoFocus.dispose();
+    _alturaFocus.dispose();
+
     super.dispose();
+  }
+
+  // ✅ Método carregarRacas com parâmetro opcional
+  Future<void> carregarRacas(
+    String especie, {
+    bool focarAposCarregar = false,
+  }) async {
+    setState(() {
+      carregandoRacas = true;
+      racas = [];
+      racaSelecionadaId = null;
+    });
+
+    try {
+      final resultado = await petService.listarRacas(especie);
+
+      setState(() {
+        racas = resultado;
+      });
+
+      // ✅ Só move o foco se o parâmetro for verdadeiro
+      if (focarAposCarregar) {
+        Future.delayed(const Duration(milliseconds: 200), () {
+          if (mounted && racas.isNotEmpty) {
+            FocusScope.of(context).requestFocus(_racaFocus);
+          }
+        });
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Erro ao carregar raças: $e')));
+    } finally {
+      if (!mounted) return;
+      setState(() {
+        carregandoRacas = false;
+      });
+    }
   }
 
   Future<void> _salvarPet() async {
@@ -79,7 +152,6 @@ class _PetEditDialogState extends State<PetEditDialog> {
     final petProvider = Provider.of<PetProvider>(context, listen: false);
     final usuario = authProvider.currentUser;
 
-    // ✅ Validação manual do ano
     final ano = anoController.text.trim();
     final mes = mesController.text.trim();
     final dia = diaController.text.trim();
@@ -112,6 +184,7 @@ class _PetEditDialogState extends State<PetEditDialog> {
       idPet: widget.pet.idPet,
       nome: nomeController.text.trim(),
       especie: especieSelecionada!,
+      idRaca: racaSelecionadaId,
       dataNascimento: dataNascimento,
       peso: double.parse(pesoController.text),
       altura: alturaController.text.isEmpty
@@ -142,7 +215,6 @@ class _PetEditDialogState extends State<PetEditDialog> {
       return;
     }
 
-    // ✅ Retorna true para indicar sucesso
     Navigator.pop(context, true);
   }
 
@@ -158,7 +230,6 @@ class _PetEditDialogState extends State<PetEditDialog> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // ✅ CABEÇALHO DO DIALOG
             Container(
               padding: const EdgeInsets.fromLTRB(24, 20, 16, 16),
               decoration: const BoxDecoration(
@@ -191,8 +262,6 @@ class _PetEditDialogState extends State<PetEditDialog> {
                 ],
               ),
             ),
-
-            // ✅ CONTEÚDO DO FORMULÁRIO
             Flexible(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(24),
@@ -201,9 +270,14 @@ class _PetEditDialogState extends State<PetEditDialog> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Nome
+                      // ✅ Nome - Enter vai para Espécie
                       TextFormField(
                         controller: nomeController,
+                        focusNode: _nomeFocus,
+                        textInputAction: TextInputAction.next,
+                        onFieldSubmitted: (_) {
+                          FocusScope.of(context).requestFocus(_especieFocus);
+                        },
                         decoration: InputDecoration(
                           labelText: 'Nome do Pet',
                           prefixIcon: const Icon(
@@ -223,12 +297,12 @@ class _PetEditDialogState extends State<PetEditDialog> {
                           return null;
                         },
                       ),
-
                       const SizedBox(height: 16),
 
-                      // Espécie
+                      // ✅ Espécie - Após selecionar, vai para Raça ou Ano
                       DropdownButtonFormField<String>(
                         value: especieSelecionada,
+                        focusNode: _especieFocus,
                         decoration: InputDecoration(
                           labelText: 'Espécie',
                           prefixIcon: const Icon(
@@ -250,7 +324,27 @@ class _PetEditDialogState extends State<PetEditDialog> {
                           ),
                         ],
                         onChanged: (value) {
-                          setState(() => especieSelecionada = value);
+                          setState(() {
+                            especieSelecionada = value;
+                            racaSelecionadaId = null;
+                            racas = [];
+                          });
+
+                          if (value == 'cao' || value == 'gato') {
+                            // ✅ Passa true para focar na raça após carregar
+                            carregarRacas(value!, focarAposCarregar: true);
+                          } else {
+                            Future.delayed(
+                              const Duration(milliseconds: 150),
+                              () {
+                                if (mounted) {
+                                  FocusScope.of(
+                                    context,
+                                  ).requestFocus(_anoFocus);
+                                }
+                              },
+                            );
+                          }
                         },
                         validator: (value) {
                           if (value == null) {
@@ -259,16 +353,74 @@ class _PetEditDialogState extends State<PetEditDialog> {
                           return null;
                         },
                       ),
-
                       const SizedBox(height: 16),
 
-                      // Data de nascimento
+                      // ✅ Raça - Após selecionar, vai para Ano
+                      DropdownButtonFormField<int>(
+                        value: racaSelecionadaId,
+                        focusNode: _racaFocus,
+                        decoration: InputDecoration(
+                          labelText: carregandoRacas
+                              ? 'Carregando raças...'
+                              : 'Raça',
+                          prefixIcon: const Icon(
+                            Icons.pets_outlined,
+                            color: Color(0xFF0D9488),
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          filled: true,
+                          fillColor: Colors.grey.shade50,
+                        ),
+                        items: racas.map((raca) {
+                          return DropdownMenuItem<int>(
+                            value: raca.idRaca,
+                            child: Text(raca.nome),
+                          );
+                        }).toList(),
+                        onChanged:
+                            especieSelecionada == null ||
+                                especieSelecionada == 'outro' ||
+                                carregandoRacas
+                            ? null
+                            : (value) {
+                                setState(() {
+                                  racaSelecionadaId = value;
+                                });
+                                Future.delayed(
+                                  const Duration(milliseconds: 100),
+                                  () {
+                                    FocusScope.of(
+                                      context,
+                                    ).requestFocus(_anoFocus);
+                                  },
+                                );
+                              },
+                        validator: (value) {
+                          if (especieSelecionada == 'cao' ||
+                              especieSelecionada == 'gato') {
+                            if (value == null) {
+                              return 'Selecione uma raça';
+                            }
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+
+                      // ✅ Data de nascimento
                       Row(
                         children: [
                           Expanded(
                             child: TextFormField(
                               controller: anoController,
+                              focusNode: _anoFocus,
                               keyboardType: TextInputType.number,
+                              textInputAction: TextInputAction.next,
+                              onFieldSubmitted: (_) {
+                                FocusScope.of(context).requestFocus(_mesFocus);
+                              },
                               decoration: InputDecoration(
                                 labelText: 'Ano *',
                                 border: OutlineInputBorder(
@@ -287,9 +439,14 @@ class _PetEditDialogState extends State<PetEditDialog> {
                           ),
                           const SizedBox(width: 10),
                           Expanded(
-                            child: TextField(
+                            child: TextFormField(
                               controller: mesController,
+                              focusNode: _mesFocus,
                               keyboardType: TextInputType.number,
+                              textInputAction: TextInputAction.next,
+                              onFieldSubmitted: (_) {
+                                FocusScope.of(context).requestFocus(_diaFocus);
+                              },
                               decoration: InputDecoration(
                                 labelText: 'Mês',
                                 border: OutlineInputBorder(
@@ -302,9 +459,14 @@ class _PetEditDialogState extends State<PetEditDialog> {
                           ),
                           const SizedBox(width: 10),
                           Expanded(
-                            child: TextField(
+                            child: TextFormField(
                               controller: diaController,
+                              focusNode: _diaFocus,
                               keyboardType: TextInputType.number,
+                              textInputAction: TextInputAction.next,
+                              onFieldSubmitted: (_) {
+                                FocusScope.of(context).requestFocus(_pesoFocus);
+                              },
                               decoration: InputDecoration(
                                 labelText: 'Dia',
                                 border: OutlineInputBorder(
@@ -317,13 +479,17 @@ class _PetEditDialogState extends State<PetEditDialog> {
                           ),
                         ],
                       ),
-
                       const SizedBox(height: 16),
 
-                      // Peso
+                      // ✅ Peso - Enter vai para Altura
                       TextFormField(
                         controller: pesoController,
+                        focusNode: _pesoFocus,
                         keyboardType: TextInputType.number,
+                        textInputAction: TextInputAction.next,
+                        onFieldSubmitted: (_) {
+                          FocusScope.of(context).requestFocus(_alturaFocus);
+                        },
                         decoration: InputDecoration(
                           labelText: 'Peso (kg)',
                           prefixIcon: const Icon(
@@ -343,13 +509,17 @@ class _PetEditDialogState extends State<PetEditDialog> {
                           return null;
                         },
                       ),
-
                       const SizedBox(height: 16),
 
-                      // Altura
+                      // ✅ Altura - Enter vai para o botão
                       TextFormField(
                         controller: alturaController,
+                        focusNode: _alturaFocus,
                         keyboardType: TextInputType.number,
+                        textInputAction: TextInputAction.done,
+                        onFieldSubmitted: (_) {
+                          _salvarPet();
+                        },
                         decoration: InputDecoration(
                           labelText: 'Altura (cm) - opcional',
                           prefixIcon: const Icon(
@@ -363,7 +533,6 @@ class _PetEditDialogState extends State<PetEditDialog> {
                           fillColor: Colors.grey.shade50,
                         ),
                       ),
-
                       const SizedBox(height: 24),
 
                       // Botão Salvar
