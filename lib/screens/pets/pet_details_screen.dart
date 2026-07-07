@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:syscopet/providers/pet_provider.dart';
+
+import '../../widgets/common/custom_snackbar.dart';
 import '../../providers/auth_provider.dart';
 import '../../models/pet_model.dart';
 import 'pet_edit_dialog.dart';
@@ -39,11 +41,10 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
     if (!mounted) return;
 
     if (erro != null) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(erro)));
+      CustomSnackbar.showError(context, erro);
       return;
     }
 
-    // Atualiza localmente
     setState(() {
       _currentPet = PetModel(
         idPet: _currentPet.idPet,
@@ -60,9 +61,11 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
       );
     });
 
-    ScaffoldMessenger.of(
+    CustomSnackbar.showSuccess(
       context,
-    ).showSnackBar(const SnackBar(content: Text("Foto enviada com sucesso!")));
+      'Foto enviada com sucesso!',
+      color: const Color(0xFF047857),
+    );
   }
 
   Future<void> _removerFoto() async {
@@ -72,7 +75,7 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
     if (!mounted) return;
 
     if (erro != null) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(erro)));
+      CustomSnackbar.showError(context, erro);
       return;
     }
 
@@ -90,9 +93,11 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
       );
     });
 
-    ScaffoldMessenger.of(
+    CustomSnackbar.showSuccess(
       context,
-    ).showSnackBar(const SnackBar(content: Text("Foto removida com sucesso!")));
+      'Foto removida com sucesso!',
+      color: const Color(0xFF047857),
+    );
   }
 
   @override
@@ -552,19 +557,15 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
               if (!context.mounted) return;
 
               if (erro != null) {
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(SnackBar(content: Text(erro)));
+                CustomSnackbar.showError(context, erro);
                 return;
               }
 
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Pet excluído com sucesso'),
-                  backgroundColor: Color(0xFF059669),
-                ),
+              CustomSnackbar.showSuccess(
+                context,
+                'Pet excluído com sucesso!',
+                color: const Color(0xFF047857),
               );
-
               Navigator.pop(context, true);
             },
             style: ElevatedButton.styleFrom(
