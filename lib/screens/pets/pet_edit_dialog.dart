@@ -48,7 +48,6 @@ class _PetEditDialogState extends State<PetEditDialog> {
   void initState() {
     super.initState();
 
-    // ✅ Preenche com dados do pet
     nomeController.text = widget.pet.nome;
     pesoController.text = widget.pet.peso.toString();
 
@@ -57,7 +56,7 @@ class _PetEditDialogState extends State<PetEditDialog> {
     }
 
     especieSelecionada = widget.pet.especie;
-    racaSelecionadaId = widget.pet.idRaca;
+    racaSelecionadaId = widget.pet.idRaca; // ✅ Mantém a raça selecionada
 
     if (widget.pet.dataNascimento != null) {
       final data = widget.pet.dataNascimento!.split('T').first;
@@ -112,7 +111,8 @@ class _PetEditDialogState extends State<PetEditDialog> {
     setState(() {
       carregandoRacas = true;
       racas = [];
-      racaSelecionadaId = null;
+      // ✅ NÃO zere racaSelecionadaId aqui!
+      // racaSelecionadaId = null;  ❌ Remova essa linha!
     });
 
     try {
@@ -299,28 +299,175 @@ class _PetEditDialogState extends State<PetEditDialog> {
                       ),
                       const SizedBox(height: 16),
 
-                      // ✅ Espécie - Após selecionar, vai para Raça ou Ano
+                      // ✅ Espécie
                       DropdownButtonFormField<String>(
                         value: especieSelecionada,
                         focusNode: _especieFocus,
                         decoration: InputDecoration(
                           labelText: 'Espécie',
                           prefixIcon: const Icon(
-                            Icons.category_outlined,
+                            Icons.category_outlined, // ✅ SEMPRE genérico
                             color: Color(0xFF0D9488),
                           ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.grey.shade300),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: Color(0xFF0D9488),
+                              width: 2,
+                            ),
+                          ),
                           filled: true,
                           fillColor: Colors.grey.shade50,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
                         ),
+                        icon: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF0D9488).withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Icon(
+                            Icons.keyboard_arrow_down,
+                            color: Color(0xFF0D9488),
+                            size: 20,
+                          ),
+                        ),
+                        iconSize: 20,
+                        dropdownColor: Colors.white,
+                        menuMaxHeight: 300,
+                        // ✅ Campo selecionado: ícone genérico (prefixIcon) + texto com ícone específico
+                        selectedItemBuilder: (context) {
+                          return [
+                            // ✅ Cão - Verde
+                            const Row(
+                              children: [
+                                Icon(
+                                  Icons.pets,
+                                  color: Color(0xFF0D9488),
+                                  size: 18,
+                                ),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Cão',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            // ✅ Gato - Roxo
+                            const Row(
+                              children: [
+                                Icon(
+                                  Icons.pets,
+                                  color: Color(0xFF8B5CF6),
+                                  size: 18,
+                                ),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Gato',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            // ✅ Outro - Verde (padrão)
+                            const Row(
+                              children: [
+                                Icon(
+                                  Icons.help_outline,
+                                  color: Color(0xFF0D9488),
+                                  size: 18,
+                                ),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Outro',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ];
+                        },
+                        // ✅ Na lista: ícone específico + texto
                         items: const [
-                          DropdownMenuItem(value: 'cao', child: Text('Cão')),
-                          DropdownMenuItem(value: 'gato', child: Text('Gato')),
+                          // ✅ Cão - Verde
+                          DropdownMenuItem(
+                            value: 'cao',
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.pets,
+                                  color: Color(0xFF0D9488),
+                                  size: 20,
+                                ),
+                                SizedBox(width: 12),
+                                Text(
+                                  'Cão',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          // ✅ Gato - Roxo
+                          DropdownMenuItem(
+                            value: 'gato',
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.pets,
+                                  color: Color(0xFF8B5CF6),
+                                  size: 20,
+                                ),
+                                SizedBox(width: 12),
+                                Text(
+                                  'Gato',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          // ✅ Outro - Verde (padrão)
                           DropdownMenuItem(
                             value: 'outro',
-                            child: Text('Outro'),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.help_outline,
+                                  color: Color(0xFF0D9488),
+                                  size: 20,
+                                ),
+                                SizedBox(width: 12),
+                                Text(
+                                  'Outro',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ],
                         onChanged: (value) {
@@ -331,7 +478,6 @@ class _PetEditDialogState extends State<PetEditDialog> {
                           });
 
                           if (value == 'cao' || value == 'gato') {
-                            // ✅ Passa true para focar na raça após carregar
                             carregarRacas(value!, focarAposCarregar: true);
                           } else {
                             Future.delayed(
@@ -355,8 +501,12 @@ class _PetEditDialogState extends State<PetEditDialog> {
                       ),
                       const SizedBox(height: 16),
 
-                      // ✅ Raça - Após selecionar, vai para Ano
+                      // ✅ Raça
+                      // ✅ Raça
                       DropdownButtonFormField<int>(
+                        key: ValueKey(
+                          'raca_${especieSelecionada}_${racas.length}',
+                        ), // ✅ Força reconstrução
                         value: racaSelecionadaId,
                         focusNode: _racaFocus,
                         decoration: InputDecoration(
@@ -364,30 +514,110 @@ class _PetEditDialogState extends State<PetEditDialog> {
                               ? 'Carregando raças...'
                               : 'Raça',
                           prefixIcon: const Icon(
-                            Icons.pets_outlined,
+                            Icons.pets, // ✅ SEMPRE genérico (pata)
                             color: Color(0xFF0D9488),
                           ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.grey.shade300),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: Color(0xFF0D9488),
+                              width: 2,
+                            ),
+                          ),
                           filled: true,
                           fillColor: Colors.grey.shade50,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
                         ),
-                        items: racas.map((raca) {
-                          return DropdownMenuItem<int>(
-                            value: raca.idRaca,
-                            child: Text(raca.nome),
-                          );
-                        }).toList(),
+                        icon: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF0D9488).withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Icon(
+                            Icons.keyboard_arrow_down,
+                            color: Color(0xFF0D9488),
+                            size: 20,
+                          ),
+                        ),
+                        iconSize: 20,
+                        dropdownColor: Colors.white,
+                        menuMaxHeight: 300,
+                        // ✅ Campo selecionado: apenas texto (ícone genérico já está no prefixIcon)
+                        selectedItemBuilder: (context) {
+                          if (racas.isEmpty) {
+                            return <Widget>[];
+                          }
+
+                          return racas.map((raca) {
+                            return Text(
+                              raca.nome,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: Color(0xFF1E293B),
+                              ),
+                            );
+                          }).toList();
+                        },
+                        // ✅ Na lista: ícone específico + texto
+                        items: racas.isEmpty
+                            ? null
+                            : racas.map((raca) {
+                                return DropdownMenuItem<int>(
+                                  value: raca.idRaca,
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        especieSelecionada == 'cao'
+                                            ? Icons.pets
+                                            : especieSelecionada == 'gato'
+                                            ? Icons.pets
+                                            : Icons.help_outline,
+                                        color: especieSelecionada == 'cao'
+                                            ? const Color(
+                                                0xFF0D9488,
+                                              ) // ✅ Cão - Verde
+                                            : especieSelecionada == 'gato'
+                                            ? const Color(
+                                                0xFF8B5CF6,
+                                              ) // ✅ Gato - Roxo
+                                            : const Color(0xFF0D9488),
+                                        size: 20,
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Text(
+                                        raca.nome,
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }).toList(),
                         onChanged:
                             especieSelecionada == null ||
                                 especieSelecionada == 'outro' ||
-                                carregandoRacas
+                                carregandoRacas ||
+                                racas.isEmpty
                             ? null
                             : (value) {
                                 setState(() {
                                   racaSelecionadaId = value;
                                 });
+
                                 Future.delayed(
                                   const Duration(milliseconds: 100),
                                   () {
@@ -406,78 +636,6 @@ class _PetEditDialogState extends State<PetEditDialog> {
                           }
                           return null;
                         },
-                      ),
-                      const SizedBox(height: 16),
-
-                      // ✅ Data de nascimento
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextFormField(
-                              controller: anoController,
-                              focusNode: _anoFocus,
-                              keyboardType: TextInputType.number,
-                              textInputAction: TextInputAction.next,
-                              onFieldSubmitted: (_) {
-                                FocusScope.of(context).requestFocus(_mesFocus);
-                              },
-                              decoration: InputDecoration(
-                                labelText: 'Ano *',
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                filled: true,
-                                fillColor: Colors.grey.shade50,
-                              ),
-                              validator: (value) {
-                                if (value == null || value.trim().isEmpty) {
-                                  return 'Obrigatório';
-                                }
-                                return null;
-                              },
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: TextFormField(
-                              controller: mesController,
-                              focusNode: _mesFocus,
-                              keyboardType: TextInputType.number,
-                              textInputAction: TextInputAction.next,
-                              onFieldSubmitted: (_) {
-                                FocusScope.of(context).requestFocus(_diaFocus);
-                              },
-                              decoration: InputDecoration(
-                                labelText: 'Mês',
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                filled: true,
-                                fillColor: Colors.grey.shade50,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: TextFormField(
-                              controller: diaController,
-                              focusNode: _diaFocus,
-                              keyboardType: TextInputType.number,
-                              textInputAction: TextInputAction.next,
-                              onFieldSubmitted: (_) {
-                                FocusScope.of(context).requestFocus(_pesoFocus);
-                              },
-                              decoration: InputDecoration(
-                                labelText: 'Dia',
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                filled: true,
-                                fillColor: Colors.grey.shade50,
-                              ),
-                            ),
-                          ),
-                        ],
                       ),
                       const SizedBox(height: 16),
 
