@@ -488,7 +488,6 @@ class _PetEditDialogState extends State<PetEditDialog> {
                       const SizedBox(height: 16),
 
                       // ✅ Raça
-                      // ✅ Raça
                       DropdownButtonFormField<int>(
                         key: ValueKey(
                           'raca_${especieSelecionada}_${racas.length}',
@@ -622,6 +621,78 @@ class _PetEditDialogState extends State<PetEditDialog> {
                           }
                           return null;
                         },
+                      ),
+                      const SizedBox(height: 16),
+
+                      // ✅ Data de nascimento
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextFormField(
+                              controller: anoController,
+                              focusNode: _anoFocus,
+                              keyboardType: TextInputType.number,
+                              textInputAction: TextInputAction.next,
+                              onFieldSubmitted: (_) {
+                                FocusScope.of(context).requestFocus(_mesFocus);
+                              },
+                              decoration: InputDecoration(
+                                labelText: 'Ano *',
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                filled: true,
+                                fillColor: Colors.grey.shade50,
+                              ),
+                              validator: (value) {
+                                if (value == null || value.trim().isEmpty) {
+                                  return 'Obrigatório';
+                                }
+                                return null;
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: TextFormField(
+                              controller: mesController,
+                              focusNode: _mesFocus,
+                              keyboardType: TextInputType.number,
+                              textInputAction: TextInputAction.next,
+                              onFieldSubmitted: (_) {
+                                FocusScope.of(context).requestFocus(_diaFocus);
+                              },
+                              decoration: InputDecoration(
+                                labelText: 'Mês',
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                filled: true,
+                                fillColor: Colors.grey.shade50,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: TextFormField(
+                              controller: diaController,
+                              focusNode: _diaFocus,
+                              keyboardType: TextInputType.number,
+                              textInputAction: TextInputAction.next,
+                              onFieldSubmitted: (_) {
+                                FocusScope.of(context).requestFocus(_pesoFocus);
+                              },
+                              decoration: InputDecoration(
+                                labelText: 'Dia',
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                filled: true,
+                                fillColor: Colors.grey.shade50,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 16),
 
