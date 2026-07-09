@@ -9,7 +9,6 @@ import 'pet_edit_dialog.dart';
 
 class PetDetailsScreen extends StatefulWidget {
   final PetModel pet;
-
   const PetDetailsScreen({super.key, required this.pet});
 
   @override
@@ -19,6 +18,7 @@ class PetDetailsScreen extends StatefulWidget {
 class _PetDetailsScreenState extends State<PetDetailsScreen> {
   final ImagePicker _picker = ImagePicker();
   late PetModel _currentPet;
+  bool _houveAlteracao = false;
 
   @override
   void initState() {
@@ -44,27 +44,34 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
       return;
     }
 
+    await provider.carregarPets(_currentPet.idUsuario,);
+
+    if (!mounted) return;
+
+    final petAtualizado = provider.pets.firstWhere(
+      (p) => p.idPet == _currentPet.idPet,
+      orElse: () => _currentPet,
+    );
+
     setState(() {
-      _currentPet = PetModel(
-        idPet: _currentPet.idPet,
-        nome: _currentPet.nome,
-        especie: _currentPet.especie,
-        dataNascimento: _currentPet.dataNascimento,
-        peso: _currentPet.peso,
-        altura: _currentPet.altura,
-        porte: _currentPet.porte,
-        idUsuario: _currentPet.idUsuario,
-        urlFoto: provider.pets
-            .firstWhere((p) => p.idPet == _currentPet.idPet)
-            .urlFoto,
-      );
+      _currentPet = petAtualizado;
+      _houveAlteracao = true;
     });
+
+    if (_currentPet.urlFoto == null || _currentPet.urlFoto!.isEmpty) {
+      CustomSnackbar.showWarning(
+        context,
+        'Foto enviada, mas a URL não voltou no pet. Confira se a API salvou url_foto.',
+      );
+      return;
+    }
 
     CustomSnackbar.showSuccess(
       context,
       'Foto enviada com sucesso!',
       color: const Color(0xFF047857),
     );
+
   }
 
   Future<void> _removerFoto() async {
@@ -78,8 +85,13 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
       return;
     }
 
-    setState(() {
-      _currentPet = PetModel(
+    await provider.carregarPets(_currentPet.idUsuario,);
+
+    if (!mounted) return;
+
+    final petAtualizado = provider.pets.firstWhere(
+      (p) => p.idPet == _currentPet.idPet,
+      orElse: () => PetModel(
         idPet: _currentPet.idPet,
         nome: _currentPet.nome,
         especie: _currentPet.especie,
@@ -89,7 +101,12 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
         porte: _currentPet.porte,
         idUsuario: _currentPet.idUsuario,
         urlFoto: null,
-      );
+      ),
+    );
+
+    setState(() {
+      _currentPet = petAtualizado;
+      _houveAlteracao = true;
     });
 
     CustomSnackbar.showSuccess(
@@ -235,7 +252,7 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
                   children: [
                     // ✅ Botão Voltar com hover
                     _HoverButton(
-                      onTap: () => Navigator.pop(context),
+                      onTap: () => Navigator.pop(context, _houveAlteracao ? true : null,),
                       hoverColor: Colors.white.withOpacity(0.3),
                       child: Container(
                         width: 40,
