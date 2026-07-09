@@ -422,7 +422,7 @@ class _PetFormDialogState extends State<PetFormDialog> {
                             racas = [];
                           });
 
-                          if (value == 'cao' || value == 'gato') {
+                          if (value == 'cao' || value == 'gato' || value =='outro') {
                             carregarRacas(value!);
                           } else {
                             Future.delayed(
@@ -547,7 +547,6 @@ class _PetFormDialogState extends State<PetFormDialog> {
                               }).toList(),
                         onChanged:
                             especieSelecionada == null ||
-                                especieSelecionada == 'outro' ||
                                 carregandoRacas ||
                                 racas.isEmpty
                             ? null
@@ -567,7 +566,8 @@ class _PetFormDialogState extends State<PetFormDialog> {
                               },
                         validator: (value) {
                           if (especieSelecionada == 'cao' ||
-                              especieSelecionada == 'gato') {
+                              especieSelecionada == 'gato' ||
+                              especieSelecionada == 'outro') {
                             if (value == null) {
                               return 'Selecione uma raça';
                             }
