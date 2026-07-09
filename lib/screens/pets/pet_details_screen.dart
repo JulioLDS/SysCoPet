@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:syscopet/providers/pet_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../models/pet_model.dart';
+import '../../widgets/common/custom_snackbar.dart';
 import 'pet_edit_dialog.dart';
 
 class PetDetailsScreen extends StatefulWidget {
@@ -39,11 +40,10 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
     if (!mounted) return;
 
     if (erro != null) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(erro)));
+      CustomSnackbar.showError(context, erro);
       return;
     }
 
-    // Atualiza localmente
     setState(() {
       _currentPet = PetModel(
         idPet: _currentPet.idPet,
@@ -60,9 +60,11 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
       );
     });
 
-    ScaffoldMessenger.of(
+    CustomSnackbar.showSuccess(
       context,
-    ).showSnackBar(const SnackBar(content: Text("Foto enviada com sucesso!")));
+      'Foto enviada com sucesso!',
+      color: const Color(0xFF047857),
+    );
   }
 
   Future<void> _removerFoto() async {
@@ -72,7 +74,7 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
     if (!mounted) return;
 
     if (erro != null) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(erro)));
+      CustomSnackbar.showError(context, erro);
       return;
     }
 
@@ -90,432 +92,10 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
       );
     });
 
-    ScaffoldMessenger.of(
+    CustomSnackbar.showSuccess(
       context,
-    ).showSnackBar(const SnackBar(content: Text("Foto removida com sucesso!")));
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final especieFormatada = _formatarEspecie(_currentPet.especie);
-    final idade = calcularIdade(_currentPet.dataNascimento);
-
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      body: Column(
-        children: [
-          // ✅ HEADER
-          Container(
-            color: const Color(0xFF0D9488),
-            padding: const EdgeInsets.fromLTRB(20, 15, 20, 20),
-            child: Row(
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.arrow_back, color: Colors.white),
-                  onPressed: () => Navigator.pop(context),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _currentPet.nome,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        '$especieFormatada • $idade',
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.9),
-                          fontSize: 13,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                // ✅ Botão Editar
-                TextButton.icon(
-                  onPressed: () async {
-                    final atualizou = await showDialog<bool>(
-                      context: context,
-                      builder: (context) => PetEditDialog(pet: _currentPet),
-                    );
-
-                    if (atualizou == true) {
-                      if (!mounted) return;
-                      Navigator.pop(context, true);
-                    }
-                  },
-                  icon: const Icon(Icons.edit, color: Colors.white, size: 18),
-                  label: const Text(
-                    'Editar',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
-                    backgroundColor: Colors.white.withOpacity(0.2),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // ✅ CONTEÚDO
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // 📷 FOTO DO PET
-                  Center(
-                    child: Column(
-                      children: [
-                        Stack(
-                          children: [
-                            CircleAvatar(
-                              radius: 80,
-                              backgroundColor: Colors.grey.shade200,
-                              backgroundImage:
-                                  _currentPet.urlFoto != null &&
-                                      _currentPet.urlFoto!.isNotEmpty
-                                  ? NetworkImage(_currentPet.urlFoto!)
-                                  : null,
-                              child:
-                                  (_currentPet.urlFoto == null ||
-                                      _currentPet.urlFoto!.isEmpty)
-                                  ? Icon(
-                                      Icons.pets,
-                                      size: 80,
-                                      color: Colors.grey.shade400,
-                                    )
-                                  : null,
-                            ),
-                            // Botões de foto
-                            Positioned(
-                              bottom: 0,
-                              right: 0,
-                              child: Row(
-                                children: [
-                                  if (_currentPet.urlFoto != null)
-                                    IconButton(
-                                      onPressed: _removerFoto,
-                                      icon: const Icon(Icons.delete),
-                                      style: IconButton.styleFrom(
-                                        backgroundColor: Colors.red,
-                                        foregroundColor: Colors.white,
-                                      ),
-                                    ),
-                                  IconButton(
-                                    onPressed: _selecionarFoto,
-                                    icon: const Icon(Icons.camera_alt),
-                                    style: IconButton.styleFrom(
-                                      backgroundColor: const Color(0xFF0D9488),
-                                      foregroundColor: Colors.white,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          _currentPet.urlFoto == null
-                              ? 'Clique na câmera para adicionar foto'
-                              : 'Clique na câmera para alterar foto',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey.shade600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-
-                  // 📊 VISÃO GERAL
-                  _buildSectionTitle('Visão Geral'),
-                  const SizedBox(height: 12),
-                  _buildInfoGrid(),
-                  const SizedBox(height: 24),
-
-                  // 💉 VACINAS
-                  _buildSectionTitle('Vacinas'),
-                  const SizedBox(height: 12),
-                  _buildPlaceholderCard(
-                    icon: Icons.vaccines_outlined,
-                    iconColor: const Color(0xFF059669),
-                    iconBg: const Color(0xFFD1FAE5),
-                    title: 'Controle de Vacinas',
-                    subtitle: 'Em desenvolvimento',
-                  ),
-                  const SizedBox(height: 24),
-
-                  // 📅 CONSULTAS
-                  _buildSectionTitle('Consultas'),
-                  const SizedBox(height: 12),
-                  _buildPlaceholderCard(
-                    icon: Icons.calendar_today_outlined,
-                    iconColor: const Color(0xFF2563EB),
-                    iconBg: const Color(0xFFDBEAFE),
-                    title: 'Histórico de Consultas',
-                    subtitle: 'Em desenvolvimento',
-                  ),
-                  const SizedBox(height: 24),
-
-                  // 🔔 LEMBRETES
-                  _buildSectionTitle('Lembretes'),
-                  const SizedBox(height: 12),
-                  _buildPlaceholderCard(
-                    icon: Icons.notifications_outlined,
-                    iconColor: const Color(0xFFEA580C),
-                    iconBg: const Color(0xFFFFEDD5),
-                    title: 'Gerenciador de Lembretes',
-                    subtitle: 'Em desenvolvimento',
-                  ),
-                  const SizedBox(height: 16),
-
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Funcionalidade em desenvolvimento'),
-                          ),
-                        );
-                      },
-                      icon: const Icon(Icons.add, color: Color(0xFF0D9488)),
-                      label: const Text(
-                        'Adicionar Lembrete',
-                        style: TextStyle(color: Color(0xFF0D9488)),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Color(0xFF0D9488)),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 40),
-
-                  // 🗑️ Botão Excluir Pet
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: () => _confirmarExclusao(context),
-                      icon: const Icon(Icons.delete),
-                      label: const Text('Excluir Pet'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSectionTitle(String title) {
-    return Row(
-      children: [
-        Container(
-          width: 4,
-          height: 20,
-          decoration: const BoxDecoration(
-            color: Color(0xFF0D9488),
-            borderRadius: BorderRadius.horizontal(left: Radius.circular(2)),
-          ),
-        ),
-        const SizedBox(width: 10),
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF1E293B),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildInfoGrid() {
-    return GridView.count(
-      crossAxisCount: 2,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: 12,
-      crossAxisSpacing: 12,
-      childAspectRatio: 1.8,
-      children: [
-        _buildInfoCard(
-          icon: Icons.monitor_weight_outlined,
-          iconColor: const Color(0xFFEA580C),
-          iconBg: const Color(0xFFFFEDD5),
-          label: 'Peso',
-          value: '${_currentPet.peso} kg',
-        ),
-        _buildInfoCard(
-          icon: Icons.height,
-          iconColor: const Color(0xFF7C3AED),
-          iconBg: const Color(0xFFEDE9FE),
-          label: 'Altura',
-          value: _currentPet.altura != null
-              ? '${_currentPet.altura} cm'
-              : 'N/A',
-        ),
-        _buildInfoCard(
-          icon: Icons.cake_outlined,
-          iconColor: const Color(0xFFDC2626),
-          iconBg: const Color(0xFFFEE2E2),
-          label: 'Nascimento',
-          value: _formatarData(_currentPet.dataNascimento),
-        ),
-        _buildInfoCard(
-          icon: Icons.pets,
-          iconColor: const Color(0xFF0D9488),
-          iconBg: const Color(0xFFD1FAE5),
-          label: 'Porte',
-          value: _currentPet.porte.isNotEmpty ? _currentPet.porte : 'N/A',
-        ),
-      ],
-    );
-  }
-
-  Widget _buildInfoCard({
-    required IconData icon,
-    required Color iconColor,
-    required Color iconBg,
-    required String label,
-    required String value,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: iconBg,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, color: iconColor, size: 20),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  value,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF1E293B),
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPlaceholderCard({
-    required IconData icon,
-    required Color iconColor,
-    required Color iconBg,
-    required String title,
-    required String subtitle,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: iconBg,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: iconColor, size: 28),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF1E293B),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
-                ),
-              ],
-            ),
-          ),
-          Icon(
-            Icons.construction_outlined,
-            color: Colors.grey.shade400,
-            size: 24,
-          ),
-        ],
-      ),
+      'Foto removida com sucesso!',
+      color: const Color(0xFF047857),
     );
   }
 
@@ -552,19 +132,15 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
               if (!context.mounted) return;
 
               if (erro != null) {
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(SnackBar(content: Text(erro)));
+                CustomSnackbar.showError(context, erro);
                 return;
               }
 
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Pet excluído com sucesso'),
-                  backgroundColor: Color(0xFF059669),
-                ),
+              CustomSnackbar.showSuccess(
+                context,
+                'Pet excluído com sucesso!',
+                color: const Color(0xFF047857),
               );
-
               Navigator.pop(context, true);
             },
             style: ElevatedButton.styleFrom(
@@ -631,4 +207,1200 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
 
     return '$anos anos';
   }
+
+  @override
+  Widget build(BuildContext context) {
+    final especieFormatada = _formatarEspecie(_currentPet.especie);
+    final idade = calcularIdade(_currentPet.dataNascimento);
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
+      body: CustomScrollView(
+        slivers: [
+          // ✅ HEADER COM APP BAR
+          SliverToBoxAdapter(
+            child: Container(
+              height: 100,
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFF0D9488), Color(0xFF14B8A6)],
+                ),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: SafeArea(
+                bottom: false,
+                child: Row(
+                  children: [
+                    // ✅ Botão Voltar com hover
+                    _HoverButton(
+                      onTap: () => Navigator.pop(context),
+                      hoverColor: Colors.white.withOpacity(0.3),
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(100),
+                          border: Border.all(
+                            color: Colors.white.withOpacity(0.3),
+                            width: 1,
+                          ),
+                        ),
+                        child: const Icon(
+                          Icons.arrow_back,
+                          color: Colors.white,
+                          size: 22,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 24),
+                    // Título e Subtítulo
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          _currentPet.nome,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '$especieFormatada • $idade',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.9),
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const Spacer(),
+                    // ✅ Botão Editar com hover
+                    _HoverButton(
+                      onTap: () async {
+                        final atualizou = await showDialog<bool>(
+                          context: context,
+                          builder: (context) => PetEditDialog(pet: _currentPet),
+                        );
+
+                        if (atualizou == true && mounted) {
+                          Navigator.pop(context, true);
+                        }
+                      },
+                      hoverColor: Colors.white,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 10,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(24),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: const [
+                            Icon(
+                              Icons.edit,
+                              color: Color(0xFF0D9488),
+                              size: 16,
+                            ),
+                            SizedBox(width: 6),
+                            Text(
+                              'Editar',
+                              style: TextStyle(
+                                color: Color(0xFF0D9488),
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          // ✅ CONTEÚDO
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 📷 CARD DE PERFIL
+                  _buildProfileCard(),
+                  const SizedBox(height: 24),
+
+                  // 📊 VISÃO GERAL
+                  _buildSectionTitle('Visão geral', Icons.bar_chart),
+                  const SizedBox(height: 12),
+                  _buildOverviewGrid(),
+                  const SizedBox(height: 24),
+
+                  // 💚 CUIDADOS
+                  _buildSectionTitle('Cuidados', Icons.favorite_border),
+                  const SizedBox(height: 12),
+                  _buildCareItem(
+                    icon: Icons.vaccines_outlined,
+                    iconColor: const Color(0xFF10B981),
+                    iconBg: const Color(0xFFD1FAE5),
+                    title: 'Vacinas',
+                    subtitle: 'Controle de Vacinas',
+                    badge: 'Em desenvolvimento',
+                    badgeColor: const Color(0xFF10B981),
+                  ),
+                  const SizedBox(height: 12),
+                  _buildCareItem(
+                    icon: Icons.calendar_today_outlined,
+                    iconColor: const Color(0xFF8B5CF6),
+                    iconBg: const Color(0xFFEDE9FE),
+                    title: 'Consultas',
+                    subtitle: 'Histórico de Consultas',
+                    badge: 'Em desenvolvimento',
+                    badgeColor: const Color(0xFF8B5CF6),
+                  ),
+                  const SizedBox(height: 12),
+                  _buildCareItem(
+                    icon: Icons.notifications_outlined,
+                    iconColor: const Color(0xFFF59E0B),
+                    iconBg: const Color(0xFFFFEDD5),
+                    title: 'Lembretes',
+                    subtitle: 'Gerenciador de Lembretes',
+                    badge: 'Em desenvolvimento',
+                    badgeColor: const Color(0xFFF59E0B),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // ⏰ PRÓXIMOS LEMBRETES - BLOCO ÚNICO
+                  _buildSectionTitle('Próximos lembretes', Icons.access_time),
+                  const SizedBox(height: 12),
+
+                  // ✅ Container único para todos os lembretes + botão
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.03),
+                          blurRadius: 10,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      children: [
+                        // ✅ Lembrete 1 - Vacina
+                        Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Row(
+                            children: [
+                              // Ícone
+                              Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: const BoxDecoration(
+                                  color: Color(0xFFD1FAE5),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.vaccines_outlined,
+                                  color: Color(0xFF059669),
+                                  size: 22,
+                                ),
+                              ),
+                              const SizedBox(width: 14),
+                              // Texto
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Vacina V8',
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w600,
+                                        color: Color(0xFF1E293B),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Mel',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: Colors.grey.shade600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              // Data/Hora com border radius
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFD1FAE5),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    const Text(
+                                      '24/05/2025',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                        color: Color(0xFF059669),
+                                      ),
+                                    ),
+                                    Text(
+                                      'Sábado, 10:00',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: const Color(
+                                          0xFF059669,
+                                        ).withOpacity(0.8),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              // Seta
+                              const Icon(
+                                Icons.chevron_right,
+                                color: Color(0xFF0D9488),
+                                size: 20,
+                              ),
+                            ],
+                          ),
+                        ),
+                        // ✅ Linha separadora
+                        Divider(
+                          height: 1,
+                          thickness: 1,
+                          color: Colors.grey.shade200,
+                        ),
+                        // ✅ Lembrete 2 - Consulta
+                        Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Row(
+                            children: [
+                              // Ícone
+                              Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: const BoxDecoration(
+                                  color: Color(0xFFDBEAFE),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.calendar_today_outlined,
+                                  color: Color(0xFF2563EB),
+                                  size: 22,
+                                ),
+                              ),
+                              const SizedBox(width: 14),
+                              // Texto
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Consulta veterinária',
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w600,
+                                        color: Color(0xFF1E293B),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Luna',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: Colors.grey.shade600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              // Data/Hora com border radius
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFDBEAFE),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    const Text(
+                                      '02/06/2025',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                        color: Color(0xFF2563EB),
+                                      ),
+                                    ),
+                                    Text(
+                                      'Segunda, 14:30',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: const Color(
+                                          0xFF2563EB,
+                                        ).withOpacity(0.8),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              // Seta
+                              const Icon(
+                                Icons.chevron_right,
+                                color: Color(0xFF0D9488),
+                                size: 20,
+                              ),
+                            ],
+                          ),
+                        ),
+                        // ✅ Linha separadora
+                        Divider(
+                          height: 1,
+                          thickness: 1,
+                          color: Colors.grey.shade200,
+                        ),
+                        // ✅ Botão "Ver todos os lembretes" COM HOVER
+                        StatefulBuilder(
+                          builder: (context, setState) {
+                            bool isHovered = false;
+                            return MouseRegion(
+                              cursor: SystemMouseCursors.click,
+                              onEnter: (_) => setState(() => isHovered = true),
+                              onExit: (_) => setState(() => isHovered = false),
+                              child: GestureDetector(
+                                onTap: () {},
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 200),
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 14,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: isHovered
+                                        ? const Color(0xFFECFDF5)
+                                        : Colors.transparent,
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: const [
+                                      Text(
+                                        'Ver todos os lembretes',
+                                        style: TextStyle(
+                                          color: Color(0xFF0D9488),
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                      SizedBox(width: 6),
+                                      Icon(
+                                        Icons.arrow_forward,
+                                        color: Color(0xFF0D9488),
+                                        size: 18,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // ✅ Botão "Adicionar lembrete" - SEM hover
+                  MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: GestureDetector(
+                      onTap: () {
+                        CustomSnackbar.showWarning(
+                          context,
+                          'Funcionalidade em desenvolvimento',
+                        );
+                      },
+                      child: CustomPaint(
+                        painter: DashedBorderPainter(
+                          color: const Color(0xFF0D9488).withOpacity(0.5),
+                          strokeWidth: 2.5,
+                          dashLength: 8,
+                          gapLength: 5,
+                          radius: 16,
+                        ),
+                        child: Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFECFDF5),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: const BoxDecoration(
+                                  color: Color(0xFF0D9488),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.add,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Adicionar lembrete',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        color: Color(0xFF1E293B),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Crie um novo lembrete para o seu pet',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: Colors.grey.shade600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const Icon(
+                                Icons.chevron_right,
+                                color: Color(0xFF0D9488),
+                                size: 24,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // ✅ Botão "Excluir pet" - SEM hover
+                  MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: GestureDetector(
+                      onTap: () => _confirmarExclusao(context),
+                      child: CustomPaint(
+                        painter: DashedBorderPainter(
+                          color: Colors.red.withOpacity(0.5),
+                          strokeWidth: 2.5,
+                          dashLength: 8,
+                          gapLength: 5,
+                          radius: 16,
+                        ),
+                        child: Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFEF2F2),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: const BoxDecoration(
+                                  color: Colors.red,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.delete,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Excluir pet',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        color: Color(0xFF1E293B),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Remover ${_currentPet.nome} da sua conta',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: Colors.grey.shade600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const Icon(
+                                Icons.chevron_right,
+                                color: Colors.red,
+                                size: 24,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProfileCard() {
+    final especieFormatada = _formatarEspecie(_currentPet.especie);
+    final idade = calcularIdade(_currentPet.dataNascimento);
+
+    return Center(
+      child: Container(
+        width: MediaQuery.of(context).size.width * 0.6,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 20,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            // Foto do Pet com borda branca
+            Column(
+              children: [
+                Container(
+                  width: 190,
+                  height: 190,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.grey.shade200, width: 8),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.08),
+                        blurRadius: 12,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      ClipOval(
+                        child:
+                            _currentPet.urlFoto != null &&
+                                _currentPet.urlFoto!.isNotEmpty
+                            ? Image.network(
+                                _currentPet.urlFoto!,
+                                fit: BoxFit.cover,
+                                width: 140,
+                                height: 140,
+                              )
+                            : Icon(
+                                Icons.pets,
+                                size: 60,
+                                color: Colors.grey.shade400,
+                              ),
+                      ),
+                      // Botão da câmera
+                      Positioned(
+                        bottom: 8,
+                        right: 8,
+                        child: MouseRegion(
+                          cursor: SystemMouseCursors.click,
+                          child: GestureDetector(
+                            onTap: _selecionarFoto,
+                            child: Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF0D9488),
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Color(0xFF0D9488),
+                                    blurRadius: 8,
+                                    offset: Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: const Icon(
+                                Icons.camera_alt,
+                                color: Colors.white,
+                                size: 22,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                // ✅ Botão "Clique na câmera para adicionar foto"
+                MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: GestureDetector(
+                    onTap:
+                        _currentPet.urlFoto == null ||
+                            _currentPet.urlFoto!.isEmpty
+                        ? _selecionarFoto
+                        : _removerFoto,
+                    child: CustomPaint(
+                      painter: DashedBorder(
+                        color: const Color(0xFF0D9488).withOpacity(0.3),
+                        strokeWidth: 2.5,
+                        dashLength: 6,
+                        gapLength: 4,
+                      ),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 15,
+                          vertical: 7,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFECFDF5),
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.camera_alt,
+                              color: const Color(0xFF0D9488),
+                              size: 20,
+                            ),
+                            const SizedBox(width: 10),
+                            Text(
+                              _currentPet.urlFoto == null ||
+                                      _currentPet.urlFoto!.isEmpty
+                                  ? 'Clique na câmera para adicionar foto'
+                                  : 'Clique para remover foto',
+                              style: const TextStyle(
+                                color: Color(0xFF0D9488),
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(width: 28),
+            // Informações
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _currentPet.nome,
+                    style: const TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1E293B),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFD1FAE5),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      especieFormatada,
+                      style: const TextStyle(
+                        color: Color(0xFF0D9488),
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    idade,
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: Colors.grey.shade600,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title, IconData icon) {
+    return Row(
+      children: [
+        Icon(icon, color: const Color(0xFF0D9488), size: 20),
+        const SizedBox(width: 8),
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF1E293B),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildOverviewGrid() {
+    return Row(
+      children: [
+        Expanded(
+          child: _buildOverviewCard(
+            icon: Icons.monitor_weight_outlined,
+            iconColor: const Color(0xFFEA580C),
+            iconBg: const Color(0xFFFFEDD5),
+            label: 'Peso',
+            value: '${_currentPet.peso} kg',
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _buildOverviewCard(
+            icon: Icons.height,
+            iconColor: const Color(0xFF7C3AED),
+            iconBg: const Color(0xFFEDE9FE),
+            label: 'Altura',
+            value: _currentPet.altura != null
+                ? '${_currentPet.altura} cm'
+                : 'N/A',
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _buildOverviewCard(
+            icon: Icons.cake_outlined,
+            iconColor: const Color(0xFFEF4444),
+            iconBg: const Color(0xFFFEE2E2),
+            label: 'Nascimento',
+            value: _formatarData(_currentPet.dataNascimento),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _buildOverviewCard(
+            icon: Icons.pets,
+            iconColor: const Color(0xFF0D9488),
+            iconBg: const Color(0xFFD1FAE5),
+            label: 'Porte',
+            value: _currentPet.porte.isNotEmpty ? _currentPet.porte : 'N/A',
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildOverviewCard({
+    required IconData icon,
+    required Color iconColor,
+    required Color iconBg,
+    required String label,
+    required String value,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: iconBg,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: iconColor, size: 20),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.grey.shade600,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF1E293B),
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCareItem({
+    required IconData icon,
+    required Color iconColor,
+    required Color iconBg,
+    required String title,
+    required String subtitle,
+    required String badge,
+    required Color badgeColor,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: iconBg,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: iconColor, size: 28),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF1E293B),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                ),
+                const SizedBox(height: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: badgeColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    badge,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: badgeColor,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Icon(Icons.chevron_right, color: Colors.grey.shade400, size: 24),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReminderItem({
+    required IconData icon,
+    required Color iconColor,
+    required String title,
+    required String subtitle,
+    required String date,
+    required String time,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: iconColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: iconColor, size: 22),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF1E293B),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: iconColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  date,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: iconColor,
+                  ),
+                ),
+                Text(
+                  time,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: iconColor.withOpacity(0.8),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Icon(Icons.chevron_right, color: Colors.grey.shade400, size: 20),
+        ],
+      ),
+    );
+  }
+}
+
+// ✅ Widget para botão com hover - FORA da classe
+class _HoverButton extends StatefulWidget {
+  final Widget child;
+  final VoidCallback onTap;
+  final Color hoverColor;
+
+  const _HoverButton({
+    required this.child,
+    required this.onTap,
+    required this.hoverColor,
+  });
+
+  @override
+  State<_HoverButton> createState() => _HoverButtonState();
+}
+
+class _HoverButtonState extends State<_HoverButton> {
+  bool _isHovering = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _isHovering = true),
+      onExit: (_) => setState(() => _isHovering = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          transform: Matrix4.identity()..scale(_isHovering ? 1.05 : 1.0),
+          child: widget.child,
+        ),
+      ),
+    );
+  }
+}
+
+// ✅ Widget para borda tracejada
+class DashedBorder extends CustomPainter {
+  final Color color;
+  final double strokeWidth;
+  final double dashLength;
+  final double gapLength;
+
+  DashedBorder({
+    required this.color,
+    required this.strokeWidth,
+    this.dashLength = 6,
+    this.gapLength = 4,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = strokeWidth
+      ..style = PaintingStyle.stroke;
+
+    final rect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(0, 0, size.width, size.height),
+      Radius.circular(size.height / 2),
+    );
+
+    final path = Path()..addRRect(rect);
+    final metrics = path.computeMetrics();
+
+    for (final metric in metrics) {
+      double distance = 0.0;
+      while (distance < metric.length) {
+        final start = distance;
+        final end = (distance + dashLength).clamp(0.0, metric.length);
+        final extractPath = metric.extractPath(start, end);
+        canvas.drawPath(extractPath, paint);
+        distance += dashLength + gapLength;
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+// ✅ Widget para borda tracejada arredondada
+class DashedBorderPainter extends CustomPainter {
+  final Color color;
+  final double strokeWidth;
+  final double dashLength;
+  final double gapLength;
+  final double radius;
+
+  DashedBorderPainter({
+    required this.color,
+    required this.strokeWidth,
+    this.dashLength = 6,
+    this.gapLength = 4,
+    this.radius = 16,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = strokeWidth
+      ..style = PaintingStyle.stroke;
+
+    final rect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(0, 0, size.width, size.height),
+      Radius.circular(radius),
+    );
+
+    final path = Path()..addRRect(rect);
+    final metrics = path.computeMetrics();
+
+    for (final metric in metrics) {
+      double distance = 0.0;
+      while (distance < metric.length) {
+        final start = distance;
+        final end = (distance + dashLength).clamp(0.0, metric.length);
+        final extractPath = metric.extractPath(start, end);
+        canvas.drawPath(extractPath, paint);
+        distance += dashLength + gapLength;
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
