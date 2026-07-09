@@ -295,9 +295,15 @@ class _HomeScreenState extends State<HomeScreen> {
                               const SizedBox(height: 20),
 
                               SizedBox(
-                                height: 240,
+                                height: 280, // ✅ Aumentado de 240 para 260
                                 child: ListView(
                                   scrollDirection: Axis.horizontal,
+                                  clipBehavior: Clip
+                                      .none, // ✅ Permite que a sombra ultrapasse
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical:
+                                        20, // ✅ Padding vertical para acomodar sombra
+                                  ),
                                   children: [
                                     _buildAddPetCard(),
                                     const SizedBox(width: 15),
@@ -1019,16 +1025,16 @@ class _HomeScreenState extends State<HomeScreen> {
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: FittedBox(
-                                 fit: BoxFit.scaleDown,
-                                 child: Text(
-                                  age,
-                                  style: const TextStyle(
-                                    color: Color(0xFF059669),
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(
+                                    age,
+                                    style: const TextStyle(
+                                      color: Color(0xFF059669),
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                   ),
                                 ),
-                              ),
                               ),
                             ],
                           ),
@@ -1379,7 +1385,6 @@ String calcularIdade(String? dataNascimento) {
   if (RegExp(r'^\d{4}$').hasMatch(data)) {
     dataCompleta = '$data-01-01';
   }
-
   // Caso venha ano e mês: 2024-05
   else if (RegExp(r'^\d{4}-\d{1,2}$').hasMatch(data)) {
     final partes = data.split('-');
@@ -1389,7 +1394,6 @@ String calcularIdade(String? dataNascimento) {
     dataCompleta = '$ano-$mes-01';
     temMes = true;
   }
-
   // Caso venha data no formato ISO: 2024-05-20 ou 2024-05-20T00:00:00.000Z
   else if (RegExp(r'^\d{4}-\d{1,2}-\d{1,2}').hasMatch(data)) {
     final match = RegExp(r'^(\d{4})-(\d{1,2})-(\d{1,2})').firstMatch(data);
@@ -1406,7 +1410,6 @@ String calcularIdade(String? dataNascimento) {
     temMes = true;
     temDia = true;
   }
-
   // Caso venha no formato brasileiro: 20/05/2024
   else if (RegExp(r'^\d{1,2}/\d{1,2}/\d{4}$').hasMatch(data)) {
     final partes = data.split('/');
