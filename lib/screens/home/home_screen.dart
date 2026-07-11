@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:syscopet/providers/pet_provider.dart';
+import 'package:syscopet/providers/reminder_provider.dart';
 import '../pets/pet_form_dialog.dart';
 import '../../providers/auth_provider.dart';
 import '../auth/auth_screen.dart';
@@ -98,6 +99,127 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
 
+  //Métodos pro lembrete (nao sei um lugar pra por)
+  String _nomePetPorId(int idPet) {
+    final petProvider = Provider.of<PetProvider>(
+      context,
+      listen: false,
+    );
+
+    final petEncontrado = petProvider.pets.where(
+      (pet) => pet.idPet == idPet,
+    );
+
+    if (petEncontrado.isEmpty) {
+      return 'Pet';
+    }
+
+    return petEncontrado.first.nome;
+  }
+
+  IconData _iconePorTipo(String tipo) {
+    switch (tipo) {
+      case 'alimentacao':
+        return Icons.restaurant;
+      case 'banho':
+        return Icons.shower;
+      case 'medicamento':
+        return Icons.medication;
+      case 'consulta':
+        return Icons.calendar_month;
+      case 'vacina':
+        return Icons.vaccines;
+      default:
+        return Icons.notifications_active;
+    }
+  }
+
+  Color _corPorTipo(String tipo) {
+    switch (tipo) {
+      case 'alimentacao':
+        return const Color(0xFFEA580C);
+      case 'banho':
+        return const Color(0xFF2563EB);
+      case 'medicamento':
+        return const Color(0xFF9333EA);
+      case 'consulta':
+        return const Color(0xFF0D9488);
+      case 'vacina':
+        return const Color(0xFF059669);
+      default:
+        return const Color(0xFF64748B);
+    }
+  }
+
+  Color _corFundoPorTipo(String tipo) {
+    switch (tipo) {
+      case 'alimentacao':
+        return const Color(0xFFFED7AA);
+      case 'banho':
+        return const Color(0xFFDBEAFE);
+      case 'medicamento':
+        return const Color(0xFFE9D5FF);
+      case 'consulta':
+        return const Color(0xFFCCFBF1);
+      case 'vacina':
+        return const Color(0xFFD1FAE5);
+      default:
+        return const Color(0xFFE2E8F0);
+    }
+  }
+
+  String _formatarTipo(String tipo) {
+    switch (tipo) {
+      case 'alimentacao':
+        return 'Alimentação';
+      case 'banho':
+        return 'Banho';
+      case 'medicamento':
+        return 'Medicamento';
+      case 'consulta':
+        return 'Consulta';
+      case 'vacina':
+        return 'Vacina';
+      default:
+        return tipo;
+    }
+  }
+
+  String _formatarDataLembrete(DateTime data) {
+    return '${data.day.toString().padLeft(2, '0')}/'
+        '${data.month.toString().padLeft(2, '0')}/'
+        '${data.year}';
+  }
+
+  String _formatarHoraLembrete(DateTime data) {
+    return '${_nomeDiaSemana(data)}, '
+        '${data.hour.toString().padLeft(2, '0')}:'
+        '${data.minute.toString().padLeft(2, '0')}';
+  }
+
+  String _nomeDiaSemana(DateTime data) {
+    switch (data.weekday) {
+      case DateTime.monday:
+        return 'Segunda';
+      case DateTime.tuesday:
+        return 'Terça';
+      case DateTime.wednesday:
+        return 'Quarta';
+      case DateTime.thursday:
+        return 'Quinta';
+      case DateTime.friday:
+        return 'Sexta';
+      case DateTime.saturday:
+        return 'Sábado';
+      case DateTime.sunday:
+        return 'Domingo';
+      default:
+        return '';
+    }
+  }
+
+
+
   @override
   void initState() {
     super.initState();
@@ -105,8 +227,10 @@ class _HomeScreenState extends State<HomeScreen> {
     Future.microtask(() async {
       final auth = Provider.of<AuthProvider>(context, listen: false);
       final petProvider = Provider.of<PetProvider>(context, listen: false);
+      final reminderProvider = Provider.of<ReminderProvider>(context, listen: false);
 
       await petProvider.carregarPets(auth.currentUser!.id);
+      await reminderProvider.carregarLembretesDosPets(petProvider.pets,);
       print("Pets carregados: ${petProvider.pets.length}");
     });
   }
@@ -116,6 +240,17 @@ class _HomeScreenState extends State<HomeScreen> {
     final authProvider = Provider.of<AuthProvider>(context);
     final petProvider = Provider.of<PetProvider>(context);
     final user = authProvider.currentUser;
+    final reminderProvider = Provider.of<ReminderProvider>(context);
+
+    final proximosLembretes = reminderProvider.lembretes
+      .where(
+        (lembrete) =>
+            lembrete.ativo && lembrete.dataHora.isAfter(DateTime.now()),
+      ).toList()..sort((a, b) => a.dataHora.compareTo(b.dataHora),
+    );
+
+    //mude o número do take para mudar quantos lembretes aparecem na tela
+    final lembretesParaMostrar = proximosLembretes.take(2).toList();
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
@@ -489,34 +624,71 @@ class _HomeScreenState extends State<HomeScreen> {
                                     const SizedBox(height: 20),
 
                                     // ✅ Lista de lembretes com timeline
-                                    _buildReminderWithTimeline(
-                                      icon: Icons.vaccines,
-                                      iconBg: const Color(0xFFD1FAE5),
-                                      iconColor: const Color(0xFF059669),
-                                      title: 'Vacina V8',
-                                      pet: 'Mel',
-                                      badge: 'Vacina',
-                                      badgeColor: const Color(0xFFD1FAE5),
-                                      badgeTextColor: const Color(0xFF059669),
-                                      date: '24/05/2025',
-                                      time: 'Sábado, 10:00',
-                                      isFirst: true,
-                                    ),
-                                    const SizedBox(height: 16),
+                                    if (reminderProvider.isLoading)
+                                      const Padding(
+                                        padding: EdgeInsets.symmetric(vertical: 24),
+                                        child: Center(
+                                          child: CircularProgressIndicator(),
+                                        ),
+                                      )
+                                    else if (lembretesParaMostrar.isEmpty)
+                                      Container(
+                                        width: double.infinity,
+                                        padding: const EdgeInsets.all(20),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFF8FAFC),
+                                          borderRadius: BorderRadius.circular(14),
+                                          border: Border.all(
+                                            color: Colors.grey.shade200,
+                                          ),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Icon(
+                                              Icons.notifications_none,
+                                              color: Colors.grey.shade500,
+                                            ),
+                                            const SizedBox(width: 12),
+                                            Expanded(
+                                              child: Text(
+                                                'Nenhum lembrete próximo encontrado.',
+                                                style: TextStyle(
+                                                  color: Colors.grey.shade600,
+                                                  fontSize: 14,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      )
+                                    else
+                                      ...List.generate(
+                                        lembretesParaMostrar.length,
+                                        (index) {
+                                          final lembrete = lembretesParaMostrar[index];
 
-                                    _buildReminderWithTimeline(
-                                      icon: Icons.calendar_month,
-                                      iconBg: const Color(0xFFDBEAFE),
-                                      iconColor: const Color(0xFF2563EB),
-                                      title: 'Consulta veterinária',
-                                      pet: 'Luna',
-                                      badge: 'Consulta',
-                                      badgeColor: const Color(0xFFDBEAFE),
-                                      badgeTextColor: const Color(0xFF2563EB),
-                                      date: '02/06/2025',
-                                      time: 'Segunda, 14:30',
-                                      isFirst: false,
-                                    ),
+                                          return Padding(
+                                            padding: EdgeInsets.only(
+                                              bottom: index == lembretesParaMostrar.length - 1
+                                                  ? 0
+                                                  : 16,
+                                            ),
+                                            child: _buildReminderWithTimeline(
+                                              icon: _iconePorTipo(lembrete.tipo),
+                                              iconBg: _corFundoPorTipo(lembrete.tipo),
+                                              iconColor: _corPorTipo(lembrete.tipo),
+                                              title: lembrete.titulo,
+                                              pet: _nomePetPorId(lembrete.idPet),
+                                              badge: _formatarTipo(lembrete.tipo),
+                                              badgeColor: _corFundoPorTipo(lembrete.tipo),
+                                              badgeTextColor: _corPorTipo(lembrete.tipo),
+                                              date: _formatarDataLembrete(lembrete.dataHora),
+                                              time: _formatarHoraLembrete(lembrete.dataHora),
+                                              isFirst: index == 0,
+                                            ),
+                                          );
+                                        },
+                                      ),
                                     const SizedBox(height: 16),
 
                                     Container(
@@ -888,6 +1060,11 @@ class _HomeScreenState extends State<HomeScreen> {
               context,
               listen: false,
             ).carregarPets(auth.currentUser!.id);
+
+            /*await Provider.of<ReminderProvider>(
+              context,
+              listen: false,
+            ).carregarLembretesDosPets();*/
           }
         },
         borderRadius: BorderRadius.circular(16),
@@ -1476,13 +1653,9 @@ String calcularIdade(String? dataNascimento) {
   }
 
   if (partesIdade.isEmpty) {
-    if (temDia) {
-      return 'Menos de 1 dia';
-    }
+    if (temDia) {return 'Menos de 1 dia';}
 
-    if (temMes) {
-      return 'Menos de 1 mês';
-    }
+    if (temMes) {return 'Menos de 1 mês';}
 
     return 'Menos de 1 ano';
   }

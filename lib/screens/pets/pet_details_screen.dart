@@ -3,9 +3,12 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:syscopet/providers/pet_provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/reminder_provider.dart';
+import '../../models/reminder_model.dart';
 import '../../models/pet_model.dart';
 import '../../widgets/common/custom_snackbar.dart';
 import 'pet_edit_dialog.dart';
+import 'reminder_form_dialog.dart';
 
 class PetDetailsScreen extends StatefulWidget {
   final PetModel pet;
@@ -24,6 +27,14 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
   void initState() {
     super.initState();
     _currentPet = widget.pet;
+
+    //carregar lembretes
+    Future.microtask(() {
+      Provider.of<ReminderProvider>(
+        context,
+        listen: false,
+      ).carregarLembretesDoPet(_currentPet.idPet!);
+    });
   }
 
   Future<void> _selecionarFoto() async {
@@ -661,11 +672,21 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
                   MouseRegion(
                     cursor: SystemMouseCursors.click,
                     child: GestureDetector(
-                      onTap: () {
-                        CustomSnackbar.showWarning(
-                          context,
-                          'Funcionalidade em desenvolvimento',
+                      onTap: () async {
+                        final criou = await showDialog<bool>(
+                          context: context,
+                          builder: (_) => ReminderFormDialog(
+                            idPet: _currentPet.idPet!,
+                          ),
                         );
+
+                        if (criou == true && mounted) {
+                          CustomSnackbar.showSuccess(
+                            context,
+                            'Lembrete criado com sucesso!',
+                            color: const Color(0xFF047857),
+                          );
+                        }
                       },
                       child: CustomPaint(
                         painter: DashedBorderPainter(
