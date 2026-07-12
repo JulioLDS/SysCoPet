@@ -450,7 +450,7 @@ class _PetFormDialogState extends State<PetFormDialog> {
                         // Raça
                         FormField<int>(
                           validator: (value) {
-                            if (especieSelecionada == 'cao' || especieSelecionada == 'gato') {
+                            if (especieSelecionada == 'cao' || especieSelecionada == 'gato' || especieSelecionada == 'outro') {
                               if (value == null) {
                                 return 'Selecione uma raça';
                               }
@@ -483,7 +483,7 @@ class _PetFormDialogState extends State<PetFormDialog> {
                                       child: Text(raca.nome),
                                     );
                                   }).toList(),
-                                  onChanged: especieSelecionada == null || especieSelecionada == 'outro' ||
+                                  onChanged: especieSelecionada == null ||
                                           carregandoRacas
                                       ? null
                                       : (value) {
@@ -617,7 +617,8 @@ class _PetFormDialogState extends State<PetFormDialog> {
                           return null;
                         },
                       ),
-                      const SizedBox(height: 16),
+                      */
+                      const SizedBox(height: 16), 
 
                       // ✅ Data de nascimento
                       Row(
