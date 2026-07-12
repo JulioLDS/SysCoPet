@@ -41,7 +41,7 @@ class PetService {
     );
 
     final List data = jsonDecode(response.body);
-    print(data);      
+    
     return data
         .map((pet) => PetModel.fromJson(pet))
         .toList();
@@ -140,8 +140,6 @@ class PetService {
     final body = await response.stream.bytesToString();
 
     if (response.statusCode != 200) {
-      print(body);
-
       try {
         final data = jsonDecode(body);
         return data['error'];
