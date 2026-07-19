@@ -86,8 +86,10 @@ class _PetFormDialogState extends State<PetFormDialog> {
         });
       }
     } catch (e) {
-      if (!mounted) return;
-      CustomSnackbar.showError(context, 'Erro ao carregar raças: $e');
+      print(e);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erro ao carregar raças: $e')),
+      );
     } finally {
       if (!mounted) return;
       setState(() {
@@ -111,6 +113,9 @@ class _PetFormDialogState extends State<PetFormDialog> {
 
   Future<void> _salvarPet() async {
     if (!_formKey.currentState!.validate()) {
+      print('❌ Validação falhou!');
+      print('   especieSelecionada: $especieSelecionada');
+      print('   racaSelecionadaId: $racaSelecionadaId');
       return;
     }
 
@@ -422,7 +427,7 @@ class _PetFormDialogState extends State<PetFormDialog> {
                             racas = [];
                           });
 
-                          if (value == 'cao' || value == 'gato') {
+                          if (value == 'cao' || value == 'gato' || value =='outro') {
                             carregarRacas(value!);
                           } else {
                             Future.delayed(
@@ -442,28 +447,65 @@ class _PetFormDialogState extends State<PetFormDialog> {
                       ),
                       const SizedBox(height: 16),
 
-                      // ✅ Raça
-                      DropdownButtonFormField<int>(
-                        value: racaSelecionadaId,
-                        focusNode: _racaFocus,
-                        decoration: InputDecoration(
-                          labelText: carregandoRacas
-                              ? 'Carregando raças...'
-                              : 'Raça',
-                          prefixIcon: const Icon(
-                            Icons.pets, // ✅ SEMPRE genérico (pata)
-                            color: Color(0xFF0D9488),
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: Colors.grey.shade300),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
+                        // Raça
+                        FormField<int>(
+                          validator: (value) {
+                            if (especieSelecionada == 'cao' || especieSelecionada == 'gato' || especieSelecionada == 'outro') {
+                              if (value == null) {
+                                return 'Selecione uma raça';
+                              }
+                            }
+                            return null;
+                          },
+                          builder: (field) {
+                            return InputDecorator(
+                              decoration: InputDecoration(
+                                labelText: carregandoRacas ? 'Carregando raças...' : 'Raça',
+                                prefixIcon: const Icon(
+                                  Icons.pets_outlined,
+                                  color: Color(0xFF0D9488),
+                                ),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                filled: true,
+                                fillColor: Colors.grey.shade50,
+                                errorText: field.errorText,
+                              ),
+                              child: DropdownButtonHideUnderline(
+                                child: DropdownButton<int>(
+                                  value: racaSelecionadaId,
+                                  isExpanded: true,
+                                  hint: const Text('Selecione uma raça'),
+                                  items: racas.map((raca) {
+                                    return DropdownMenuItem<int>(
+                                      value: raca.idRaca,
+                                      child: Text(raca.nome),
+                                    );
+                                  }).toList(),
+                                  onChanged: especieSelecionada == null ||
+                                          carregandoRacas
+                                      ? null
+                                      : (value) {
+                                          setState(() {
+                                            racaSelecionadaId = value;
+                                          });
+                                          // Atualiza o estado do campo
+                                          field.didChange(value);
+                                        },
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                        /* Dropdown antigo
+                        DropdownButtonFormField<int>(
+                          key: ValueKey(racaSelecionadaId),
+                          value: racaSelecionadaId,
+                          decoration: InputDecoration(
+                            labelText: carregandoRacas ? 'Carregando raças...' : 'Raça',
+                            prefixIcon const Icon(
+                              Icons.pets_outlined,
                               color: Color(0xFF0D9488),
                               width: 2,
                             ),
@@ -547,7 +589,6 @@ class _PetFormDialogState extends State<PetFormDialog> {
                               }).toList(),
                         onChanged:
                             especieSelecionada == null ||
-                                especieSelecionada == 'outro' ||
                                 carregandoRacas ||
                                 racas.isEmpty
                             ? null
@@ -567,7 +608,8 @@ class _PetFormDialogState extends State<PetFormDialog> {
                               },
                         validator: (value) {
                           if (especieSelecionada == 'cao' ||
-                              especieSelecionada == 'gato') {
+                              especieSelecionada == 'gato' ||
+                              especieSelecionada == 'outro') {
                             if (value == null) {
                               return 'Selecione uma raça';
                             }
@@ -575,7 +617,8 @@ class _PetFormDialogState extends State<PetFormDialog> {
                           return null;
                         },
                       ),
-                      const SizedBox(height: 16),
+                      */
+                      const SizedBox(height: 16), 
 
                       // ✅ Data de nascimento
                       Row(
@@ -707,8 +750,9 @@ class _PetFormDialogState extends State<PetFormDialog> {
                           if (value == null || value.trim().isEmpty) {
                             return 'Digite o peso';
                           }
-                          final peso = double.tryParse(value.trim());
-                          if (peso == null) {
+
+                          final peso = double.tryParse(value.trim().replaceAll(',', '.'));
+                          if (peso==null){
                             return 'Digite apenas números';
                           }
                           if (peso < 0) {
@@ -744,7 +788,9 @@ class _PetFormDialogState extends State<PetFormDialog> {
                           if (value == null || value.trim().isEmpty) {
                             return null;
                           }
-                          final altura = double.tryParse(value.trim());
+
+                          final altura = double.tryParse(value.trim().replaceAll(',', '.'));
+
                           if (altura == null) {
                             return 'Digite apenas números';
                           }

@@ -41,7 +41,7 @@ class PetService {
     );
 
     final List data = jsonDecode(response.body);
-
+    
     return data
         .map((pet) => PetModel.fromJson(pet))
         .toList();
@@ -90,13 +90,19 @@ class PetService {
   //Carregar raças
   Future<List<RacaModel>> listarRacas(String especie) async {
     final url = Uri.parse('${ApiConfig.baseUrl}/pets/raca?especie=$especie');
-
     final response = await http.get(url);
 
     if (response.statusCode == 200) {
       final List<dynamic> dados = jsonDecode(response.body);
 
-      return dados.map((item) => RacaModel.fromJson(item)).toList();
+      // Filtra apenas os campos necessários
+      final dadosFiltrados = dados.map((item) => {
+        'id': item['id'],
+        'nome': item['nome'],
+        'especie': item['especie']
+      }).toList();
+
+      return dadosFiltrados.map((item) => RacaModel.fromJson(item)).toList();
     }
 
     throw Exception('Erro ao carregar raças');
@@ -134,8 +140,6 @@ class PetService {
     final body = await response.stream.bytesToString();
 
     if (response.statusCode != 200) {
-      print(body);
-
       try {
         final data = jsonDecode(body);
         return data['error'];

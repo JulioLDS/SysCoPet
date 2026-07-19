@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:syscopet/providers/pet_provider.dart';
+import 'package:syscopet/providers/reminder_provider.dart';
 import 'package:syscopet/screens/splash_screen/splash_screen.dart';
 import 'package:syscopet/screens/onboarding/onboarding_screen.dart';
 import 'providers/auth_provider.dart';
@@ -20,6 +21,7 @@ void main() {
           },
         ),
         ChangeNotifierProvider(create: (_) => PetProvider()),
+        ChangeNotifierProvider(create: (_) => ReminderProvider(),)
       ],
       child: const MyApp(),
     ),
