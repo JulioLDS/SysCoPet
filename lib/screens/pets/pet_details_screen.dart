@@ -9,6 +9,7 @@ import '../../models/pet_model.dart';
 import '../../widgets/common/custom_snackbar.dart';
 import 'pet_edit_dialog.dart';
 import 'reminder_form_dialog.dart';
+import 'package:provider/provider.dart';
 
 class PetDetailsScreen extends StatefulWidget {
   final PetModel pet;
@@ -394,256 +395,158 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
                   ),
                   const SizedBox(height: 24),
 
-                  // ⏰ PRÓXIMOS LEMBRETES - BLOCO ÚNICO
+                  // ⏰ PRÓXIMOS LEMBRETES - BLOCO ÚNICO (DINÂMICO)
                   _buildSectionTitle('Próximos lembretes', Icons.access_time),
                   const SizedBox(height: 12),
 
-                  // ✅ Container único para todos os lembretes + botão
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.03),
-                          blurRadius: 10,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      children: [
-                        // ✅ Lembrete 1 - Vacina
-                        Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Row(
-                            children: [
-                              // Ícone
-                              Container(
-                                padding: const EdgeInsets.all(10),
-                                decoration: const BoxDecoration(
-                                  color: Color(0xFFD1FAE5),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  Icons.vaccines_outlined,
-                                  color: Color(0xFF059669),
-                                  size: 22,
-                                ),
-                              ),
-                              const SizedBox(width: 14),
-                              // Texto
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                      'Vacina V8',
-                                      style: TextStyle(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w600,
-                                        color: Color(0xFF1E293B),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      'Mel',
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        color: Colors.grey.shade600,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              // Data/Hora com border radius
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 8,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFD1FAE5),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.end,
-                                  children: [
-                                    const Text(
-                                      '24/05/2025',
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w600,
-                                        color: Color(0xFF059669),
-                                      ),
-                                    ),
-                                    Text(
-                                      'Sábado, 10:00',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        color: const Color(
-                                          0xFF059669,
-                                        ).withOpacity(0.8),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              // Seta
-                              const Icon(
-                                Icons.chevron_right,
-                                color: Color(0xFF0D9488),
-                                size: 20,
+                  // ✅ Container único que reage ao Provider
+                  Consumer<ReminderProvider>(
+                    builder: (context, reminderProvider, child) {
+                      // 1. Filtrar lembretes deste pet, ativos e futuros
+                      final lembretesDoPet =
+                          reminderProvider.lembretes
+                              .where(
+                                (lembrete) =>
+                                    lembrete.idPet == _currentPet.idPet &&
+                                    lembrete.ativo &&
+                                    lembrete.dataHora.isAfter(DateTime.now()),
+                              )
+                              .toList()
+                            ..sort((a, b) => a.dataHora.compareTo(b.dataHora));
+
+                      // 2. Pegar apenas os 2 primeiros
+                      final lembretesParaMostrar = lembretesDoPet
+                          .take(2)
+                          .toList();
+
+                      // 3. Estado de Carregamento
+                      if (reminderProvider.isLoading) {
+                        return Container(
+                          padding: const EdgeInsets.all(30),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: const Center(
+                            child: CircularProgressIndicator(),
+                          ),
+                        );
+                      }
+
+                      // 4. Estado Vazio
+                      if (lembretesParaMostrar.isEmpty) {
+                        return Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.03),
+                                blurRadius: 10,
+                                offset: const Offset(0, 2),
                               ),
                             ],
                           ),
-                        ),
-                        // ✅ Linha separadora
-                        Divider(
-                          height: 1,
-                          thickness: 1,
-                          color: Colors.grey.shade200,
-                        ),
-                        // ✅ Lembrete 2 - Consulta
-                        Padding(
-                          padding: const EdgeInsets.all(16),
                           child: Row(
                             children: [
-                              // Ícone
-                              Container(
-                                padding: const EdgeInsets.all(10),
-                                decoration: const BoxDecoration(
-                                  color: Color(0xFFDBEAFE),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  Icons.calendar_today_outlined,
-                                  color: Color(0xFF2563EB),
-                                  size: 22,
-                                ),
-                              ),
-                              const SizedBox(width: 14),
-                              // Texto
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                      'Consulta veterinária',
-                                      style: TextStyle(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w600,
-                                        color: Color(0xFF1E293B),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      'Luna',
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        color: Colors.grey.shade600,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              // Data/Hora com border radius
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 8,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFDBEAFE),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.end,
-                                  children: [
-                                    const Text(
-                                      '02/06/2025',
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w600,
-                                        color: Color(0xFF2563EB),
-                                      ),
-                                    ),
-                                    Text(
-                                      'Segunda, 14:30',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        color: const Color(
-                                          0xFF2563EB,
-                                        ).withOpacity(0.8),
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                              Icon(
+                                Icons.notifications_none,
+                                color: Colors.grey.shade500,
+                                size: 28,
                               ),
                               const SizedBox(width: 12),
-                              // Seta
-                              const Icon(
-                                Icons.chevron_right,
-                                color: Color(0xFF0D9488),
-                                size: 20,
+                              Expanded(
+                                child: Text(
+                                  'Nenhum lembrete próximo para ${_currentPet.nome}.',
+                                  style: TextStyle(
+                                    color: Colors.grey.shade600,
+                                    fontSize: 14,
+                                  ),
+                                ),
                               ),
                             ],
                           ),
+                        );
+                      }
+
+                      // 5. Lista de Lembretes Reais
+                      return Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.03),
+                              blurRadius: 10,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
                         ),
-                        // ✅ Linha separadora
-                        Divider(
-                          height: 1,
-                          thickness: 1,
-                          color: Colors.grey.shade200,
-                        ),
-                        // ✅ Botão "Ver todos os lembretes" COM HOVER
-                        StatefulBuilder(
-                          builder: (context, setState) {
-                            bool isHovered = false;
-                            return MouseRegion(
-                              cursor: SystemMouseCursors.click,
-                              onEnter: (_) => setState(() => isHovered = true),
-                              onExit: (_) => setState(() => isHovered = false),
-                              child: GestureDetector(
-                                onTap: () {},
-                                child: AnimatedContainer(
-                                  duration: const Duration(milliseconds: 200),
-                                  width: double.infinity,
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 14,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: isHovered
-                                        ? const Color(0xFFECFDF5)
-                                        : Colors.transparent,
-                                  ),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: const [
-                                      Text(
-                                        'Ver todos os lembretes',
-                                        style: TextStyle(
-                                          color: Color(0xFF0D9488),
-                                          fontWeight: FontWeight.w600,
-                                          fontSize: 14,
+                        child: Column(
+                          children: [
+                            ...lembretesParaMostrar.map((lembrete) {
+                              final index = lembretesParaMostrar.indexOf(
+                                lembrete,
+                              );
+                              return Column(
+                                children: [
+                                  _buildReminderItemDynamic(lembrete),
+                                  if (index < lembretesParaMostrar.length - 1 ||
+                                      lembretesDoPet.length > 2)
+                                    Divider(
+                                      height: 1,
+                                      thickness: 1,
+                                      color: Colors.grey.shade200,
+                                    ),
+                                ],
+                              );
+                            }).toList(),
+
+                            // Botão "Ver todos" (só aparece se tiver mais de 2)
+                            if (lembretesDoPet.length > 2)
+                              MouseRegion(
+                                cursor: SystemMouseCursors.click,
+                                child: GestureDetector(
+                                  onTap: () {
+                                    // TODO: Navegar para tela de todos os lembretes
+                                  },
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 200),
+                                    width: double.infinity,
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 14,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.transparent,
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: const [
+                                        Text(
+                                          'Ver todos os lembretes',
+                                          style: TextStyle(
+                                            color: Color(0xFF0D9488),
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 14,
+                                          ),
                                         ),
-                                      ),
-                                      SizedBox(width: 6),
-                                      Icon(
-                                        Icons.arrow_forward,
-                                        color: Color(0xFF0D9488),
-                                        size: 18,
-                                      ),
-                                    ],
+                                        SizedBox(width: 6),
+                                        Icon(
+                                          Icons.arrow_forward,
+                                          color: Color(0xFF0D9488),
+                                          size: 18,
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ),
-                            );
-                          },
+                          ],
                         ),
-                      ],
-                    ),
+                      );
+                    },
                   ),
                   const SizedBox(height: 24),
 
@@ -1298,44 +1201,95 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
     );
   }
 
-  Widget _buildReminderItem({
-    required IconData icon,
-    required Color iconColor,
-    required String title,
-    required String subtitle,
-    required String date,
-    required String time,
-  }) {
-    return Container(
+  // ✅ Métodos Auxiliares para Lembretes
+  IconData _getIconByType(String tipo) {
+    switch (tipo) {
+      case 'alimentacao':
+        return Icons.restaurant;
+      case 'banho':
+        return Icons.shower;
+      case 'medicamento':
+        return Icons.medication;
+      case 'consulta':
+        return Icons.calendar_month;
+      case 'vacina':
+        return Icons.vaccines;
+      default:
+        return Icons.notifications_active;
+    }
+  }
+
+  Color _getColorByType(String tipo) {
+    switch (tipo) {
+      case 'alimentacao':
+        return const Color(0xFFEA580C);
+      case 'banho':
+        return const Color(0xFF2563EB);
+      case 'medicamento':
+        return const Color(0xFF9333EA);
+      case 'consulta':
+        return const Color(0xFF0D9488);
+      case 'vacina':
+        return const Color(0xFF059669);
+      default:
+        return const Color(0xFF64748B);
+    }
+  }
+
+  Color _getBgColorByType(String tipo) {
+    switch (tipo) {
+      case 'alimentacao':
+        return const Color(0xFFFED7AA);
+      case 'banho':
+        return const Color(0xFFDBEAFE);
+      case 'medicamento':
+        return const Color(0xFFE9D5FF);
+      case 'consulta':
+        return const Color(0xFFCCFBF1);
+      case 'vacina':
+        return const Color(0xFFD1FAE5);
+      default:
+        return const Color(0xFFE2E8F0);
+    }
+  }
+
+  String _formatarDataLembrete(DateTime data) {
+    return '${data.day.toString().padLeft(2, '0')}/'
+        '${data.month.toString().padLeft(2, '0')}/'
+        '${data.year}';
+  }
+
+  String _formatarHoraLembrete(DateTime data) {
+    final dias = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+    return '${dias[data.weekday % 7]}, '
+        '${data.hour.toString().padLeft(2, '0')}:'
+        '${data.minute.toString().padLeft(2, '0')}';
+  }
+
+  // ✅ Widget do Item de Lembrete (Agora recebe o Model direto)
+  Widget _buildReminderItemDynamic(ReminderModel lembrete) {
+    final icon = _getIconByType(lembrete.tipo);
+    final color = _getColorByType(lembrete.tipo);
+    final bgColor = _getBgColorByType(lembrete.tipo);
+
+    return Padding(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
       child: Row(
         children: [
+          // Ícone
           Container(
             padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: iconColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, color: iconColor, size: 22),
+            decoration: BoxDecoration(color: bgColor, shape: BoxShape.circle),
+            child: Icon(icon, color: color, size: 22),
           ),
           const SizedBox(width: 14),
+          // Texto
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  title,
+                  lembrete.titulo,
                   style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
@@ -1344,41 +1298,40 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  subtitle,
+                  _currentPet.nome,
                   style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
                 ),
               ],
             ),
           ),
+          // Data/Hora
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              color: iconColor.withOpacity(0.1),
+              color: bgColor,
               borderRadius: BorderRadius.circular(10),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  date,
+                  _formatarDataLembrete(lembrete.dataHora),
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: iconColor,
+                    color: color,
                   ),
                 ),
                 Text(
-                  time,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: iconColor.withOpacity(0.8),
-                  ),
+                  _formatarHoraLembrete(lembrete.dataHora),
+                  style: TextStyle(fontSize: 11, color: color.withOpacity(0.8)),
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 8),
-          Icon(Icons.chevron_right, color: Colors.grey.shade400, size: 20),
+          const SizedBox(width: 12),
+          // Seta
+          const Icon(Icons.chevron_right, color: Color(0xFF0D9488), size: 20),
         ],
       ),
     );
