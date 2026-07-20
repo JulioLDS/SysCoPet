@@ -127,58 +127,32 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
   }
 
   void _confirmarExclusao(BuildContext context) {
-    showDialog(
+    showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Row(
-          children: [
-            Icon(Icons.warning_amber_rounded, color: Colors.red, size: 28),
-            SizedBox(width: 12),
-            Text('Excluir pet'),
-          ],
-        ),
-        content: Text(
-          'Deseja realmente excluir ${_currentPet.nome}? Esta ação não pode ser desfeita.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(context);
+      builder: (_) => DeletePetDialog(petName: _currentPet.nome),
+    ).then((confirmado) async {
+      // Se o usuário clicou em "Sim, excluir" (retorna true)
+      if (confirmado == true) {
+        final petProvider = Provider.of<PetProvider>(context, listen: false);
+        final erro = await petProvider.deletarPet(_currentPet.idPet!);
 
-              final petProvider = Provider.of<PetProvider>(
-                context,
-                listen: false,
-              );
-              final erro = await petProvider.deletarPet(_currentPet.idPet!);
+        if (!context.mounted) return;
 
-              if (!context.mounted) return;
+        if (erro != null) {
+          CustomSnackbar.showError(context, erro);
+          return;
+        }
 
-              if (erro != null) {
-                CustomSnackbar.showError(context, erro);
-                return;
-              }
+        CustomSnackbar.showSuccess(
+          context,
+          'Pet excluído com sucesso!',
+          color: const Color(0xFF047857),
+        );
 
-              CustomSnackbar.showSuccess(
-                context,
-                'Pet excluído com sucesso!',
-                color: const Color(0xFF047857),
-              );
-              Navigator.pop(context, true);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Excluir'),
-          ),
-        ],
-      ),
-    );
+        // Volta para a tela anterior indicando que a lista precisa ser atualizada
+        Navigator.pop(context, true);
+      }
+    });
   }
 
   String _formatarEspecie(String especie) {
@@ -1488,4 +1462,193 @@ class DashedBorderPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+// ✅ Dialog Customizado para Exclusão de Pet
+class DeletePetDialog extends StatelessWidget {
+  final String petName;
+
+  const DeletePetDialog({super.key, required this.petName});
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 450),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // ✅ Header
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFFEF2F2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.delete_outline,
+                      color: Color(0xFFEF4444),
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Text(
+                      'Excluir pet',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF1E293B),
+                      ),
+                    ),
+                  ),
+                  MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFFEF2F2),
+                          borderRadius: BorderRadius.all(Radius.circular(8)),
+                        ),
+                        child: const Icon(
+                          Icons.close,
+                          color: Color(0xFFEF4444),
+                          size: 18,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+
+              // ✅ Mensagem de Aviso
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEF2F2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(
+                      Icons.warning_amber_rounded,
+                      color: Color(0xFFEF4444),
+                      size: 24,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Tem certeza que deseja excluir $petName?',
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF1E293B),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          const Text(
+                            'Essa ação não pode ser desfeita e todos os dados, fotos e lembretes do pet serão permanentemente removidos.',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Color(0xFF64748B),
+                              height: 1.4,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // ✅ Botões
+              Row(
+                children: [
+                  Expanded(
+                    child: MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFF64748B),
+                          side: const BorderSide(color: Color(0xFFE2E8F0)),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          'Cancelar',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFEF4444),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.delete_outline, size: 20),
+                            SizedBox(width: 8),
+                            Text(
+                              'Excluir',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
