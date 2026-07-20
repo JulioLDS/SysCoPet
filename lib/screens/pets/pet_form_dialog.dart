@@ -87,9 +87,9 @@ class _PetFormDialogState extends State<PetFormDialog> {
       }
     } catch (e) {
       print(e);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erro ao carregar raças: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Erro ao carregar raças: $e')));
     } finally {
       if (!mounted) return;
       setState(() {
@@ -249,363 +249,250 @@ class _PetFormDialogState extends State<PetFormDialog> {
                       ),
                       const SizedBox(height: 16),
 
-                      // ✅ Espécie
-                      DropdownButtonFormField<String>(
-                        value: especieSelecionada,
-                        focusNode: _especieFocus,
-                        decoration: InputDecoration(
-                          labelText: 'Espécie',
-                          prefixIcon: const Icon(
-                            Icons.category_outlined, // ✅ SEMPRE genérico
-                            color: Color(0xFF0D9488),
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: Colors.grey.shade300),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: Color(0xFF0D9488),
-                              width: 2,
-                            ),
-                          ),
-                          filled: true,
-                          fillColor: Colors.grey.shade50,
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
-                          ),
-                        ),
-                        icon: Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF0D9488).withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: const Icon(
-                            Icons.keyboard_arrow_down,
-                            color: Color(0xFF0D9488),
-                            size: 20,
-                          ),
-                        ),
-                        iconSize: 20,
-                        dropdownColor: Colors.white,
-                        menuMaxHeight: 300,
-                        // ✅ Campo selecionado: ícone genérico (prefixIcon) + texto com ícone específico
-                        selectedItemBuilder: (context) {
-                          return [
-                            // ✅ Cão - Verde
-                            const Row(
-                              children: [
-                                Icon(
-                                  Icons.pets,
-                                  color: Color(0xFF0D9488),
-                                  size: 18,
-                                ),
-                                SizedBox(width: 8),
-                                Text(
-                                  'Cão',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            // ✅ Gato - Roxo
-                            const Row(
-                              children: [
-                                Icon(
-                                  Icons.pets,
-                                  color: Color(0xFF8B5CF6),
-                                  size: 18,
-                                ),
-                                SizedBox(width: 8),
-                                Text(
-                                  'Gato',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            // ✅ Outro - Verde (padrão)
-                            const Row(
-                              children: [
-                                Icon(
-                                  Icons.help_outline,
-                                  color: Color(0xFF0D9488),
-                                  size: 18,
-                                ),
-                                SizedBox(width: 8),
-                                Text(
-                                  'Outro',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ];
-                        },
-                        // ✅ Na lista: ícone específico + texto
-                        items: const [
-                          // ✅ Cão - Verde
-                          DropdownMenuItem(
-                            value: 'cao',
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.pets,
-                                  color: Color(0xFF0D9488),
-                                  size: 20,
-                                ),
-                                SizedBox(width: 12),
-                                Text(
-                                  'Cão',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          // ✅ Gato - Roxo
-                          DropdownMenuItem(
-                            value: 'gato',
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.pets,
-                                  color: Color(0xFF8B5CF6),
-                                  size: 20,
-                                ),
-                                SizedBox(width: 12),
-                                Text(
-                                  'Gato',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          // ✅ Outro - Verde (padrão)
-                          DropdownMenuItem(
-                            value: 'outro',
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.help_outline,
-                                  color: Color(0xFF0D9488),
-                                  size: 20,
-                                ),
-                                SizedBox(width: 12),
-                                Text(
-                                  'Outro',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                        onChanged: (value) {
-                          setState(() {
-                            especieSelecionada = value;
-                            racaSelecionadaId = null;
-                            racas = [];
-                          });
-
-                          if (value == 'cao' || value == 'gato' || value =='outro') {
-                            carregarRacas(value!);
-                          } else {
-                            Future.delayed(
-                              const Duration(milliseconds: 100),
-                              () {
-                                FocusScope.of(context).requestFocus(_anoFocus);
-                              },
-                            );
-                          }
-                        },
+                      // ✅ Espécie com ÍCONES
+                      // ✅ Espécie com ÍCONES (Padronizado com Raça)
+                      FormField<String>(
                         validator: (value) {
                           if (value == null) {
                             return 'Selecione uma espécie';
                           }
                           return null;
                         },
+                        builder: (field) {
+                          return InputDecorator(
+                            decoration: InputDecoration(
+                              labelText: 'Espécie',
+                              prefixIcon: const Icon(
+                                Icons.category_outlined,
+                                color: Color(0xFF0D9488),
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                  color: Colors.grey.shade300,
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(
+                                  color: Color(0xFF0D9488),
+                                  width: 2,
+                                ),
+                              ),
+                              filled: true,
+                              fillColor: Colors.grey.shade50,
+                              errorText: field.errorText,
+                            ),
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<String>(
+                                value: especieSelecionada,
+                                isExpanded: true,
+                                hint: const Text('Selecione uma espécie'),
+                                // ✅ Ícone de seta customizado
+                                icon: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: BoxDecoration(
+                                    color: const Color(
+                                      0xFF0D9488,
+                                    ).withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: const Icon(
+                                    Icons.keyboard_arrow_down,
+                                    color: Color(0xFF0D9488),
+                                    size: 20,
+                                  ),
+                                ),
+                                iconSize: 20,
+                                dropdownColor: Colors.white,
+                                menuMaxHeight: 300,
+                                // ✅ Campo selecionado: ÍCONE + TEXTO
+                                selectedItemBuilder: (context) {
+                                  return [
+                                    // Cão
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        SizedBox(
+                                          width: 30,
+                                          height: 30,
+                                          child: Image.asset(
+                                            'assets/icons/cao.png',
+                                            fit: BoxFit.contain,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        const Text(
+                                          'Cão',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w500,
+                                            color: Color(0xFF1E293B),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    // Gato
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        SizedBox(
+                                          width: 30,
+                                          height: 30,
+                                          child: Image.asset(
+                                            'assets/icons/gato.png',
+                                            fit: BoxFit.contain,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        const Text(
+                                          'Gato',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w500,
+                                            color: Color(0xFF1E293B),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    // Outro
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        SizedBox(
+                                          width: 30,
+                                          height: 30,
+                                          child: Image.asset(
+                                            'assets/icons/desconhecido.png',
+                                            fit: BoxFit.contain,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        const Text(
+                                          'Outro',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w500,
+                                            color: Color(0xFF1E293B),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ];
+                                },
+                                // ✅ Na lista: ÍCONE + TEXTO
+                                items: [
+                                  // Cão
+                                  DropdownMenuItem(
+                                    value: 'cao',
+                                    child: Row(
+                                      children: [
+                                        SizedBox(
+                                          width: 30,
+                                          height: 30,
+                                          child: Image.asset(
+                                            'assets/icons/cao.png',
+                                            fit: BoxFit.contain,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        const Text(
+                                          'Cão',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w500,
+                                            color: Color(0xFF1E293B),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  // Gato
+                                  DropdownMenuItem(
+                                    value: 'gato',
+                                    child: Row(
+                                      children: [
+                                        SizedBox(
+                                          width: 30,
+                                          height: 30,
+                                          child: Image.asset(
+                                            'assets/icons/gato.png',
+                                            fit: BoxFit.contain,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        const Text(
+                                          'Gato',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w500,
+                                            color: Color(0xFF1E293B),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  // Outro
+                                  DropdownMenuItem(
+                                    value: 'outro',
+                                    child: Row(
+                                      children: [
+                                        SizedBox(
+                                          width: 30,
+                                          height: 30,
+                                          child: Image.asset(
+                                            'assets/icons/desconhecido.png',
+                                            fit: BoxFit.contain,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        const Text(
+                                          'Outro',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w500,
+                                            color: Color(0xFF1E293B),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                                onChanged: (value) {
+                                  setState(() {
+                                    especieSelecionada = value;
+                                    racaSelecionadaId = null;
+                                    racas = [];
+                                    field.didChange(value);
+                                  });
+
+                                  if (value == 'cao' ||
+                                      value == 'gato' ||
+                                      value == 'outro') {
+                                    carregarRacas(value!);
+                                  } else {
+                                    Future.delayed(
+                                      const Duration(milliseconds: 100),
+                                      () {
+                                        FocusScope.of(
+                                          context,
+                                        ).requestFocus(_anoFocus);
+                                      },
+                                    );
+                                  }
+                                },
+                              ),
+                            ),
+                          );
+                        },
                       ),
                       const SizedBox(height: 16),
 
-                        // Raça
-                        FormField<int>(
-                          validator: (value) {
-                            if (especieSelecionada == 'cao' || especieSelecionada == 'gato' || especieSelecionada == 'outro') {
-                              if (value == null) {
-                                return 'Selecione uma raça';
-                              }
-                            }
-                            return null;
-                          },
-                          builder: (field) {
-                            return InputDecorator(
-                              decoration: InputDecoration(
-                                labelText: carregandoRacas ? 'Carregando raças...' : 'Raça',
-                                prefixIcon: const Icon(
-                                  Icons.pets_outlined,
-                                  color: Color(0xFF0D9488),
-                                ),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                filled: true,
-                                fillColor: Colors.grey.shade50,
-                                errorText: field.errorText,
-                              ),
-                              child: DropdownButtonHideUnderline(
-                                child: DropdownButton<int>(
-                                  value: racaSelecionadaId,
-                                  isExpanded: true,
-                                  hint: const Text('Selecione uma raça'),
-                                  items: racas.map((raca) {
-                                    return DropdownMenuItem<int>(
-                                      value: raca.idRaca,
-                                      child: Text(raca.nome),
-                                    );
-                                  }).toList(),
-                                  onChanged: especieSelecionada == null ||
-                                          carregandoRacas
-                                      ? null
-                                      : (value) {
-                                          setState(() {
-                                            racaSelecionadaId = value;
-                                          });
-                                          // Atualiza o estado do campo
-                                          field.didChange(value);
-                                        },
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                        /* Dropdown antigo
-                        DropdownButtonFormField<int>(
-                          key: ValueKey(racaSelecionadaId),
-                          value: racaSelecionadaId,
-                          decoration: InputDecoration(
-                            labelText: carregandoRacas ? 'Carregando raças...' : 'Raça',
-                            prefixIcon const Icon(
-                              Icons.pets_outlined,
-                              color: Color(0xFF0D9488),
-                              width: 2,
-                            ),
-                          ),
-                          filled: true,
-                          fillColor: Colors.grey.shade50,
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
-                          ),
-                        ),
-                        icon: Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF0D9488).withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: const Icon(
-                            Icons.keyboard_arrow_down,
-                            color: Color(0xFF0D9488),
-                            size: 20,
-                          ),
-                        ),
-                        iconSize: 20,
-                        dropdownColor: Colors.white,
-                        menuMaxHeight: 300,
-                        // ✅ Campo selecionado: ícone genérico (prefixIcon) + texto com ícone específico
-                        selectedItemBuilder: (context) {
-                          if (racas.isEmpty) {
-                            return <Widget>[];
-                          }
-
-                          // ✅ Retorna apenas o texto (sem ícone)
-                          return racas.map((raca) {
-                            return Text(
-                              raca.nome,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                                color: Color(0xFF1E293B),
-                              ),
-                            );
-                          }).toList();
-                        },
-                        // ✅ Na lista: ícone específico + texto
-                        items: racas.isEmpty
-                            ? null // ✅ Quando vazio, items é null
-                            : racas.map((raca) {
-                                return DropdownMenuItem<int>(
-                                  value: raca.idRaca,
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        especieSelecionada == 'cao'
-                                            ? Icons.pets
-                                            : especieSelecionada == 'gato'
-                                            ? Icons.pets
-                                            : Icons.help_outline,
-                                        color: especieSelecionada == 'cao'
-                                            ? const Color(
-                                                0xFF0D9488,
-                                              ) // ✅ Cão - Verde
-                                            : especieSelecionada == 'gato'
-                                            ? const Color(
-                                                0xFF8B5CF6,
-                                              ) // ✅ Gato - Roxo
-                                            : const Color(0xFF0D9488),
-                                        size: 20,
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Text(
-                                        raca.nome,
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              }).toList(),
-                        onChanged:
-                            especieSelecionada == null ||
-                                carregandoRacas ||
-                                racas.isEmpty
-                            ? null
-                            : (value) {
-                                setState(() {
-                                  racaSelecionadaId = value;
-                                });
-
-                                Future.delayed(
-                                  const Duration(milliseconds: 100),
-                                  () {
-                                    FocusScope.of(
-                                      context,
-                                    ).requestFocus(_anoFocus);
-                                  },
-                                );
-                              },
+                      // Raça
+                      FormField<int>(
                         validator: (value) {
                           if (especieSelecionada == 'cao' ||
                               especieSelecionada == 'gato' ||
@@ -616,9 +503,97 @@ class _PetFormDialogState extends State<PetFormDialog> {
                           }
                           return null;
                         },
+                        builder: (field) {
+                          return InputDecorator(
+                            decoration: InputDecoration(
+                              labelText: 'Raça',
+                              prefixIcon: const Icon(
+                                Icons.pets_outlined,
+                                color: Color(0xFF0D9488),
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              filled: true,
+                              fillColor: Colors.grey.shade50,
+                              errorText: field.errorText,
+                            ),
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<int>(
+                                value: racaSelecionadaId,
+                                isExpanded: true,
+                                hint: Text(
+                                  carregandoRacas
+                                      ? 'Carregando raças...'
+                                      : 'Selecione uma raça',
+                                ),
+                                // ✅ Ícone de seta customizado (igual ao da espécie)
+                                icon: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: BoxDecoration(
+                                    color: const Color(
+                                      0xFF0D9488,
+                                    ).withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: const Icon(
+                                    Icons.keyboard_arrow_down,
+                                    color: Color(0xFF0D9488),
+                                    size: 20,
+                                  ),
+                                ),
+                                iconSize: 20,
+                                dropdownColor: Colors.white,
+                                menuMaxHeight: 300,
+                                items: racas.map((raca) {
+                                  return DropdownMenuItem<int>(
+                                    value: raca.idRaca,
+                                    child: Row(
+                                      children: [
+                                        SizedBox(
+                                          width: 30, // ✅ De 32 para 30
+                                          height: 30, // ✅ De 32 para 30
+                                          child: Image.asset(
+                                            especieSelecionada == 'cao'
+                                                ? 'assets/icons/cao.png'
+                                                : especieSelecionada == 'gato'
+                                                ? 'assets/icons/gato.png'
+                                                : 'assets/icons/desconhecido.png',
+                                            fit: BoxFit.contain,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Text(
+                                            raca.nome,
+                                            style: const TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w500,
+                                              color: Color(0xFF1E293B),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }).toList(),
+                                onChanged:
+                                    especieSelecionada == null ||
+                                        carregandoRacas
+                                    ? null
+                                    : (value) {
+                                        setState(() {
+                                          racaSelecionadaId = value;
+                                        });
+                                        field.didChange(value);
+                                      },
+                              ),
+                            ),
+                          );
+                        },
                       ),
-                      */
-                      const SizedBox(height: 16), 
+
+                      const SizedBox(height: 16),
 
                       // ✅ Data de nascimento
                       Row(
@@ -751,8 +726,10 @@ class _PetFormDialogState extends State<PetFormDialog> {
                             return 'Digite o peso';
                           }
 
-                          final peso = double.tryParse(value.trim().replaceAll(',', '.'));
-                          if (peso==null){
+                          final peso = double.tryParse(
+                            value.trim().replaceAll(',', '.'),
+                          );
+                          if (peso == null) {
                             return 'Digite apenas números';
                           }
                           if (peso < 0) {
@@ -789,7 +766,9 @@ class _PetFormDialogState extends State<PetFormDialog> {
                             return null;
                           }
 
-                          final altura = double.tryParse(value.trim().replaceAll(',', '.'));
+                          final altura = double.tryParse(
+                            value.trim().replaceAll(',', '.'),
+                          );
 
                           if (altura == null) {
                             return 'Digite apenas números';
