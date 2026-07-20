@@ -7,6 +7,7 @@ import '../../providers/auth_provider.dart';
 import '../auth/auth_screen.dart';
 import '../pets/pet_edit_dialog.dart';
 import '../pets/pet_details_screen.dart';
+import '../pets/my_pets_screen.dart'; // ✅ Adicione esta linha
 
 // ✅ Widget helper para hover
 class HoverBuilder extends StatefulWidget {
@@ -101,14 +102,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   //Métodos pro lembrete (nao sei um lugar pra por)
   String _nomePetPorId(int idPet) {
-    final petProvider = Provider.of<PetProvider>(
-      context,
-      listen: false,
-    );
+    final petProvider = Provider.of<PetProvider>(context, listen: false);
 
-    final petEncontrado = petProvider.pets.where(
-      (pet) => pet.idPet == idPet,
-    );
+    final petEncontrado = petProvider.pets.where((pet) => pet.idPet == idPet);
 
     if (petEncontrado.isEmpty) {
       return 'Pet';
@@ -218,8 +214,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-
-
   @override
   void initState() {
     super.initState();
@@ -227,10 +221,13 @@ class _HomeScreenState extends State<HomeScreen> {
     Future.microtask(() async {
       final auth = Provider.of<AuthProvider>(context, listen: false);
       final petProvider = Provider.of<PetProvider>(context, listen: false);
-      final reminderProvider = Provider.of<ReminderProvider>(context, listen: false);
+      final reminderProvider = Provider.of<ReminderProvider>(
+        context,
+        listen: false,
+      );
 
       await petProvider.carregarPets(auth.currentUser!.id);
-      await reminderProvider.carregarLembretesDosPets(petProvider.pets,);
+      await reminderProvider.carregarLembretesDosPets(petProvider.pets);
       print("Pets carregados: ${petProvider.pets.length}");
     });
   }
@@ -242,12 +239,14 @@ class _HomeScreenState extends State<HomeScreen> {
     final user = authProvider.currentUser;
     final reminderProvider = Provider.of<ReminderProvider>(context);
 
-    final proximosLembretes = reminderProvider.lembretes
-      .where(
-        (lembrete) =>
-            lembrete.ativo && lembrete.dataHora.isAfter(DateTime.now()),
-      ).toList()..sort((a, b) => a.dataHora.compareTo(b.dataHora),
-    );
+    final proximosLembretes =
+        reminderProvider.lembretes
+            .where(
+              (lembrete) =>
+                  lembrete.ativo && lembrete.dataHora.isAfter(DateTime.now()),
+            )
+            .toList()
+          ..sort((a, b) => a.dataHora.compareTo(b.dataHora));
 
     //mude o número do take para mudar quantos lembretes aparecem na tela
     final lembretesParaMostrar = proximosLembretes.take(2).toList();
@@ -404,11 +403,31 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ),
                                   const Spacer(),
                                   TextButton(
-                                    onPressed: () {},
-                                    child: Row(
+                                    onPressed: () async {
+                                      final atualizou =
+                                          await Navigator.push<bool>(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  const MeusPetsScreen(),
+                                            ),
+                                          );
+
+                                      if (atualizou == true && mounted) {
+                                        final auth = Provider.of<AuthProvider>(
+                                          context,
+                                          listen: false,
+                                        );
+                                        await Provider.of<PetProvider>(
+                                          context,
+                                          listen: false,
+                                        ).carregarPets(auth.currentUser!.id);
+                                      }
+                                    },
+                                    child: const Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        const Text(
+                                        Text(
                                           'Ver todos',
                                           style: TextStyle(
                                             color: Color(0xFF14B8A6),
@@ -416,8 +435,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                             fontSize: 16,
                                           ),
                                         ),
-                                        const SizedBox(width: 4),
-                                        const Icon(
+                                        SizedBox(width: 4),
+                                        Icon(
                                           Icons.chevron_right,
                                           color: Color(0xFF14B8A6),
                                           size: 35,
@@ -626,7 +645,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                     // ✅ Lista de lembretes com timeline
                                     if (reminderProvider.isLoading)
                                       const Padding(
-                                        padding: EdgeInsets.symmetric(vertical: 24),
+                                        padding: EdgeInsets.symmetric(
+                                          vertical: 24,
+                                        ),
                                         child: Center(
                                           child: CircularProgressIndicator(),
                                         ),
@@ -637,7 +658,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                         padding: const EdgeInsets.all(20),
                                         decoration: BoxDecoration(
                                           color: const Color(0xFFF8FAFC),
-                                          borderRadius: BorderRadius.circular(14),
+                                          borderRadius: BorderRadius.circular(
+                                            14,
+                                          ),
                                           border: Border.all(
                                             color: Colors.grey.shade200,
                                           ),
@@ -665,25 +688,48 @@ class _HomeScreenState extends State<HomeScreen> {
                                       ...List.generate(
                                         lembretesParaMostrar.length,
                                         (index) {
-                                          final lembrete = lembretesParaMostrar[index];
+                                          final lembrete =
+                                              lembretesParaMostrar[index];
 
                                           return Padding(
                                             padding: EdgeInsets.only(
-                                              bottom: index == lembretesParaMostrar.length - 1
+                                              bottom:
+                                                  index ==
+                                                      lembretesParaMostrar
+                                                              .length -
+                                                          1
                                                   ? 0
                                                   : 16,
                                             ),
                                             child: _buildReminderWithTimeline(
-                                              icon: _iconePorTipo(lembrete.tipo),
-                                              iconBg: _corFundoPorTipo(lembrete.tipo),
-                                              iconColor: _corPorTipo(lembrete.tipo),
+                                              icon: _iconePorTipo(
+                                                lembrete.tipo,
+                                              ),
+                                              iconBg: _corFundoPorTipo(
+                                                lembrete.tipo,
+                                              ),
+                                              iconColor: _corPorTipo(
+                                                lembrete.tipo,
+                                              ),
                                               title: lembrete.titulo,
-                                              pet: _nomePetPorId(lembrete.idPet),
-                                              badge: _formatarTipo(lembrete.tipo),
-                                              badgeColor: _corFundoPorTipo(lembrete.tipo),
-                                              badgeTextColor: _corPorTipo(lembrete.tipo),
-                                              date: _formatarDataLembrete(lembrete.dataHora),
-                                              time: _formatarHoraLembrete(lembrete.dataHora),
+                                              pet: _nomePetPorId(
+                                                lembrete.idPet,
+                                              ),
+                                              badge: _formatarTipo(
+                                                lembrete.tipo,
+                                              ),
+                                              badgeColor: _corFundoPorTipo(
+                                                lembrete.tipo,
+                                              ),
+                                              badgeTextColor: _corPorTipo(
+                                                lembrete.tipo,
+                                              ),
+                                              date: _formatarDataLembrete(
+                                                lembrete.dataHora,
+                                              ),
+                                              time: _formatarHoraLembrete(
+                                                lembrete.dataHora,
+                                              ),
                                               isFirst: index == 0,
                                             ),
                                           );
@@ -1653,9 +1699,13 @@ String calcularIdade(String? dataNascimento) {
   }
 
   if (partesIdade.isEmpty) {
-    if (temDia) {return 'Menos de 1 dia';}
+    if (temDia) {
+      return 'Menos de 1 dia';
+    }
 
-    if (temMes) {return 'Menos de 1 mês';}
+    if (temMes) {
+      return 'Menos de 1 mês';
+    }
 
     return 'Menos de 1 ano';
   }
