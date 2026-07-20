@@ -55,7 +55,7 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
       return;
     }
 
-    await provider.carregarPets(_currentPet.idUsuario,);
+    await provider.carregarPets(_currentPet.idUsuario);
 
     if (!mounted) return;
 
@@ -82,7 +82,6 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
       'Foto enviada com sucesso!',
       color: const Color(0xFF047857),
     );
-
   }
 
   Future<void> _removerFoto() async {
@@ -96,7 +95,7 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
       return;
     }
 
-    await provider.carregarPets(_currentPet.idUsuario,);
+    await provider.carregarPets(_currentPet.idUsuario);
 
     if (!mounted) return;
 
@@ -263,7 +262,8 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
                   children: [
                     // ✅ Botão Voltar com hover
                     _HoverButton(
-                      onTap: () => Navigator.pop(context, _houveAlteracao ? true : null,),
+                      onTap: () =>
+                          Navigator.pop(context, _houveAlteracao ? true : null),
                       hoverColor: Colors.white.withOpacity(0.3),
                       child: Container(
                         width: 40,
@@ -675,9 +675,8 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
                       onTap: () async {
                         final criou = await showDialog<bool>(
                           context: context,
-                          builder: (_) => ReminderFormDialog(
-                            idPet: _currentPet.idPet!,
-                          ),
+                          builder: (_) =>
+                              ReminderFormDialog(idPet: _currentPet.idPet!),
                         );
 
                         if (criou == true && mounted) {
@@ -853,13 +852,14 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
         child: Row(
           children: [
             // Foto do Pet com borda branca
+            // Foto do Pet
             Column(
               children: [
+                // Container externo com borda
                 Container(
                   width: 190,
                   height: 190,
                   decoration: BoxDecoration(
-                    color: Colors.white,
                     shape: BoxShape.circle,
                     border: Border.all(color: Colors.grey.shade200, width: 8),
                     boxShadow: [
@@ -874,21 +874,32 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
                     alignment: Alignment.center,
                     children: [
                       ClipOval(
-                        child:
-                            _currentPet.urlFoto != null &&
-                                _currentPet.urlFoto!.isNotEmpty
-                            ? Image.network(
-                                _currentPet.urlFoto!,
-                                fit: BoxFit.cover,
-                                width: 140,
-                                height: 140,
-                              )
-                            : Icon(
-                                Icons.pets,
-                                size: 60,
-                                color: Colors.grey.shade400,
-                              ),
+                        child: SizedBox(
+                          width: 190,
+                          height: 190,
+                          child:
+                              _currentPet.urlFoto != null &&
+                                  _currentPet.urlFoto!.isNotEmpty
+                              ? Image.network(
+                                  _currentPet.urlFoto!,
+                                  width: 190,
+                                  height: 190,
+                                  fit: BoxFit.cover,
+                                  alignment: Alignment.center,
+                                )
+                              : Container(
+                                  width: 190,
+                                  height: 190,
+                                  color: Colors.white,
+                                  child: Icon(
+                                    Icons.pets,
+                                    size: 60,
+                                    color: Colors.grey.shade400,
+                                  ),
+                                ),
+                        ),
                       ),
+
                       // Botão da câmera
                       Positioned(
                         bottom: 8,
@@ -923,7 +934,8 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                // ✅ Botão "Clique na câmera para adicionar foto"
+
+                // ✅ Botão com largura FIXA para não mover a foto
                 MouseRegion(
                   cursor: SystemMouseCursors.click,
                   child: GestureDetector(
@@ -939,36 +951,42 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
                         dashLength: 6,
                         gapLength: 4,
                       ),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 15,
-                          vertical: 7,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFECFDF5),
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.camera_alt,
-                              color: const Color(0xFF0D9488),
-                              size: 20,
-                            ),
-                            const SizedBox(width: 10),
-                            Text(
-                              _currentPet.urlFoto == null ||
-                                      _currentPet.urlFoto!.isEmpty
-                                  ? 'Clique na câmera para adicionar foto'
-                                  : 'Clique para remover foto',
-                              style: const TextStyle(
-                                color: Color(0xFF0D9488),
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
+                      child: SizedBox(
+                        // ✅ Largura fixa igual à maior frase
+                        width: 280,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 15,
+                            vertical: 7,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFECFDF5),
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment
+                                .center, // ✅ Centraliza o conteúdo
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.camera_alt,
+                                color: const Color(0xFF0D9488),
+                                size: 20,
                               ),
-                            ),
-                          ],
+                              const SizedBox(width: 10),
+                              Text(
+                                _currentPet.urlFoto == null ||
+                                        _currentPet.urlFoto!.isEmpty
+                                    ? 'Clique para adicionar foto'
+                                    : 'Clique para remover foto',
+                                style: const TextStyle(
+                                  color: Color(0xFF0D9488),
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
