@@ -38,7 +38,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       precacheImage(const AssetImage('assets/images/background2.png'), context);
-      precacheImage(const AssetImage('assets/images/pets.png'), context);
+      precacheImage(
+        const AssetImage('assets/images/pets_lado_esquerdo.png'),
+        context,
+      );
     });
   }
 
@@ -190,7 +193,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     right: -100,
                     height: screenHeight * 1.05,
                     child: Image.asset(
-                      'assets/images/pets.png',
+                      'assets/images/pets_lado_esquerdo.png',
                       fit: BoxFit.contain,
                       alignment: Alignment.topCenter,
                     ),
