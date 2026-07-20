@@ -8,6 +8,7 @@ import 'providers/auth_provider.dart';
 import 'core/themes/app_theme.dart';
 import 'screens/auth/auth_screen.dart';
 import 'screens/home/home_screen.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 void main() {
   runApp(
@@ -21,7 +22,7 @@ void main() {
           },
         ),
         ChangeNotifierProvider(create: (_) => PetProvider()),
-        ChangeNotifierProvider(create: (_) => ReminderProvider(),)
+        ChangeNotifierProvider(create: (_) => ReminderProvider()),
       ],
       child: const MyApp(),
     ),
@@ -37,6 +38,13 @@ class MyApp extends StatelessWidget {
       title: 'SyscoPet',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
+      locale: const Locale('pt', 'BR'),
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [Locale('pt', 'BR'), Locale('en', 'US')],
       initialRoute: '/',
       routes: {
         '/': (context) => const SplashScreen(),
