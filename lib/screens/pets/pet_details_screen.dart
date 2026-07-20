@@ -1062,19 +1062,32 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
     );
   }
 
+  String _obterTextoRaca() {
+    if (_currentPet.idRaca == null ||
+        _currentPet.nomeRaca == null ||
+        _currentPet.nomeRaca!.trim().isEmpty) {
+      return 'SRD';
+    }
+
+    return _currentPet.nomeRaca!;
+  }
+
   Widget _buildOverviewGrid() {
     return Row(
       children: [
+        // 1. PESO
         Expanded(
           child: _buildOverviewCard(
             icon: Icons.monitor_weight_outlined,
             iconColor: const Color(0xFFEA580C),
             iconBg: const Color(0xFFFFEDD5),
             label: 'Peso',
-            value: '${_currentPet.peso} kg',
+            value: '${_currentPet.peso.toStringAsFixed(1)} kg',
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 8),
+
+        // 2. ALTURA
         Expanded(
           child: _buildOverviewCard(
             icon: Icons.height,
@@ -1082,26 +1095,42 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
             iconBg: const Color(0xFFEDE9FE),
             label: 'Altura',
             value: _currentPet.altura != null
-                ? '${_currentPet.altura} cm'
+                ? '${_currentPet.altura!.toStringAsFixed(1)} cm'
                 : 'N/A',
           ),
         ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _buildOverviewCard(
-            icon: Icons.cake_outlined,
-            iconColor: const Color(0xFFEF4444),
-            iconBg: const Color(0xFFFEE2E2),
-            label: 'Nascimento',
-            value: _formatarData(_currentPet.dataNascimento),
-          ),
-        ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 8),
+
+        // 3. RAÇA
         Expanded(
           child: _buildOverviewCard(
             icon: Icons.pets,
             iconColor: const Color(0xFF0D9488),
             iconBg: const Color(0xFFD1FAE5),
+            label: 'Raça',
+            value: _obterTextoRaca(),
+          ),
+        ),
+        const SizedBox(width: 8),
+
+        // 4. NASCIMENTO (Label encurtado para caber melhor)
+        Expanded(
+          child: _buildOverviewCard(
+            icon: Icons.cake_outlined,
+            iconColor: const Color(0xFFEF4444),
+            iconBg: const Color(0xFFFEE2E2),
+            label: 'Nasc.',
+            value: _formatarData(_currentPet.dataNascimento),
+          ),
+        ),
+        const SizedBox(width: 8),
+
+        // 5. PORTE
+        Expanded(
+          child: _buildOverviewCard(
+            icon: Icons.straighten,
+            iconColor: const Color(0xFF3B82F6),
+            iconBg: const Color(0xFFDBEAFE),
             label: 'Porte',
             value: _currentPet.porte.isNotEmpty ? _currentPet.porte : 'N/A',
           ),

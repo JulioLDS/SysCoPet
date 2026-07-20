@@ -6,6 +6,7 @@ class PetModel {
   final String nome;
   final String especie;
   final int? idRaca;
+  final String? nomeRaca;
   final String? dataNascimento;
   final double peso;
   final double? altura;
@@ -18,13 +19,13 @@ class PetModel {
     required this.nome,
     required this.especie,
     this.idRaca,
+    this.nomeRaca,
     this.dataNascimento,
     required this.peso,
     this.altura,
     required this.porte,
     this.urlFoto,
   });
-
 
   //Preparo para campos nulos
   static int? _intNullable(dynamic valor) {
@@ -44,9 +45,7 @@ class PetModel {
     if (valor is double) return valor;
     if (valor is int) return valor.toDouble();
 
-    return double.tryParse(
-      valor.toString().replaceAll(',', '.'),
-    );
+    return double.tryParse(valor.toString().replaceAll(',', '.'));
   }
 
   static double _doubleObrigatorio(dynamic valor, {double padrao = 0}) {
@@ -54,10 +53,7 @@ class PetModel {
     if (valor is double) return valor;
     if (valor is int) return valor.toDouble();
 
-    return double.tryParse(
-          valor.toString().replaceAll(',', '.'),
-        ) ??
-        padrao;
+    return double.tryParse(valor.toString().replaceAll(',', '.')) ?? padrao;
   }
 
   factory PetModel.fromJson(Map<String, dynamic> json) {
@@ -67,6 +63,7 @@ class PetModel {
       nome: json['nome']?.toString() ?? '',
       especie: json['especie']?.toString() ?? '',
       idRaca: _intNullable(json['id_raca']),
+      nomeRaca: json['nome_raca']?.toString(),
       dataNascimento: json['data_nascimento']?.toString(),
       peso: _doubleObrigatorio(json['peso']),
       altura: _doubleNullable(json['altura']),
@@ -77,17 +74,17 @@ class PetModel {
 
   Map<String, dynamic> toJson() {
     return {
-      'idPet' : idPet,
+      'idPet': idPet,
       'id_usuario': idUsuario,
       'nome': nome,
       'especie': especie,
-      'id_raca' : idRaca,
+      'id_raca': idRaca,
+      'nome_raca': nomeRaca,
       'data_nascimento': dataNascimento,
       'peso': peso,
       'altura': altura,
-      'porte' : porte,
-      'url_foto' : urlFoto,
-
+      'porte': porte,
+      'url_foto': urlFoto,
     }..removeWhere((key, value) => value == null);
   }
 
