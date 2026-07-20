@@ -356,8 +356,7 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
                   const SizedBox(height: 24),
 
                   // 💚 CUIDADOS
-                  _buildSectionTitle('Cuidados', Icons.favorite_border),
-                  const SizedBox(height: 12),
+                  // 💚 CUIDADOS
                   _buildCareItem(
                     icon: Icons.vaccines_outlined,
                     iconColor: const Color(0xFF10B981),
@@ -366,6 +365,8 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
                     subtitle: 'Controle de Vacinas',
                     badge: 'Em desenvolvimento',
                     badgeColor: const Color(0xFF10B981),
+                    backgroundImage:
+                        'assets/images/cuidados1.png', // ✅ CAMINHO COMPLETO OBRIGATÓRIO
                   ),
                   const SizedBox(height: 12),
                   _buildCareItem(
@@ -376,6 +377,8 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
                     subtitle: 'Histórico de Consultas',
                     badge: 'Em desenvolvimento',
                     badgeColor: const Color(0xFF8B5CF6),
+                    backgroundImage:
+                        'assets/images/cuidados2.png', // ✅ CAMINHO COMPLETO OBRIGATÓRIO
                   ),
                   const SizedBox(height: 12),
                   _buildCareItem(
@@ -386,6 +389,8 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
                     subtitle: 'Gerenciador de Lembretes',
                     badge: 'Em desenvolvimento',
                     badgeColor: const Color(0xFFF59E0B),
+                    backgroundImage:
+                        'assets/images/cuidados3.png', // ✅ CAMINHO COMPLETO OBRIGATÓRIO
                   ),
                   const SizedBox(height: 24),
 
@@ -1178,11 +1183,24 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
     required String subtitle,
     required String badge,
     required Color badgeColor,
+    String? backgroundImage,
   }) {
+    // ✅ Cores de fundo super claras correspondentes às imagens
+    Color getBackgroundColor() {
+      if (title == 'Vacinas')
+        return const Color(0xFFF7FAFA); // Verde menta super claro
+      if (title == 'Consultas')
+        return const Color(0xFFF8F7FC); // Lavanda super claro
+      if (title == 'Lembretes')
+        return const Color(0xFFFEF6F3); // Pêssego super claro
+      return Colors.white;
+    }
+
+    final backgroundColor = getBackgroundColor();
+
     return Container(
-      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: backgroundColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -1192,57 +1210,89 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
           ),
         ],
       ),
-      child: Row(
+      child: Stack(
+        clipBehavior: Clip.antiAlias,
         children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: iconBg,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: iconColor, size: 28),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          // ✅ IMAGEM DE FUNDO - Alinhada à direita
+          if (backgroundImage != null)
+            Align(
+              alignment: Alignment.centerRight,
+              child: SizedBox(
+                height: 110,
+                child: Image.asset(
+                  backgroundImage,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(height: 130, color: backgroundColor);
+                  },
+                ),
+              ),
+            )
+          else
+            const SizedBox(height: 130),
+
+          // ✅ CONTEÚDO
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
               children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF1E293B),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
-                ),
-                const SizedBox(height: 6),
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
+                  padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: badgeColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(6),
+                    color: iconBg,
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Text(
-                    badge,
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: badgeColor,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  child: Icon(icon, color: iconColor, size: 28),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF1E293B),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        subtitle,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey.shade700,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: badgeColor.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          badge,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: badgeColor,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
+                const SizedBox(width: 8),
+                const Icon(Icons.chevron_right, color: Colors.grey, size: 24),
               ],
             ),
           ),
-          Icon(Icons.chevron_right, color: Colors.grey.shade400, size: 24),
         ],
       ),
     );
