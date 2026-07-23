@@ -77,6 +77,7 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  //login
   Future<String?> login({required String email, required String senha}) async {
     isLoading = true;
     notifyListeners();
@@ -100,6 +101,41 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
 
     return null;
+  }
+
+  //login com google
+  Future<String?> loginComGoogle() async {
+    try {
+      isLoading = true;
+      notifyListeners();
+
+      final resposta = await _authService.loginComGoogle();
+
+      if (resposta['sucesso'] != true) {
+        return resposta['erro'] ?? 'Erro ao fazer login com Google';
+      }
+
+      final usuarioJson = resposta['usuario'];
+
+      if (usuarioJson == null) {
+        return 'Erro: usuário não retornado pela API';
+      }
+
+      currentUser = UserModel.fromJson(usuarioJson);
+
+      final token = resposta['token'];
+
+      if (token != null) {
+        await _saveUserSession();
+      }
+
+      return null;
+    } catch (e) {
+      return 'Erro ao fazer login com Google: $e';
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
   }
 
   //Logout

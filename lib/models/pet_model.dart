@@ -79,7 +79,6 @@ class PetModel {
       'nome': nome,
       'especie': especie,
       'id_raca': idRaca,
-      'nome_raca': nomeRaca,
       'data_nascimento': dataNascimento,
       'peso': peso,
       'altura': altura,

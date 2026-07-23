@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
 
 import 'package:shared_preferences/shared_preferences.dart';
@@ -61,6 +62,76 @@ class AuthService {
         email: data['user']['email'],
       ),
     };
+  }
+
+  //Login com google
+  final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
+
+  bool _googleInicializado = false;
+
+  Future<void> _inicializarGoogle() async {
+    if (_googleInicializado) return;
+
+    await _googleSignIn.initialize(
+      serverClientId: '357380729178-ro75lhale3r65l1kecmmtvujim4qietq.apps.googleusercontent.com',
+    );
+
+    _googleInicializado = true;
+  }
+
+  Future<Map<String, dynamic>> loginComGoogle() async {
+    try {
+      await _inicializarGoogle();
+
+      if (!_googleSignIn.supportsAuthenticate()) {
+        throw Exception(
+          'Esta plataforma não suporta authenticate(). No Flutter Web, use o botão oficial do Google.',
+        );
+      }
+
+      final GoogleSignInAccount googleUser =
+          await _googleSignIn.authenticate();
+
+      final GoogleSignInAuthentication googleAuth =
+          googleUser.authentication;
+
+      final String? idToken = googleAuth.idToken;
+
+      if (idToken == null) {
+        throw Exception('Falha ao obter ID Token do Google');
+      }
+
+      final response = await http.post(
+        Uri.parse('${ApiConfig.baseUrl}/usuarios/login-google'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'idToken': idToken,
+        }),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return {
+          'sucesso': true,
+          'mensagem': data['mensagem'],
+          'token': data['token'],
+          'usuario': data['usuario'],
+        };
+      }
+
+      return {
+        'sucesso': false,
+        'erro': data['erro'] ?? data['mensagem'] ?? 'Erro ao fazer login com Google',
+      };
+    } catch (e) {
+      return {
+        'sucesso': false,
+        'erro': 'Erro no login com Google: $e',
+      };
+    }
   }
 
   //Esqueci a senha

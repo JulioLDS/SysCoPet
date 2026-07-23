@@ -60,6 +60,29 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  Future<void> _handleGoogleLogin() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+    final errorMessage = await authProvider.loginComGoogle();
+
+    if (!mounted) return;
+
+    if (errorMessage != null) {
+      CustomSnackbar.showError(context, errorMessage);
+      return;
+    }
+
+    Navigator.pushReplacement(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            const HomeScreen(),
+        transitionDuration: Duration.zero,
+        reverseTransitionDuration: Duration.zero,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
@@ -72,7 +95,7 @@ class _LoginScreenState extends State<LoginScreen> {
       onLogin: _handleLogin,
       onForgotPassword: widget.onForgotPassword,
       onGoToRegister: widget.onGoToRegister,
-      onGoogleLogin: () {},
+      onGoogleLogin: _handleGoogleLogin,
       isLoading: authProvider.isLoading,
     );
   }
