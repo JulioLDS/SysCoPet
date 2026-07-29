@@ -106,6 +106,7 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
         idPet: _currentPet.idPet,
         nome: _currentPet.nome,
         especie: _currentPet.especie,
+        nomeRaca: _currentPet.nomeRaca,
         dataNascimento: _currentPet.dataNascimento,
         peso: _currentPet.peso,
         altura: _currentPet.altura,
@@ -944,7 +945,7 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
     );
   }
 
-  String _obterTextoRaca() {
+  /*String _obterTextoRaca() {
     if (_currentPet.idRaca == null ||
         _currentPet.nomeRaca == null ||
         _currentPet.nomeRaca!.trim().isEmpty) {
@@ -952,7 +953,7 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
     }
 
     return _currentPet.nomeRaca!;
-  }
+  }*/
 
   Widget _buildOverviewGrid() {
     return Row(
@@ -990,7 +991,7 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
             iconColor: const Color(0xFF0D9488),
             iconBg: const Color(0xFFD1FAE5),
             label: 'Raça',
-            value: _obterTextoRaca(),
+            value: _currentPet.nomeRaca ?? 'SRD',
           ),
         ),
         const SizedBox(width: 8),
