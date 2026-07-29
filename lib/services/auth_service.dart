@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
 
@@ -67,39 +68,30 @@ class AuthService {
   //Login com google
   final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
 
-  bool _googleInicializado = false;
+  static const String googleClientId ='357380729178-ro75lhale3r65l1kecmmtvujim4qietq.apps.googleusercontent.com';
 
-  Future<void> _inicializarGoogle() async {
-    if (_googleInicializado) return;
+  static Future<void>? _googleInitFuture;
 
-    await _googleSignIn.initialize(
-      serverClientId: '357380729178-ro75lhale3r65l1kecmmtvujim4qietq.apps.googleusercontent.com',
-    );
-
-    _googleInicializado = true;
+  Future<void> inicializarGoogle() {
+    _googleInitFuture ??= _inicializarGoogleInterno();
+    return _googleInitFuture!;
   }
 
-  Future<Map<String, dynamic>> loginComGoogle() async {
+  Future<void> _inicializarGoogleInterno() async {
+    if (kIsWeb) {
+      await _googleSignIn.initialize(
+        clientId: googleClientId,
+      );
+    } else {
+      await _googleSignIn.initialize(
+        serverClientId: googleClientId,
+      );
+    }
+  }
+
+  Future<Map<String, dynamic>> loginGoogleNoBackend(String idToken) async {
     try {
-      await _inicializarGoogle();
-
-      if (!_googleSignIn.supportsAuthenticate()) {
-        throw Exception(
-          'Esta plataforma não suporta authenticate(). No Flutter Web, use o botão oficial do Google.',
-        );
-      }
-
-      final GoogleSignInAccount googleUser =
-          await _googleSignIn.authenticate();
-
-      final GoogleSignInAuthentication googleAuth =
-          googleUser.authentication;
-
-      final String? idToken = googleAuth.idToken;
-
-      if (idToken == null) {
-        throw Exception('Falha ao obter ID Token do Google');
-      }
+      print('ENVIANDO ID TOKEN PARA O BACKEND...');
 
       final response = await http.post(
         Uri.parse('${ApiConfig.baseUrl}/usuarios/login-google'),
@@ -110,6 +102,9 @@ class AuthService {
           'idToken': idToken,
         }),
       );
+
+      print('STATUS BACKEND GOOGLE: ${response.statusCode}');
+      print('RESPOSTA BACKEND GOOGLE: ${response.body}');
 
       final data = jsonDecode(response.body);
 
@@ -124,8 +119,44 @@ class AuthService {
 
       return {
         'sucesso': false,
-        'erro': data['erro'] ?? data['mensagem'] ?? 'Erro ao fazer login com Google',
+        'erro': data['erro'] ??
+            data['mensagem'] ??
+            'Erro ao fazer login com Google',
       };
+    } catch (e) {
+      print('ERRO AO COMUNICAR COM BACKEND GOOGLE: $e');
+
+      return {
+        'sucesso': false,
+        'erro': 'Erro ao comunicar com a API: $e',
+      };
+    }
+  }
+
+  //Login Google mobile
+  Future<Map<String, dynamic>> loginComGoogleMobile() async {
+    try {
+      await inicializarGoogle();
+
+      if (!_googleSignIn.supportsAuthenticate()) {
+        return {
+          'sucesso': false,
+          'erro': 'Esta plataforma não suporta authenticate().',
+        };
+      }
+
+      final googleUser = await _googleSignIn.authenticate();
+      final googleAuth = googleUser.authentication;
+      final idToken = googleAuth.idToken;
+
+      if (idToken == null) {
+        return {
+          'sucesso': false,
+          'erro': 'Falha ao obter ID Token do Google',
+        };
+      }
+
+      return await loginGoogleNoBackend(idToken);
     } catch (e) {
       return {
         'sucesso': false,

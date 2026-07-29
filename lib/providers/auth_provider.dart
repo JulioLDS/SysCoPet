@@ -104,12 +104,51 @@ class AuthProvider extends ChangeNotifier {
   }
 
   //login com google
-  Future<String?> loginComGoogle() async {
+  Future<void> inicializarGoogle(){
+    return _authService.inicializarGoogle();
+  }
+
+  Future<String?> loginComGoogleIdToken(String idToken) async {
     try {
       isLoading = true;
       notifyListeners();
 
-      final resposta = await _authService.loginComGoogle();
+      final resposta = await _authService.loginGoogleNoBackend(idToken);
+
+      if (resposta['sucesso'] != true) {
+        return resposta['erro'] ?? 'Erro ao fazer login com Google';
+      }
+
+      final usuarioJson = resposta['usuario'];
+
+      if (usuarioJson == null) {
+        return 'Erro: usuário não retornado pela API';
+      }
+
+      currentUser = UserModel.fromJson(usuarioJson);
+
+      final token = resposta['token'];
+
+      if (token != null) {
+        await _saveUserSession();
+      }
+
+      return null;
+    } catch (e) {
+      return 'Erro ao fazer login com Google: $e';
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  //Login com google mobile
+  Future<String?> loginComGoogleMobile() async {
+    try {
+      isLoading = true;
+      notifyListeners();
+
+      final resposta = await _authService.loginComGoogleMobile();
 
       if (resposta['sucesso'] != true) {
         return resposta['erro'] ?? 'Erro ao fazer login com Google';

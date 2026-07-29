@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter/foundation.dart';
 import '../../providers/auth_provider.dart';
 import '../home/home_screen.dart';
 import '../../widgets/auth/login_form_widget.dart';
+import '../../widgets/auth/google_login_web_button.dart';
 import '../../widgets/common/custom_snackbar.dart'; // ✅ Adicione
 
 class LoginScreen extends StatefulWidget {
@@ -34,6 +36,18 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  void _goToHome() {
+    Navigator.pushReplacement(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            const HomeScreen(),
+        transitionDuration: Duration.zero,
+        reverseTransitionDuration: Duration.zero,
+      ),
+    );
+  }
+
   Future<void> _handleLogin() async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
@@ -49,21 +63,13 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    Navigator.pushReplacement(
-      context,
-      PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) =>
-            const HomeScreen(),
-        transitionDuration: Duration.zero,
-        reverseTransitionDuration: Duration.zero,
-      ),
-    );
+    _goToHome();
   }
 
-  Future<void> _handleGoogleLogin() async {
+  Future<void> _handleGoogleLoginMobile() async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
-    final errorMessage = await authProvider.loginComGoogle();
+    final errorMessage = await authProvider.loginComGoogleMobile();
 
     if (!mounted) return;
 
@@ -72,15 +78,7 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    Navigator.pushReplacement(
-      context,
-      PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) =>
-            const HomeScreen(),
-        transitionDuration: Duration.zero,
-        reverseTransitionDuration: Duration.zero,
-      ),
-    );
+    _goToHome();
   }
 
   @override
@@ -95,7 +93,14 @@ class _LoginScreenState extends State<LoginScreen> {
       onLogin: _handleLogin,
       onForgotPassword: widget.onForgotPassword,
       onGoToRegister: widget.onGoToRegister,
-      onGoogleLogin: _handleGoogleLogin,
+      onGoogleLogin: _handleGoogleLoginMobile,
+      googleButton: kIsWeb
+        ? GoogleLoginWebButton(
+          onSuccess: _goToHome,
+          onError: (erro){
+            CustomSnackbar.showError(context, erro);
+          },
+          ):null,
       isLoading: authProvider.isLoading,
     );
   }

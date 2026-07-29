@@ -12,6 +12,7 @@ class LoginFormWidget extends StatefulWidget {
   final VoidCallback onGoToRegister;
   final VoidCallback onGoogleLogin;
   final bool isLoading;
+  final Widget? googleButton;
 
   const LoginFormWidget({
     super.key,
@@ -24,6 +25,7 @@ class LoginFormWidget extends StatefulWidget {
     required this.onGoToRegister,
     required this.onGoogleLogin,
     required this.isLoading,
+    this.googleButton,
   });
 
   @override
@@ -189,30 +191,46 @@ class _LoginFormWidgetState extends State<LoginFormWidget> {
           ),
           const SizedBox(height: 20),
 
-          OutlinedButton.icon(
-            onPressed: widget.onGoogleLogin,
-            icon: Image.asset(
-              'assets/icons/google.png',
-              height: 24,
-              errorBuilder: (context, error, stackTrace) => const Icon(
-                Icons.g_mobiledata,
-                size: 24,
-                color: Color(0xFF0D9488),
+          if (widget.googleButton != null)
+            AbsorbPointer(
+              absorbing: widget.isLoading,
+              child: Opacity(
+                opacity: widget.isLoading ? 0.6 : 1,
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: Center(
+                    child: widget.googleButton!,
+                  ),
+                ),
+              ),
+            )
+          else
+            OutlinedButton.icon(
+              onPressed: widget.isLoading ? null: widget.onGoogleLogin,
+              icon: Image.asset(
+                'assets/icons/google.png',
+                height: 24,
+                errorBuilder: (context, error, stackTrace) => const Icon(
+                  Icons.g_mobiledata,
+                  size: 24,
+                  color: Color(0xFF0D9488),
+                ),
+              ),
+              label: const Text('Entrar com Google'),
+              style: OutlinedButton.styleFrom(
+                backgroundColor: Colors.white.withValues(alpha: 0.85),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                minimumSize: const Size(double.infinity, 48),
+                side: const BorderSide(color: Color(0xFF0D9488)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
             ),
-            label: const Text('Entrar com Google'),
-            style: OutlinedButton.styleFrom(
-              backgroundColor: Colors.white.withValues(alpha: 0.85),
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              minimumSize: const Size(double.infinity, 48),
-              side: const BorderSide(color: Color(0xFF0D9488)),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          ),
-          const SizedBox(height: 20),
 
+          const SizedBox(height: 20),
+          
           Center(
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
