@@ -63,7 +63,15 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    _goToHome();
+    Navigator.pushReplacement(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            const HomeScreen(),
+        transitionDuration: Duration.zero,
+        reverseTransitionDuration: Duration.zero,
+      ),
+    );
   }
 
   Future<void> _handleGoogleLoginMobile() async {
@@ -78,7 +86,15 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    _goToHome();
+    Navigator.pushReplacement(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            const HomeScreen(),
+        transitionDuration: Duration.zero,
+        reverseTransitionDuration: Duration.zero,
+      ),
+    );
   }
 
   @override

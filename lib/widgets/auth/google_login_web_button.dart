@@ -48,6 +48,8 @@ class _GoogleLoginWebButtonState extends State<GoogleLoginWebButton> {
             return;
           }
 
+          print(idToken.runtimeType);
+
           final erro = await authProvider.loginComGoogleIdToken(idToken);
 
           if (!mounted) return;

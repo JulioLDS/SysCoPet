@@ -18,12 +18,10 @@ class AuthProvider extends ChangeNotifier {
     required String email,
     required String senha,
   }) async {
-    print("1 - Entrou no provider");
 
     isLoading = true;
     notifyListeners();
 
-    print("2 - Chamando authService");
 
     final result = await _authService.register(
       nome: nome,
@@ -31,7 +29,6 @@ class AuthProvider extends ChangeNotifier {
       senha: senha,
     );
 
-    print("3 - Voltou do authService");
 
     isLoading = false;
     notifyListeners();
