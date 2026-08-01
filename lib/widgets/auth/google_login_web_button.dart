@@ -41,7 +41,7 @@ class _GoogleLoginWebButtonState extends State<GoogleLoginWebButton> {
         if (event is GoogleSignInAuthenticationEventSignIn) {
           print('USUARIO GOOGLE RECEBIDO');
           final idToken = event.user.authentication.idToken;
-          print('ID TOKEN EXISTE? ${idToken !=null}');
+          print('ID TOKEN EXISTE? ${idToken != null}');
 
           if (idToken == null) {
             widget.onError('Falha ao obter ID Token do Google.');
@@ -72,16 +72,15 @@ class _GoogleLoginWebButtonState extends State<GoogleLoginWebButton> {
   }
 
   @override
-  void dispose() {
-    _subscription?.cancel();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 44,
-      child: web.renderButton(),
+    return Container(
+      width: double.infinity,
+      height: 50,
+      child: OverflowBox(
+        maxHeight: 70,
+        maxWidth: double.infinity,
+        child: web.renderButton(),
+      ),
     );
   }
 }

@@ -199,15 +199,13 @@ class _LoginFormWidgetState extends State<LoginFormWidget> {
                 child: SizedBox(
                   width: double.infinity,
                   height: 48,
-                  child: Center(
-                    child: widget.googleButton!,
-                  ),
+                  child: Center(child: widget.googleButton!),
                 ),
               ),
             )
           else
             OutlinedButton.icon(
-              onPressed: widget.isLoading ? null: widget.onGoogleLogin,
+              onPressed: widget.isLoading ? null : widget.onGoogleLogin,
               icon: Image.asset(
                 'assets/icons/google.png',
                 height: 24,
@@ -230,7 +228,7 @@ class _LoginFormWidgetState extends State<LoginFormWidget> {
             ),
 
           const SizedBox(height: 20),
-          
+
           Center(
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),

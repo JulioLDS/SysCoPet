@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/auth/register_form_widget.dart';
+import '../../widgets/auth/google_login_web_button.dart';
 import '../../widgets/common/custom_snackbar.dart';
+import '../home/home_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   final VoidCallback onGoToLogin;
@@ -25,7 +28,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final confirmPasswordFocusNode = FocusNode();
   final checkboxFocusNode = FocusNode();
 
-  // ✅ Use RegisterFormWidgetState (sem o _)
   final GlobalKey<RegisterFormWidgetState> _formKey = GlobalKey();
 
   @override
@@ -42,8 +44,34 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.dispose();
   }
 
+  void _goToHome() {
+    Navigator.pushReplacement(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            const HomeScreen(),
+        transitionDuration: Duration.zero,
+        reverseTransitionDuration: Duration.zero,
+      ),
+    );
+  }
+
+  Future<void> _handleGoogleRegisterMobile() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+    final errorMessage = await authProvider.loginComGoogleMobile();
+
+    if (!mounted) return;
+
+    if (errorMessage != null) {
+      CustomSnackbar.showError(context, errorMessage);
+      return;
+    }
+
+    _goToHome();
+  }
+
   Future<void> _handleRegister() async {
-    // ✅ Validação dos termos
     if (_formKey.currentState?.isTermsAccepted == false) {
       CustomSnackbar.showWarning(
         context,
@@ -93,7 +121,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final authProvider = Provider.of<AuthProvider>(context);
 
     return RegisterFormWidget(
-      key: _formKey, // ✅ Passa a key para o widget
+      key: _formKey,
       nameController: nameController,
       emailController: emailController,
       passwordController: passwordController,
@@ -104,8 +132,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
       confirmPasswordFocusNode: confirmPasswordFocusNode,
       checkboxFocusNode: checkboxFocusNode,
       onRegister: _handleRegister,
-      onGoogleRegister: () {},
+      onGoogleRegister: _handleGoogleRegisterMobile,
       isLoading: authProvider.isLoading,
+      googleButton: kIsWeb
+          ? GoogleLoginWebButton(
+              onSuccess: _goToHome,
+              onError: (erro) {
+                CustomSnackbar.showError(context, erro);
+              },
+            )
+          : null,
     );
   }
 }
