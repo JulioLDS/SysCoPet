@@ -57,7 +57,7 @@ class _PetEditDialogState extends State<PetEditDialog> {
     }
 
     especieSelecionada = widget.pet.especie;
-    racaSelecionadaId = widget.pet.idRaca; // ✅ Mantém a raça selecionada
+    racaSelecionadaId = widget.pet.idRaca;
 
     if (widget.pet.dataNascimento != null) {
       final data = widget.pet.dataNascimento!.split('T').first;
@@ -76,7 +76,6 @@ class _PetEditDialogState extends State<PetEditDialog> {
       }
     }
 
-    // ✅ Carrega raças se for cão ou gato (SEM focar automaticamente)
     if (especieSelecionada == 'cao' || especieSelecionada == 'gato') {
       carregarRacas(especieSelecionada!, focarAposCarregar: false);
     }
@@ -91,7 +90,6 @@ class _PetEditDialogState extends State<PetEditDialog> {
     mesController.dispose();
     diaController.dispose();
 
-    // ✅ Dispose dos FocusNodes
     _nomeFocus.dispose();
     _especieFocus.dispose();
     _racaFocus.dispose();
@@ -104,7 +102,6 @@ class _PetEditDialogState extends State<PetEditDialog> {
     super.dispose();
   }
 
-  // ✅ Método carregarRacas com parâmetro opcional
   Future<void> carregarRacas(
     String especie, {
     bool focarAposCarregar = false,
@@ -112,8 +109,6 @@ class _PetEditDialogState extends State<PetEditDialog> {
     setState(() {
       carregandoRacas = true;
       racas = [];
-      // ✅ NÃO zere racaSelecionadaId aqui!
-      // racaSelecionadaId = null;  ❌ Remova essa linha!
     });
 
     try {
@@ -123,7 +118,6 @@ class _PetEditDialogState extends State<PetEditDialog> {
         racas = resultado;
       });
 
-      // ✅ Só move o foco se o parâmetro for verdadeiro
       if (focarAposCarregar) {
         Future.delayed(const Duration(milliseconds: 200), () {
           if (mounted && racas.isNotEmpty) {
@@ -142,10 +136,9 @@ class _PetEditDialogState extends State<PetEditDialog> {
     }
   }
 
+  // ✅ MÉTODO CORRIGIDO: Apenas salva e devolve o resultado para a tela de detalhes
   Future<void> _salvarPet() async {
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
+    if (!_formKey.currentState!.validate()) return;
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final petProvider = Provider.of<PetProvider>(context, listen: false);
@@ -154,22 +147,17 @@ class _PetEditDialogState extends State<PetEditDialog> {
     final ano = anoController.text.trim();
     final mes = mesController.text.trim();
     final dia = diaController.text.trim();
+
     if (ano.isEmpty) {
       CustomSnackbar.showError(context, 'O ano de nascimento é obrigatório');
       return;
     }
 
-    String? dataNascimento;
-
-    if (ano.isNotEmpty) {
-      dataNascimento = ano;
-
-      if (mes.isNotEmpty) {
-        dataNascimento += '-${mes.padLeft(2, '0')}';
-
-        if (dia.isNotEmpty) {
-          dataNascimento += '-${dia.padLeft(2, '0')}';
-        }
+    String? dataNascimento = ano;
+    if (mes.isNotEmpty) {
+      dataNascimento += '-${mes.padLeft(2, '0')}';
+      if (dia.isNotEmpty) {
+        dataNascimento += '-${dia.padLeft(2, '0')}';
       }
     }
 
@@ -183,25 +171,18 @@ class _PetEditDialogState extends State<PetEditDialog> {
       altura: alturaController.text.isEmpty
           ? null
           : double.parse(alturaController.text),
-      porte: '',
+      porte: widget.pet.porte,
       idUsuario: usuario!.id,
     );
 
-    final erro = await petProvider.atualizarPet(pet);
+    // 1. Chama a atualização no backend
+    final resultado = await petProvider.atualizarPet(pet);
 
     if (!mounted) return;
 
-    if (erro != null) {
-      CustomSnackbar.showError(context, erro);
-      return;
-    }
-
-    CustomSnackbar.showSuccess(
-      context,
-      'Mudanças salvas com sucesso!',
-      color: const Color(0xFF047857),
-    );
-    Navigator.pop(context, true);
+    // 2. Retorna o resultado (Map) para a PetDetailsScreen tratar tudo
+    // (mostrar alerta, mostrar sucesso e atualizar os dados na tela)
+    Navigator.pop(context, resultado);
   }
 
   @override
@@ -256,7 +237,6 @@ class _PetEditDialogState extends State<PetEditDialog> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // ✅ Nome - Enter vai para Espécie
                       TextFormField(
                         controller: nomeController,
                         focusNode: _nomeFocus,
@@ -285,14 +265,13 @@ class _PetEditDialogState extends State<PetEditDialog> {
                       ),
                       const SizedBox(height: 16),
 
-                      // ✅ Espécie
                       DropdownButtonFormField<String>(
                         value: especieSelecionada,
                         focusNode: _especieFocus,
                         decoration: InputDecoration(
                           labelText: 'Espécie',
                           prefixIcon: const Icon(
-                            Icons.category_outlined, // ✅ SEMPRE genérico
+                            Icons.category_outlined,
                             color: Color(0xFF0D9488),
                           ),
                           border: OutlineInputBorder(
@@ -331,10 +310,8 @@ class _PetEditDialogState extends State<PetEditDialog> {
                         iconSize: 20,
                         dropdownColor: Colors.white,
                         menuMaxHeight: 300,
-                        // ✅ Campo selecionado: ícone genérico (prefixIcon) + texto com ícone específico
                         selectedItemBuilder: (context) {
                           return [
-                            // ✅ Cão - Verde
                             const Row(
                               children: [
                                 Icon(
@@ -352,7 +329,6 @@ class _PetEditDialogState extends State<PetEditDialog> {
                                 ),
                               ],
                             ),
-                            // ✅ Gato - Roxo
                             const Row(
                               children: [
                                 Icon(
@@ -370,7 +346,6 @@ class _PetEditDialogState extends State<PetEditDialog> {
                                 ),
                               ],
                             ),
-                            // ✅ Outro - Verde (padrão)
                             const Row(
                               children: [
                                 Icon(
@@ -390,9 +365,7 @@ class _PetEditDialogState extends State<PetEditDialog> {
                             ),
                           ];
                         },
-                        // ✅ Na lista: ícone específico + texto
                         items: const [
-                          // ✅ Cão - Verde
                           DropdownMenuItem(
                             value: 'cao',
                             child: Row(
@@ -413,7 +386,6 @@ class _PetEditDialogState extends State<PetEditDialog> {
                               ],
                             ),
                           ),
-                          // ✅ Gato - Roxo
                           DropdownMenuItem(
                             value: 'gato',
                             child: Row(
@@ -434,7 +406,6 @@ class _PetEditDialogState extends State<PetEditDialog> {
                               ],
                             ),
                           ),
-                          // ✅ Outro - Verde (padrão)
                           DropdownMenuItem(
                             value: 'outro',
                             child: Row(
@@ -487,11 +458,10 @@ class _PetEditDialogState extends State<PetEditDialog> {
                       ),
                       const SizedBox(height: 16),
 
-                      // ✅ Raça
                       DropdownButtonFormField<int>(
                         key: ValueKey(
                           'raca_${especieSelecionada}_${racas.length}',
-                        ), // ✅ Força reconstrução
+                        ),
                         value: racaSelecionadaId,
                         focusNode: _racaFocus,
                         decoration: InputDecoration(
@@ -499,7 +469,7 @@ class _PetEditDialogState extends State<PetEditDialog> {
                               ? 'Carregando raças...'
                               : 'Raça',
                           prefixIcon: const Icon(
-                            Icons.pets, // ✅ SEMPRE genérico (pata)
+                            Icons.pets,
                             color: Color(0xFF0D9488),
                           ),
                           border: OutlineInputBorder(
@@ -538,7 +508,6 @@ class _PetEditDialogState extends State<PetEditDialog> {
                         iconSize: 20,
                         dropdownColor: Colors.white,
                         menuMaxHeight: 300,
-                        // ✅ Campo selecionado: apenas texto (ícone genérico já está no prefixIcon)
                         selectedItemBuilder: (context) {
                           if (racas.isEmpty) {
                             return <Widget>[];
@@ -555,7 +524,6 @@ class _PetEditDialogState extends State<PetEditDialog> {
                             );
                           }).toList();
                         },
-                        // ✅ Na lista: ícone específico + texto
                         items: racas.isEmpty
                             ? null
                             : racas.map((raca) {
@@ -570,13 +538,9 @@ class _PetEditDialogState extends State<PetEditDialog> {
                                             ? Icons.pets
                                             : Icons.help_outline,
                                         color: especieSelecionada == 'cao'
-                                            ? const Color(
-                                                0xFF0D9488,
-                                              ) // ✅ Cão - Verde
+                                            ? const Color(0xFF0D9488)
                                             : especieSelecionada == 'gato'
-                                            ? const Color(
-                                                0xFF8B5CF6,
-                                              ) // ✅ Gato - Roxo
+                                            ? const Color(0xFF8B5CF6)
                                             : const Color(0xFF0D9488),
                                         size: 20,
                                       ),
@@ -624,7 +588,6 @@ class _PetEditDialogState extends State<PetEditDialog> {
                       ),
                       const SizedBox(height: 16),
 
-                      // ✅ Data de nascimento
                       Row(
                         children: [
                           Expanded(
@@ -696,7 +659,6 @@ class _PetEditDialogState extends State<PetEditDialog> {
                       ),
                       const SizedBox(height: 16),
 
-                      // ✅ Peso - Enter vai para Altura
                       TextFormField(
                         controller: pesoController,
                         focusNode: _pesoFocus,
@@ -726,7 +688,6 @@ class _PetEditDialogState extends State<PetEditDialog> {
                       ),
                       const SizedBox(height: 16),
 
-                      // ✅ Altura - Enter vai para o botão
                       TextFormField(
                         controller: alturaController,
                         focusNode: _alturaFocus,
@@ -750,7 +711,6 @@ class _PetEditDialogState extends State<PetEditDialog> {
                       ),
                       const SizedBox(height: 24),
 
-                      // Botão Salvar
                       SizedBox(
                         height: 50,
                         child: ElevatedButton(

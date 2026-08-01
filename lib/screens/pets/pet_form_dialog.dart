@@ -7,6 +7,7 @@ import '../../widgets/common/custom_snackbar.dart';
 import '../../models/pet_model.dart';
 import '../../providers/pet_provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../widgets/common/health_alert_banner.dart';
 
 class PetFormDialog extends StatefulWidget {
   const PetFormDialog({super.key});
@@ -18,10 +19,8 @@ class PetFormDialog extends StatefulWidget {
 class _PetFormDialogState extends State<PetFormDialog> {
   final _formKey = GlobalKey<FormState>();
 
-  // ✅ FocusNodes para navegação
+  // ✅ FocusNodes APENAS para campos de texto (Dropdowns removidos)
   final FocusNode _nomeFocus = FocusNode();
-  final FocusNode _especieFocus = FocusNode();
-  final FocusNode _racaFocus = FocusNode();
   final FocusNode _anoFocus = FocusNode();
   final FocusNode _mesFocus = FocusNode();
   final FocusNode _diaFocus = FocusNode();
@@ -52,10 +51,8 @@ class _PetFormDialogState extends State<PetFormDialog> {
     mesController.dispose();
     diaController.dispose();
 
-    // ✅ Dispose dos FocusNodes
+    // ✅ Dispose apenas dos FocusNodes de texto
     _nomeFocus.dispose();
-    _especieFocus.dispose();
-    _racaFocus.dispose();
     _anoFocus.dispose();
     _mesFocus.dispose();
     _diaFocus.dispose();
@@ -78,13 +75,6 @@ class _PetFormDialogState extends State<PetFormDialog> {
       setState(() {
         racas = resultado;
       });
-
-      // ✅ Foca na raça após carregar
-      if (racas.isNotEmpty) {
-        Future.delayed(const Duration(milliseconds: 100), () {
-          FocusScope.of(context).requestFocus(_racaFocus);
-        });
-      }
     } catch (e) {
       print(e);
       ScaffoldMessenger.of(
@@ -95,19 +85,6 @@ class _PetFormDialogState extends State<PetFormDialog> {
       setState(() {
         carregandoRacas = false;
       });
-    }
-  }
-
-  IconData _getEspecieIcon(String? especie) {
-    switch (especie) {
-      case 'cao':
-        return Icons.pets; //  Pata para cão
-      case 'gato':
-        return Icons.pets; //  Rosto para gato (temporário)
-      case 'outro':
-        return Icons.help_outline;
-      default:
-        return Icons.category_outlined;
     }
   }
 
@@ -151,21 +128,26 @@ class _PetFormDialogState extends State<PetFormDialog> {
       idUsuario: usuario!.id,
     );
 
-    final erro = await petProvider.cadastrarPet(pet);
+    final resultado = await petProvider.cadastrarPet(pet);
 
     if (!mounted) return;
 
-    if (erro != null) {
-      CustomSnackbar.showError(context, erro);
+    if (resultado['erro'] != null) {
+      CustomSnackbar.showError(context, resultado['erro']!);
       return;
+    }
+
+    if (resultado['alerta'] != null && resultado['alerta']!.isNotEmpty) {
+      HealthAlertBanner.show(context, resultado['alerta']!);
     }
 
     CustomSnackbar.showSuccess(
       context,
-      'Pet criado com sucesso!',
+      resultado['mensagem'] ?? 'Pet criado com sucesso!',
       color: const Color(0xFF047857),
     );
-    Navigator.pop(context, true);
+
+    Navigator.pop(context);
   }
 
   @override
@@ -220,13 +202,13 @@ class _PetFormDialogState extends State<PetFormDialog> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // ✅ Nome - Enter vai para Espécie
+                      // ✅ Nome: Enter pula os dropdowns e vai direto para o Ano
                       TextFormField(
                         controller: nomeController,
                         focusNode: _nomeFocus,
                         textInputAction: TextInputAction.next,
                         onFieldSubmitted: (_) {
-                          FocusScope.of(context).requestFocus(_especieFocus);
+                          FocusScope.of(context).requestFocus(_anoFocus);
                         },
                         decoration: InputDecoration(
                           labelText: 'Nome do Pet',
@@ -249,8 +231,7 @@ class _PetFormDialogState extends State<PetFormDialog> {
                       ),
                       const SizedBox(height: 16),
 
-                      // ✅ Espécie com ÍCONES
-                      // ✅ Espécie com ÍCONES (Padronizado com Raça)
+                      // ✅ Espécie (Sem FocusNode, interação por clique/toque)
                       FormField<String>(
                         validator: (value) {
                           if (value == null) {
@@ -291,7 +272,6 @@ class _PetFormDialogState extends State<PetFormDialog> {
                                 value: especieSelecionada,
                                 isExpanded: true,
                                 hint: const Text('Selecione uma espécie'),
-                                // ✅ Ícone de seta customizado
                                 icon: Container(
                                   padding: const EdgeInsets.all(4),
                                   decoration: BoxDecoration(
@@ -309,10 +289,8 @@ class _PetFormDialogState extends State<PetFormDialog> {
                                 iconSize: 20,
                                 dropdownColor: Colors.white,
                                 menuMaxHeight: 300,
-                                // ✅ Campo selecionado: ÍCONE + TEXTO
                                 selectedItemBuilder: (context) {
                                   return [
-                                    // Cão
                                     Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
@@ -335,7 +313,6 @@ class _PetFormDialogState extends State<PetFormDialog> {
                                         ),
                                       ],
                                     ),
-                                    // Gato
                                     Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
@@ -358,7 +335,6 @@ class _PetFormDialogState extends State<PetFormDialog> {
                                         ),
                                       ],
                                     ),
-                                    // Outro
                                     Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
@@ -383,9 +359,7 @@ class _PetFormDialogState extends State<PetFormDialog> {
                                     ),
                                   ];
                                 },
-                                // ✅ Na lista: ÍCONE + TEXTO
                                 items: [
-                                  // Cão
                                   DropdownMenuItem(
                                     value: 'cao',
                                     child: Row(
@@ -410,7 +384,6 @@ class _PetFormDialogState extends State<PetFormDialog> {
                                       ],
                                     ),
                                   ),
-                                  // Gato
                                   DropdownMenuItem(
                                     value: 'gato',
                                     child: Row(
@@ -435,7 +408,6 @@ class _PetFormDialogState extends State<PetFormDialog> {
                                       ],
                                     ),
                                   ),
-                                  // Outro
                                   DropdownMenuItem(
                                     value: 'outro',
                                     child: Row(
@@ -473,15 +445,6 @@ class _PetFormDialogState extends State<PetFormDialog> {
                                       value == 'gato' ||
                                       value == 'outro') {
                                     carregarRacas(value!);
-                                  } else {
-                                    Future.delayed(
-                                      const Duration(milliseconds: 100),
-                                      () {
-                                        FocusScope.of(
-                                          context,
-                                        ).requestFocus(_anoFocus);
-                                      },
-                                    );
                                   }
                                 },
                               ),
@@ -491,7 +454,7 @@ class _PetFormDialogState extends State<PetFormDialog> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Raça
+                      // ✅ Raça: Ao selecionar, o foco vai automaticamente para o Ano
                       FormField<int>(
                         validator: (value) {
                           if (especieSelecionada == 'cao' ||
@@ -527,7 +490,6 @@ class _PetFormDialogState extends State<PetFormDialog> {
                                       ? 'Carregando raças...'
                                       : 'Selecione uma raça',
                                 ),
-                                // ✅ Ícone de seta customizado (igual ao da espécie)
                                 icon: Container(
                                   padding: const EdgeInsets.all(4),
                                   decoration: BoxDecoration(
@@ -551,8 +513,8 @@ class _PetFormDialogState extends State<PetFormDialog> {
                                     child: Row(
                                       children: [
                                         SizedBox(
-                                          width: 30, // ✅ De 32 para 30
-                                          height: 30, // ✅ De 32 para 30
+                                          width: 30,
+                                          height: 30,
                                           child: Image.asset(
                                             especieSelecionada == 'cao'
                                                 ? 'assets/icons/cao.png'
@@ -586,6 +548,16 @@ class _PetFormDialogState extends State<PetFormDialog> {
                                           racaSelecionadaId = value;
                                         });
                                         field.didChange(value);
+
+                                        // ✅ Após selecionar a raça, foca no campo Ano
+                                        Future.delayed(
+                                          const Duration(milliseconds: 100),
+                                          () {
+                                            FocusScope.of(
+                                              context,
+                                            ).requestFocus(_anoFocus);
+                                          },
+                                        );
                                       },
                               ),
                             ),
@@ -595,7 +567,7 @@ class _PetFormDialogState extends State<PetFormDialog> {
 
                       const SizedBox(height: 16),
 
-                      // ✅ Data de nascimento
+                      // ✅ Data de nascimento (Cadeia de foco intacta)
                       Row(
                         children: [
                           Expanded(
@@ -620,12 +592,9 @@ class _PetFormDialogState extends State<PetFormDialog> {
                                   return 'Obrigatório';
                                 }
                                 final ano = int.tryParse(value.trim());
-                                if (ano == null) {
-                                  return 'Digite apenas números';
-                                }
-                                if (ano < 0) {
+                                if (ano == null) return 'Digite apenas números';
+                                if (ano < 0)
                                   return 'O ano não pode ser negativo';
-                                }
                                 return null;
                               },
                             ),
@@ -649,16 +618,12 @@ class _PetFormDialogState extends State<PetFormDialog> {
                                 fillColor: Colors.grey.shade50,
                               ),
                               validator: (value) {
-                                if (value == null || value.trim().isEmpty) {
+                                if (value == null || value.trim().isEmpty)
                                   return null;
-                                }
                                 final mes = int.tryParse(value.trim());
-                                if (mes == null) {
-                                  return 'Digite apenas números';
-                                }
-                                if (mes < 1 || mes > 12) {
+                                if (mes == null) return 'Digite apenas números';
+                                if (mes < 1 || mes > 12)
                                   return 'Informe um mês entre 1 e 12';
-                                }
                                 return null;
                               },
                             ),
@@ -682,16 +647,12 @@ class _PetFormDialogState extends State<PetFormDialog> {
                                 fillColor: Colors.grey.shade50,
                               ),
                               validator: (value) {
-                                if (value == null || value.trim().isEmpty) {
+                                if (value == null || value.trim().isEmpty)
                                   return null;
-                                }
                                 final dia = int.tryParse(value.trim());
-                                if (dia == null) {
-                                  return 'Digite apenas números';
-                                }
-                                if (dia < 1 || dia > 31) {
+                                if (dia == null) return 'Digite apenas números';
+                                if (dia < 1 || dia > 31)
                                   return 'Informe um dia entre 1 e 31';
-                                }
                                 return null;
                               },
                             ),
@@ -700,7 +661,7 @@ class _PetFormDialogState extends State<PetFormDialog> {
                       ),
                       const SizedBox(height: 16),
 
-                      // ✅ Peso - Enter vai para Altura
+                      // ✅ Peso
                       TextFormField(
                         controller: pesoController,
                         focusNode: _pesoFocus,
@@ -725,22 +686,17 @@ class _PetFormDialogState extends State<PetFormDialog> {
                           if (value == null || value.trim().isEmpty) {
                             return 'Digite o peso';
                           }
-
                           final peso = double.tryParse(
                             value.trim().replaceAll(',', '.'),
                           );
-                          if (peso == null) {
-                            return 'Digite apenas números';
-                          }
-                          if (peso < 0) {
-                            return 'O peso não pode ser negativo';
-                          }
+                          if (peso == null) return 'Digite apenas números';
+                          if (peso < 0) return 'O peso não pode ser negativo';
                           return null;
                         },
                       ),
                       const SizedBox(height: 16),
 
-                      // ✅ Altura - Enter vai para o botão
+                      // ✅ Altura
                       TextFormField(
                         controller: alturaController,
                         focusNode: _alturaFocus,
@@ -762,20 +718,13 @@ class _PetFormDialogState extends State<PetFormDialog> {
                           fillColor: Colors.grey.shade50,
                         ),
                         validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
+                          if (value == null || value.trim().isEmpty)
                             return null;
-                          }
-
                           final altura = double.tryParse(
                             value.trim().replaceAll(',', '.'),
                           );
-
-                          if (altura == null) {
-                            return 'Digite apenas números';
-                          }
-                          if (altura < 0) {
-                            return 'Altura não pode ser negativa';
-                          }
+                          if (altura == null) return 'Digite apenas números';
+                          if (altura < 0) return 'Altura não pode ser negativa';
                           return null;
                         },
                       ),

@@ -18,17 +18,14 @@ class AuthProvider extends ChangeNotifier {
     required String email,
     required String senha,
   }) async {
-
     isLoading = true;
     notifyListeners();
-
 
     final result = await _authService.register(
       nome: nome,
       email: email,
       senha: senha,
     );
-
 
     isLoading = false;
     notifyListeners();
@@ -45,7 +42,7 @@ class AuthProvider extends ChangeNotifier {
     await prefs.setString(
       'user_session',
       jsonEncode({
-        'id' : currentUser!.id,
+        'id': currentUser!.id,
         'nome': currentUser!.nome,
         'email': currentUser!.email,
       }),
@@ -58,8 +55,7 @@ class AuthProvider extends ChangeNotifier {
 
     final session = prefs.getString('user_session');
 
-    if (session != null) { 
-
+    if (session != null) {
       final data = jsonDecode(session);
 
       currentUser = UserModel(
@@ -79,10 +75,7 @@ class AuthProvider extends ChangeNotifier {
     isLoading = true;
     notifyListeners();
 
-    final user = await _authService.login(
-      email: email, 
-      senha: senha
-    );
+    final user = await _authService.login(email: email, senha: senha);
 
     isLoading = false;
     notifyListeners();
@@ -101,7 +94,7 @@ class AuthProvider extends ChangeNotifier {
   }
 
   //login com google
-  Future<void> inicializarGoogle(){
+  Future<void> inicializarGoogle() {
     return _authService.inicializarGoogle();
   }
 
