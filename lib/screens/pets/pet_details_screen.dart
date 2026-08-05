@@ -3,6 +3,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:syscopet/providers/pet_provider.dart';
 import '../../models/reminder_ocurrence_model.dart';
+import 'package:syscopet/widgets/common/health_alert_banner.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/reminder_provider.dart';
 import '../../models/reminder_model.dart';
@@ -288,13 +289,61 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
                     // ✅ Botão Editar com hover
                     _HoverButton(
                       onTap: () async {
-                        final atualizou = await showDialog<bool>(
-                          context: context,
-                          builder: (context) => PetEditDialog(pet: _currentPet),
-                        );
+                        // 1. Abre o dialog e espera o resultado (Map<String, String?>)
+                        final resultado =
+                            await showDialog<Map<String, String?>>(
+                              context: context,
+                              builder: (context) =>
+                                  PetEditDialog(pet: _currentPet),
+                            );
 
-                        if (atualizou == true && mounted) {
-                          Navigator.pop(context, true);
+                        // 2. Se o dialog retornou um resultado e a tela ainda está montada
+                        if (resultado != null && mounted) {
+                          // 3. Verifica se houve erro
+                          if (resultado['erro'] != null) {
+                            CustomSnackbar.showError(
+                              context,
+                              resultado['erro']!,
+                            );
+                            return;
+                          }
+
+                          // 4. Recarrega os pets do provider para pegar os dados atualizados do backend
+                          final petProvider = Provider.of<PetProvider>(
+                            context,
+                            listen: false,
+                          );
+                          await petProvider.carregarPets(_currentPet.idUsuario);
+
+                          if (mounted) {
+                            // 5. Atualiza o pet atual na tela
+                            final petAtualizado = petProvider.pets.firstWhere(
+                              (p) => p.idPet == _currentPet.idPet,
+                              orElse: () => _currentPet,
+                            );
+
+                            setState(() {
+                              _currentPet = petAtualizado;
+                              _houveAlteracao = true;
+                            });
+
+                            // 6. Mostra o alerta de saúde (se houver) - AGORA no contexto correto!
+                            if (resultado['alerta'] != null &&
+                                resultado['alerta']!.isNotEmpty) {
+                              HealthAlertBanner.show(
+                                context,
+                                resultado['alerta']!,
+                              );
+                            }
+
+                            // 7. Mostra mensagem de sucesso
+                            CustomSnackbar.showSuccess(
+                              context,
+                              resultado['mensagem'] ??
+                                  'Pet atualizado com sucesso!',
+                              color: const Color(0xFF047857),
+                            );
+                          }
                         }
                       },
                       hoverColor: Colors.white,
