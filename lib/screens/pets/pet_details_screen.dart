@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:syscopet/providers/pet_provider.dart';
+import '../../models/reminder_ocurrence_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/reminder_provider.dart';
 import '../../models/reminder_model.dart';
@@ -34,7 +35,7 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
       Provider.of<ReminderProvider>(
         context,
         listen: false,
-      ).carregarLembretesDoPet(_currentPet.idPet!);
+      ).carregarOcorrenciasDoPet(_currentPet.idPet!);
     });
   }
 
@@ -404,19 +405,19 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
                   Consumer<ReminderProvider>(
                     builder: (context, reminderProvider, child) {
                       // 1. Filtrar lembretes deste pet, ativos e futuros
-                      final lembretesDoPet =
-                          reminderProvider.lembretes
+                      final proximasOcorrencias =
+                          reminderProvider.ocorrencias
                               .where(
-                                (lembrete) =>
-                                    lembrete.idPet == _currentPet.idPet &&
-                                    lembrete.ativo &&
-                                    lembrete.dataHora.isAfter(DateTime.now()),
+                                (ocorrencia) =>
+                                    ocorrencia.idPet == _currentPet.idPet &&
+                                    ocorrencia.ativo &&
+                                    ocorrencia.dataHora.isAfter(DateTime.now()),
                               )
                               .toList()
                             ..sort((a, b) => a.dataHora.compareTo(b.dataHora));
 
                       // 2. Pegar apenas os 2 primeiros
-                      final lembretesParaMostrar = lembretesDoPet
+                      final lembretesParaMostrar = proximasOcorrencias
                           .take(2)
                           .toList();
 
@@ -486,15 +487,15 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
                         ),
                         child: Column(
                           children: [
-                            ...lembretesParaMostrar.map((lembrete) {
-                              final index = lembretesParaMostrar.indexOf(
-                                lembrete,
-                              );
+                            ...lembretesParaMostrar.asMap().entries.map((entry) {
+                              final index = entry.key;
+                              final ocorrencia = entry.value;
+                              
                               return Column(
                                 children: [
-                                  _buildReminderItemDynamic(lembrete),
+                                  _buildReminderItemDynamic(ocorrencia),
                                   if (index < lembretesParaMostrar.length - 1 ||
-                                      lembretesDoPet.length > 2)
+                                      proximasOcorrencias.length > 2)
                                     Divider(
                                       height: 1,
                                       thickness: 1,
@@ -505,7 +506,7 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
                             }).toList(),
 
                             // Botão "Ver todos" (só aparece se tiver mais de 2)
-                            if (lembretesDoPet.length > 2)
+                            if (proximasOcorrencias.length > 2)
                               MouseRegion(
                                 cursor: SystemMouseCursors.click,
                                 child: GestureDetector(
@@ -1268,10 +1269,10 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
   }
 
   // ✅ Widget do Item de Lembrete (Agora recebe o Model direto)
-  Widget _buildReminderItemDynamic(ReminderModel lembrete) {
-    final icon = _getIconByType(lembrete.tipo);
-    final color = _getColorByType(lembrete.tipo);
-    final bgColor = _getBgColorByType(lembrete.tipo);
+  Widget _buildReminderItemDynamic(ReminderOccurrenceModel ocorrencia) {
+    final icon = _getIconByType(ocorrencia.tipo);
+    final color = _getColorByType(ocorrencia.tipo);
+    final bgColor = _getBgColorByType(ocorrencia.tipo);
 
     return Padding(
       padding: const EdgeInsets.all(16),
@@ -1290,7 +1291,7 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  lembrete.titulo,
+                  ocorrencia.titulo,
                   style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
@@ -1316,7 +1317,7 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  _formatarDataLembrete(lembrete.dataHora),
+                  _formatarDataLembrete(ocorrencia.dataHora),
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
@@ -1324,7 +1325,7 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
                   ),
                 ),
                 Text(
-                  _formatarHoraLembrete(lembrete.dataHora),
+                  _formatarHoraLembrete(ocorrencia.dataHora),
                   style: TextStyle(fontSize: 11, color: color.withOpacity(0.8)),
                 ),
               ],

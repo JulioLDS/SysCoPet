@@ -227,7 +227,7 @@ class _HomeScreenState extends State<HomeScreen> {
       );
 
       await petProvider.carregarPets(auth.currentUser!.id);
-      await reminderProvider.carregarLembretesDosPets(petProvider.pets);
+      await reminderProvider.carregarOcorrenciasDosPets(petProvider.pets);
       print("Pets carregados: ${petProvider.pets.length}");
     });
   }
@@ -240,7 +240,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final reminderProvider = Provider.of<ReminderProvider>(context);
 
     final proximosLembretes =
-        reminderProvider.lembretes
+        reminderProvider.ocorrencias
             .where(
               (lembrete) =>
                   lembrete.ativo && lembrete.dataHora.isAfter(DateTime.now()),
@@ -1102,15 +1102,15 @@ class _HomeScreenState extends State<HomeScreen> {
 
           if (atualizou == true) {
             final auth = Provider.of<AuthProvider>(context, listen: false);
-            await Provider.of<PetProvider>(
-              context,
-              listen: false,
-            ).carregarPets(auth.currentUser!.id);
+            final petProvider = Provider.of<PetProvider>(context,listen: false,);
 
-            /*await Provider.of<ReminderProvider>(
-              context,
-              listen: false,
-            ).carregarLembretesDosPets();*/
+              final reminderProvider = Provider.of<ReminderProvider>(context,listen: false,);
+
+              await petProvider.carregarPets(auth.currentUser!.id);
+
+              await reminderProvider.carregarOcorrenciasDosPets(
+                petProvider.pets,
+              );
           }
         },
         borderRadius: BorderRadius.circular(16),

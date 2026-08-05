@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 
 import '../config/api_config.dart';
 import '../models/reminder_model.dart';
+import '../models/reminder_ocurrence_model.dart';
 
 class ReminderService {
 
@@ -30,22 +31,49 @@ class ReminderService {
 
   //Criar lembrete
   Future<String?> criarLembrete(ReminderModel lembrete) async {
-    final response = await http.post(
-      Uri.parse('${ApiConfig.baseUrl}/pets/lembretes'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(lembrete.toJson()),
+    final url = Uri.parse(
+      '${ApiConfig.baseUrl}/pets/lembretes',
     );
 
-    final data = jsonDecode(response.body);
+    final bodyJson = jsonEncode(
+      lembrete.toJson(),
+    );
 
-    print(data);
+    print('POST lembrete: $url');
+    print('Body enviado: $bodyJson');
 
-    if (response.statusCode != 201) {
-      if (data['erros'] != null) {
-        return (data['erros'] as List).join('\n');
+    final response = await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: bodyJson,
+    );
+
+    print('Status criar lembrete: ${response.statusCode}');
+    print('Body criar lembrete: ${response.body}');
+
+    Map<String, dynamic>? data;
+
+    try {
+      final decoded = jsonDecode(response.body);
+
+      if (decoded is Map<String, dynamic>) {
+        data = decoded;
+      }
+    } catch (_) {
+      return 'A API retornou uma resposta inválida ao criar lembrete.';
+    }
+
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      if (data?['erros'] != null) {
+        return (data!['erros'] as List).join('\n');
       }
 
-      return data['erro'] ?? data['error'] ?? 'Erro ao criar lembrete';
+      return data?['erro'] ??
+          data?['error'] ??
+          data?['message'] ??
+          'Erro ao criar lembrete';
     }
 
     return null;
@@ -65,4 +93,23 @@ class ReminderService {
 
     return null;
   }
+
+  //Buscar ocorrência
+  Future<List<ReminderOccurrenceModel>> buscarOcorrencias(int idPet,) async {
+
+    final response = await http.get(
+      Uri.parse(
+        '${ApiConfig.baseUrl}/pets/lembretes/ocorrencias/$idPet?quantidade=5',
+      ),
+    );
+
+    final List data = jsonDecode(response.body);
+
+    return data
+        .map(
+          (e) => ReminderOccurrenceModel.fromJson(e),
+        )
+        .toList();
+  }
+
 }
