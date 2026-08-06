@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:syscopet/providers/pet_provider.dart';
@@ -99,6 +101,8 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
+  final ScrollController _petScrollController = ScrollController();
+  int _currentPetIndex = 0;
 
   //Métodos pro lembrete (nao sei um lugar pra por)
   String _nomePetPorId(int idPet) {
@@ -218,6 +222,9 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
 
+    // ✅ Listener para atualizar o dot ativo enquanto rola
+    _petScrollController.addListener(_onPetScroll);
+
     Future.microtask(() async {
       final auth = Provider.of<AuthProvider>(context, listen: false);
       final petProvider = Provider.of<PetProvider>(context, listen: false);
@@ -230,6 +237,34 @@ class _HomeScreenState extends State<HomeScreen> {
       await reminderProvider.carregarLembretesDosPets(petProvider.pets);
       print("Pets carregados: ${petProvider.pets.length}");
     });
+  }
+
+  // ✅ Método que calcula qual dot deve estar ativo
+  void _onPetScroll() {
+    if (_petScrollController.hasClients) {
+      // Largura média de um card (160) + padding (15) = 175
+      final itemWidth = 175.0;
+      final maxIndex = context.read<PetProvider>().pets.length;
+
+      final newIndex = (_petScrollController.offset / itemWidth).round().clamp(
+        0,
+        maxIndex,
+      );
+
+      if (newIndex != _currentPetIndex) {
+        setState(() {
+          _currentPetIndex = newIndex;
+        });
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    // ✅ Limpa o listener para evitar vazamento de memória
+    _petScrollController.removeListener(_onPetScroll);
+    _petScrollController.dispose();
+    super.dispose();
   }
 
   @override
@@ -449,29 +484,180 @@ class _HomeScreenState extends State<HomeScreen> {
                               const SizedBox(height: 20),
 
                               SizedBox(
-                                height: 280, // ✅ Aumentado de 240 para 260
-                                child: ListView(
-                                  scrollDirection: Axis.horizontal,
-                                  clipBehavior: Clip
-                                      .none, // ✅ Permite que a sombra ultrapasse
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical:
-                                        20, // ✅ Padding vertical para acomodar sombra
-                                  ),
+                                height: 280,
+                                child: Stack(
+                                  clipBehavior: Clip.none,
                                   children: [
-                                    _buildAddPetCard(),
-                                    const SizedBox(width: 15),
-                                    ...petProvider.pets.map(
-                                      (pet) => Padding(
-                                        padding: const EdgeInsets.only(
-                                          right: 15,
+                                    // ✅ 1. Lista com Rolagem Suave
+                                    Positioned.fill(
+                                      child: ScrollConfiguration(
+                                        behavior:
+                                            ScrollConfiguration.of(
+                                              context,
+                                            ).copyWith(
+                                              dragDevices: {
+                                                PointerDeviceKind.touch,
+                                                PointerDeviceKind.mouse,
+                                                PointerDeviceKind.stylus,
+                                                PointerDeviceKind.trackpad,
+                                              },
+                                            ),
+                                        child: ListView(
+                                          controller: _petScrollController,
+                                          scrollDirection: Axis.horizontal,
+                                          clipBehavior: Clip.none,
+                                          padding: const EdgeInsets.symmetric(
+                                            vertical: 20,
+                                          ),
+                                          children: [
+                                            const SizedBox(width: 15),
+                                            _buildAddPetCard(),
+                                            const SizedBox(width: 15),
+                                            ...petProvider.pets.map(
+                                              (pet) => Padding(
+                                                padding: const EdgeInsets.only(
+                                                  right: 15,
+                                                ),
+                                                child: _buildPetCard(
+                                                  pet: pet,
+                                                  age: calcularIdade(
+                                                    pet.dataNascimento,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 15),
+                                          ],
                                         ),
-                                        child: _buildPetCard(
-                                          pet: pet,
-                                          age: calcularIdade(
-                                            pet.dataNascimento,
+                                      ),
+                                    ),
+
+                                    // ✅ 2. GRADIENTE FADE no canto direito (colado na borda)
+                                    // ✅ 2. GRADIENTE FADE BEM FORTE - COLADO TOTALMENTE NA DIREITA
+                                    if (petProvider.pets.isNotEmpty)
+                                      Positioned(
+                                        right: -40,
+                                        top: 0,
+                                        bottom: 10,
+                                        width:
+                                            100, // ✅ Aumentado de 80 para 100
+                                        child: IgnorePointer(
+                                          child: Container(
+                                            decoration: BoxDecoration(
+                                              gradient: LinearGradient(
+                                                begin: Alignment.centerLeft,
+                                                end: Alignment.centerRight,
+                                                stops: const [
+                                                  0.0,
+                                                  0.3,
+                                                  0.7,
+                                                  1.0,
+                                                ], // ✅ 4 pontos para transição mais agressiva
+                                                colors: [
+                                                  const Color(
+                                                    0xFFF8FAFC,
+                                                  ).withOpacity(0.0),
+                                                  const Color(
+                                                    0xFFF8FAFC,
+                                                  ).withOpacity(0.5),
+                                                  const Color(
+                                                    0xFFF8FAFC,
+                                                  ).withOpacity(0.9),
+                                                  const Color(
+                                                    0xFFF8FAFC,
+                                                  ).withOpacity(
+                                                    1.0,
+                                                  ), // ✅ Totalmente opaco
+                                                ],
+                                              ),
+                                            ),
                                           ),
                                         ),
+                                      ),
+
+                                    // ✅ 3. BARRA COMPLETA COM ANIMAÇÃO SUAVE
+                                    Positioned(
+                                      bottom: -10,
+                                      left: 0,
+                                      right: 0,
+                                      child: LayoutBuilder(
+                                        builder: (context, constraints) {
+                                          final totalItems =
+                                              petProvider.pets.length + 1;
+                                          final itemWidth = 175.0;
+                                          final totalContentWidth =
+                                              (totalItems * itemWidth) + 30;
+                                          final visibleWidth =
+                                              constraints.maxWidth;
+
+                                          // ✅ Barra ocupa toda a largura disponível
+                                          final barWidth = visibleWidth;
+
+                                          // ✅ Alça proporcional (mínimo 40px, máximo 30% da barra)
+                                          final thumbWidth =
+                                              (visibleWidth /
+                                                      totalContentWidth *
+                                                      barWidth)
+                                                  .clamp(40.0, barWidth * 0.3);
+
+                                          final maxScroll =
+                                              (totalContentWidth - visibleWidth)
+                                                  .clamp(0.0, double.infinity);
+                                          final scrollPosition =
+                                              _petScrollController.hasClients
+                                              ? _petScrollController.offset
+                                              : 0.0;
+
+                                          final maxThumbPosition =
+                                              barWidth - thumbWidth;
+                                          final thumbPosition = maxScroll > 0
+                                              ? (scrollPosition /
+                                                        maxScroll *
+                                                        maxThumbPosition)
+                                                    .clamp(
+                                                      0.0,
+                                                      maxThumbPosition,
+                                                    )
+                                              : 0.0;
+
+                                          return Container(
+                                            width: barWidth,
+                                            height: 6,
+                                            decoration: BoxDecoration(
+                                              color: Colors.grey.shade100,
+                                              borderRadius:
+                                                  BorderRadius.circular(3),
+                                              border: Border.all(
+                                                color: Colors.grey.shade300,
+                                                width: 1,
+                                              ),
+                                            ),
+                                            child: Stack(
+                                              children: [
+                                                // ✅ Alça com animação suave
+                                                AnimatedContainer(
+                                                  duration: const Duration(
+                                                    milliseconds: 200,
+                                                  ),
+                                                  curve: Curves.easeOut,
+                                                  margin: EdgeInsets.only(
+                                                    left: thumbPosition,
+                                                  ),
+                                                  width: thumbWidth,
+                                                  decoration: BoxDecoration(
+                                                    color: const Color(
+                                                      0xFF0D9488,
+                                                    ).withOpacity(0.6),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          3,
+                                                        ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          );
+                                        },
                                       ),
                                     ),
                                   ],
@@ -1106,11 +1292,6 @@ class _HomeScreenState extends State<HomeScreen> {
               context,
               listen: false,
             ).carregarPets(auth.currentUser!.id);
-
-            /*await Provider.of<ReminderProvider>(
-              context,
-              listen: false,
-            ).carregarLembretesDosPets();*/
           }
         },
         borderRadius: BorderRadius.circular(16),
@@ -1167,7 +1348,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: Padding(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 16,
-                            vertical: 20,
+                            vertical: 16, // ✅ Reduzido de 20 para 16
                           ),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -1176,7 +1357,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 alignment: Alignment.bottomRight,
                                 children: [
                                   CircleAvatar(
-                                    radius: 50,
+                                    radius: 45, // ✅ Reduzido de 50 para 45
                                     backgroundColor: Colors.grey.shade100,
                                     backgroundImage:
                                         pet.urlFoto != null &&
@@ -1188,7 +1369,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                             pet.urlFoto.isEmpty)
                                         ? Icon(
                                             Icons.pets,
-                                            size: 50,
+                                            size:
+                                                45, // ✅ Reduzido de 50 para 45
                                             color: Colors.grey.shade400,
                                           )
                                         : null,
@@ -1208,14 +1390,16 @@ class _HomeScreenState extends State<HomeScreen> {
                                       ),
                                       child: const Icon(
                                         Icons.edit,
-                                        size: 16,
+                                        size: 14, // ✅ Reduzido de 16 para 14
                                         color: Colors.white,
                                       ),
                                     ),
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 14),
+                              const SizedBox(
+                                height: 12,
+                              ), // ✅ Reduzido de 14 para 12
                               Text(
                                 pet.nome,
                                 style: const TextStyle(
@@ -1236,11 +1420,17 @@ class _HomeScreenState extends State<HomeScreen> {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
-                              const SizedBox(height: 10),
+                              const SizedBox(
+                                height: 8,
+                              ), // ✅ Reduzido de 10 para 8
+                              // ✅ Container da idade com FittedBox para evitar overflow
                               Container(
                                 width: double.infinity,
+                                constraints: const BoxConstraints(
+                                  maxHeight: 32, // ✅ Limita altura máxima
+                                ),
                                 padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
+                                  horizontal: 8, // ✅ Reduzido de 12 para 8
                                   vertical: 4,
                                 ),
                                 decoration: BoxDecoration(
@@ -1248,7 +1438,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: FittedBox(
-                                  fit: BoxFit.scaleDown,
+                                  fit: BoxFit
+                                      .scaleDown, // ✅ Escala o texto se necessário
+                                  alignment: Alignment.center,
                                   child: Text(
                                     age,
                                     style: const TextStyle(
@@ -1256,6 +1448,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       fontSize: 12,
                                       fontWeight: FontWeight.w600,
                                     ),
+                                    textAlign: TextAlign.center,
                                   ),
                                 ),
                               ),
@@ -1273,324 +1466,320 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
+}
 
-  Widget _buildQuickActionCard({
-    required String title,
-    required String subtitle,
-    required IconData icon,
-    required Color color,
-    required Color iconColor,
-  }) {
-    return Expanded(
-      child: HoverBuilder(
-        builder: (context, isHovered) {
-          return AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            height: 100,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: isHovered
-                  ? Color.lerp(
-                      color,
-                      Colors.black,
-                      0.05,
-                    )! // ✅ Escurece 5% no hover
-                  : color,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: isHovered
-                      ? iconColor.withOpacity(0.25)
-                      : iconColor.withOpacity(0.1),
-                  blurRadius: isHovered ? 12 : 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () {},
-                borderRadius: BorderRadius.circular(16),
-                splashColor: iconColor.withOpacity(0.2),
-                highlightColor: Colors.transparent,
-                child: Row(
-                  children: [
-                    // ✅ Ícone maior em círculo colorido sólido
-                    Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: iconColor,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(icon, color: Colors.white, size: 28),
-                    ),
-                    const SizedBox(width: 12),
-                    // ✅ Texto
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            title,
-                            style: TextStyle(
-                              color: iconColor,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            subtitle,
-                            style: TextStyle(
-                              color: iconColor.withOpacity(0.7),
-                              fontSize: 11,
-                            ),
-                            maxLines: 2,
-                          ),
-                        ],
-                      ),
-                    ),
-                    // ✅ Seta em círculo branco com arrow_forward
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: iconColor.withOpacity(0.15),
-                            blurRadius: 6,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Icon(
-                        Icons.arrow_forward,
-                        color: iconColor,
-                        size: 18,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildReminderWithTimeline({
-    required IconData icon,
-    required Color iconBg,
-    required Color iconColor,
-    required String title,
-    required String pet,
-    required String badge,
-    required Color badgeColor,
-    required Color badgeTextColor,
-    required String date,
-    required String time,
-    required bool isFirst,
-  }) {
-    return HoverBuilder(
+Widget _buildQuickActionCard({
+  required String title,
+  required String subtitle,
+  required IconData icon,
+  required Color color,
+  required Color iconColor,
+}) {
+  return Expanded(
+    child: HoverBuilder(
       builder: (context, isHovered) {
         return AnimatedContainer(
           duration: const Duration(milliseconds: 200),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // ✅ Timeline (linha + bolinha)
-              SizedBox(
-                width: 24,
-                child: Column(
-                  children: [
-                    // Bolinha
-                    Container(
-                      width: 12,
-                      height: 12,
-                      margin: const EdgeInsets.only(top: 20),
-                      decoration: BoxDecoration(
-                        color: iconColor,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
-                        boxShadow: [
-                          BoxShadow(
-                            color: iconColor.withOpacity(0.3),
-                            blurRadius: 4,
-                            offset: const Offset(0, 1),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+          height: 100,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: isHovered
+                ? Color.lerp(
+                    color,
+                    Colors.black,
+                    0.05,
+                  )! // ✅ Escurece 5% no hover
+                : color,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: isHovered
+                    ? iconColor.withOpacity(0.25)
+                    : iconColor.withOpacity(0.1),
+                blurRadius: isHovered ? 12 : 8,
+                offset: const Offset(0, 2),
               ),
-              const SizedBox(width: 12),
-
-              // ✅ Card do lembrete com hover e clique
-              Expanded(
-                child: MouseRegion(
-                  cursor: SystemMouseCursors.click,
-                  child: GestureDetector(
-                    onTap: () {
-                      print('Clicou no lembrete: $title');
-                      // Aqui você pode navegar para a tela de detalhes
-                    },
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: isHovered ? Colors.grey.shade50 : Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: isHovered
-                              ? iconColor.withOpacity(0.3)
-                              : Colors.grey.shade200,
-                          width: 1,
+            ],
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () {},
+              borderRadius: BorderRadius.circular(16),
+              splashColor: iconColor.withOpacity(0.2),
+              highlightColor: Colors.transparent,
+              child: Row(
+                children: [
+                  // ✅ Ícone maior em círculo colorido sólido
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: iconColor,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(icon, color: Colors.white, size: 28),
+                  ),
+                  const SizedBox(width: 12),
+                  // ✅ Texto
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          title,
+                          style: TextStyle(
+                            color: iconColor,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
                         ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: isHovered
-                                ? iconColor.withOpacity(0.1)
-                                : Colors.black.withOpacity(0.03),
-                            blurRadius: isHovered ? 12 : 8,
-                            offset: const Offset(0, 2),
+                        const SizedBox(height: 4),
+                        Text(
+                          subtitle,
+                          style: TextStyle(
+                            color: iconColor.withOpacity(0.7),
+                            fontSize: 11,
                           ),
-                        ],
+                          maxLines: 2,
+                        ),
+                      ],
+                    ),
+                  ),
+                  // ✅ Seta em círculo branco com arrow_forward
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: iconColor.withOpacity(0.15),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      Icons.arrow_forward,
+                      color: iconColor,
+                      size: 18,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    ),
+  );
+}
+
+Widget _buildReminderWithTimeline({
+  required IconData icon,
+  required Color iconBg,
+  required Color iconColor,
+  required String title,
+  required String pet,
+  required String badge,
+  required Color badgeColor,
+  required Color badgeTextColor,
+  required String date,
+  required String time,
+  required bool isFirst,
+}) {
+  return HoverBuilder(
+    builder: (context, isHovered) {
+      return AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ✅ Timeline (linha + bolinha)
+            SizedBox(
+              width: 24,
+              child: Column(
+                children: [
+                  // Bolinha
+                  Container(
+                    width: 12,
+                    height: 12,
+                    margin: const EdgeInsets.only(top: 20),
+                    decoration: BoxDecoration(
+                      color: iconColor,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2),
+                      boxShadow: [
+                        BoxShadow(
+                          color: iconColor.withOpacity(0.3),
+                          blurRadius: 4,
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+
+            // ✅ Card do lembrete com hover e clique
+            Expanded(
+              child: MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: GestureDetector(
+                  onTap: () {
+                    print('Clicou no lembrete: $title');
+                    // Aqui você pode navegar para a tela de detalhes
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: isHovered ? Colors.grey.shade50 : Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: isHovered
+                            ? iconColor.withOpacity(0.3)
+                            : Colors.grey.shade200,
+                        width: 1,
                       ),
-                      child: Row(
-                        children: [
-                          // Ícone
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: iconBg,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Icon(icon, color: iconColor, size: 24),
+                      boxShadow: [
+                        BoxShadow(
+                          color: isHovered
+                              ? iconColor.withOpacity(0.1)
+                              : Colors.black.withOpacity(0.03),
+                          blurRadius: isHovered ? 12 : 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        // Ícone
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: iconBg,
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                          const SizedBox(width: 16),
+                          child: Icon(icon, color: iconColor, size: 24),
+                        ),
+                        const SizedBox(width: 16),
 
-                          // Texto
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  title,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 15,
-                                    color: Color(0xFF1E293B),
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Row(
-                                  children: [
-                                    Icon(
-                                      Icons.pets,
-                                      color: iconColor,
-                                      size: 14,
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      pet,
-                                      style: TextStyle(
-                                        color: Colors.grey[600],
-                                        fontSize: 13,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          // Badge
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: badgeColor,
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              badge,
-                              style: TextStyle(
-                                color: badgeTextColor,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-
-                          // Data/Hora
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
+                        // Texto
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
+                              Text(
+                                title,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 15,
+                                  color: Color(0xFF1E293B),
+                                ),
+                              ),
+                              const SizedBox(height: 4),
                               Row(
-                                mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(
-                                    Icons.calendar_today,
-                                    color: Colors.grey[600],
-                                    size: 14,
-                                  ),
+                                  Icon(Icons.pets, color: iconColor, size: 14),
                                   const SizedBox(width: 4),
                                   Text(
-                                    date,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w600,
+                                    pet,
+                                    style: TextStyle(
+                                      color: Colors.grey[600],
                                       fontSize: 13,
-                                      color: Color(0xFF475569),
                                     ),
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 4),
-                              Text(
-                                time,
-                                style: TextStyle(
-                                  color: Colors.grey[500],
-                                  fontSize: 12,
-                                ),
-                              ),
                             ],
                           ),
-                          const SizedBox(width: 12),
+                        ),
 
-                          // Seta
-                          AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: isHovered ? iconColor : iconBg,
-                              shape: BoxShape.circle,
-                            ),
-                            child: Icon(
-                              Icons.chevron_right,
-                              color: isHovered ? Colors.white : iconColor,
-                              size: 18,
+                        // Badge
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: badgeColor,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            badge,
+                            style: TextStyle(
+                              color: badgeTextColor,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                        const SizedBox(width: 16),
+
+                        // Data/Hora
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.calendar_today,
+                                  color: Colors.grey[600],
+                                  size: 14,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  date,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 13,
+                                    color: Color(0xFF475569),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              time,
+                              style: TextStyle(
+                                color: Colors.grey[500],
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(width: 12),
+
+                        // Seta
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: isHovered ? iconColor : iconBg,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.chevron_right,
+                            color: isHovered ? Colors.white : iconColor,
+                            size: 18,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
               ),
-            ],
-          ),
-        );
-      },
-    );
-  }
+            ),
+          ],
+        ),
+      );
+    },
+  );
 }
 
 String calcularIdade(String? dataNascimento) {
