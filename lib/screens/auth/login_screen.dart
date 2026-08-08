@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 import '../../providers/auth_provider.dart';
 import '../home/home_screen.dart';
 import '../../widgets/auth/login_form_widget.dart';
-import '../../widgets/auth/google_login_web_button.dart';
+import '../../widgets/auth/google_login_button.dart';
 import '../../widgets/common/custom_snackbar.dart'; // ✅ Adicione
 
 class LoginScreen extends StatefulWidget {
