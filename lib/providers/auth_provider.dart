@@ -18,20 +18,14 @@ class AuthProvider extends ChangeNotifier {
     required String email,
     required String senha,
   }) async {
-    print("1 - Entrou no provider");
-
     isLoading = true;
     notifyListeners();
-
-    print("2 - Chamando authService");
 
     final result = await _authService.register(
       nome: nome,
       email: email,
       senha: senha,
     );
-
-    print("3 - Voltou do authService");
 
     isLoading = false;
     notifyListeners();
@@ -48,7 +42,7 @@ class AuthProvider extends ChangeNotifier {
     await prefs.setString(
       'user_session',
       jsonEncode({
-        'id' : currentUser!.id,
+        'id': currentUser!.id,
         'nome': currentUser!.nome,
         'email': currentUser!.email,
       }),
@@ -61,8 +55,7 @@ class AuthProvider extends ChangeNotifier {
 
     final session = prefs.getString('user_session');
 
-    if (session != null) { 
-
+    if (session != null) {
       final data = jsonDecode(session);
 
       currentUser = UserModel(
@@ -77,14 +70,12 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  //login
   Future<String?> login({required String email, required String senha}) async {
     isLoading = true;
     notifyListeners();
 
-    final user = await _authService.login(
-      email: email, 
-      senha: senha
-    );
+    final user = await _authService.login(email: email, senha: senha);
 
     isLoading = false;
     notifyListeners();
@@ -100,6 +91,80 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
 
     return null;
+  }
+
+  //login com google
+  Future<void> inicializarGoogle() {
+    return _authService.inicializarGoogle();
+  }
+
+  Future<String?> loginComGoogleIdToken(String idToken) async {
+    try {
+      isLoading = true;
+      notifyListeners();
+
+      final resposta = await _authService.loginGoogleNoBackend(idToken);
+
+      if (resposta['sucesso'] != true) {
+        return resposta['erro'] ?? 'Erro ao fazer login com Google';
+      }
+
+      final usuarioJson = resposta['usuario'];
+
+      if (usuarioJson == null) {
+        return 'Erro: usuário não retornado pela API';
+      }
+
+      currentUser = UserModel.fromJson(usuarioJson);
+
+      final token = resposta['token'];
+
+      if (token != null) {
+        await _saveUserSession();
+      }
+
+      return null;
+    } catch (e) {
+      return 'Erro ao fazer login com Google: $e';
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  //Login com google mobile
+  Future<String?> loginComGoogleMobile() async {
+    try {
+      isLoading = true;
+      notifyListeners();
+
+      final resposta = await _authService.loginComGoogleMobile();
+
+      if (resposta['sucesso'] != true) {
+        return resposta['erro'] ?? 'Erro ao fazer login com Google';
+      }
+
+      final usuarioJson = resposta['usuario'];
+
+      if (usuarioJson == null) {
+        return 'Erro: usuário não retornado pela API';
+      }
+
+      currentUser = UserModel.fromJson(usuarioJson);
+
+      final token = resposta['token'];
+
+      if (token != null) {
+        await _saveUserSession();
+      }
+
+      return null;
+    } catch (e) {
+      return 'Erro ao fazer login com Google: $e';
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
   }
 
   //Logout

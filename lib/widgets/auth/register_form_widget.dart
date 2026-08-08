@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter/services.dart';
 import '../../screens/auth/legal_screen.dart';
 
 class RegisterFormWidget extends StatefulWidget {
@@ -16,6 +17,7 @@ class RegisterFormWidget extends StatefulWidget {
   final VoidCallback onRegister;
   final VoidCallback onGoogleRegister;
   final bool isLoading;
+  final Widget? googleButton;
 
   const RegisterFormWidget({
     super.key,
@@ -31,6 +33,7 @@ class RegisterFormWidget extends StatefulWidget {
     required this.onRegister,
     required this.onGoogleRegister,
     required this.isLoading,
+    this.googleButton,
   });
 
   @override
@@ -146,6 +149,7 @@ class RegisterFormWidgetState extends State<RegisterFormWidget> {
               onPressed: () {
                 setState(() => _obscurePassword = !_obscurePassword);
               },
+              focusNode: FocusNode(skipTraversal: true),
             ),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             filled: true,
@@ -198,6 +202,16 @@ class RegisterFormWidgetState extends State<RegisterFormWidget> {
           focusNode: widget.checkboxFocusNode,
           canRequestFocus: true,
           skipTraversal: false,
+          onKeyEvent: (node, event) {
+            // ✅ Captura Enter ou Espaço para marcar/desmarcar
+            if (event is KeyDownEvent &&
+                (event.logicalKey == LogicalKeyboardKey.enter ||
+                    event.logicalKey == LogicalKeyboardKey.space)) {
+              setState(() => _agreeTerms = !_agreeTerms);
+              return KeyEventResult.handled;
+            }
+            return KeyEventResult.ignored;
+          },
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: () => setState(() => _agreeTerms = !_agreeTerms),
@@ -379,30 +393,41 @@ class RegisterFormWidgetState extends State<RegisterFormWidget> {
         ),
         const SizedBox(height: 5),
 
-        OutlinedButton.icon(
-          onPressed: widget.onGoogleRegister,
-          icon: Image.asset(
-            'assets/icons/google.png',
-            height: 24,
-            errorBuilder: (context, error, stackTrace) => const Icon(
-              Icons.g_mobiledata,
-              size: 24,
-              color: Color(0xFF0D9488),
+        if (widget.googleButton != null)
+          AbsorbPointer(
+            absorbing: widget.isLoading,
+            child: Opacity(
+              opacity: widget.isLoading ? 0.6 : 1,
+              child: SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: Center(child: widget.googleButton!),
+              ),
+            ),
+          )
+        else
+          OutlinedButton.icon(
+            onPressed: widget.isLoading ? null : widget.onGoogleRegister,
+            icon: Image.asset(
+              'assets/icons/google.png',
+              height: 24,
+              errorBuilder: (context, error, stackTrace) => const Icon(
+                Icons.g_mobiledata,
+                size: 24,
+                color: Color(0xFF0D9488),
+              ),
+            ),
+            label: const Text('Entrar com Google'),
+            style: OutlinedButton.styleFrom(
+              backgroundColor: Colors.white.withValues(alpha: 0.85),
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              minimumSize: const Size(double.infinity, 48),
+              side: const BorderSide(color: Color(0xFF0D9488)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
           ),
-          label: const Text('Continuar com Google'),
-          style: OutlinedButton.styleFrom(
-             backgroundColor: Colors.white.withValues(alpha: 0.85),
-             padding: const EdgeInsets.symmetric(vertical: 12),
-             minimumSize: const Size(double.infinity, 48),
-             side: const BorderSide(
-               color: Color(0xFF0D9488),
-             ),
-             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-        ),
       ],
     );
   }

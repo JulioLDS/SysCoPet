@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:syscopet/models/raca_model.dart';
 
 import '../config/api_config.dart';
 import '../models/pet_model.dart';
@@ -9,50 +10,69 @@ import '../models/pet_model.dart';
 class PetService {
   //Adicionar pet
   Future<String?> addPet(PetModel pet) async {
-  final response = await http.post(
+    final response = await http.post(
       Uri.parse('${ApiConfig.baseUrl}/pets'),
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: {'Content-Type': 'application/json'},
       body: jsonEncode(pet.toJson()),
     );
 
-  final data = jsonDecode(response.body);
+    final data = jsonDecode(response.body);
 
-  if (response.statusCode != 201) {
-
+    if (response.statusCode != 201) {
       if (data['erros'] != null) {
-        return (data['erros']as List).join('\n');
+        return (data['erros'] as List).join('\n');
       }
 
       return data['erro'] ?? 'Erro desconhecido';
-  }
+    }
 
     return null;
   }
 
-//Buscar pet
+  //Adiciona pet e retorna mensagem + alerta
+  Future<Map<String, String?>> addPetComRetornoCompleto(PetModel pet) async {
+    try {
+      final response = await http.post(
+        Uri.parse('${ApiConfig.baseUrl}/pets'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(pet.toJson()),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 201) {
+        return {
+          'mensagem': data['mensagem'] ?? 'Pet cadastrado com sucesso!',
+          'alerta': data['alerta'],
+        };
+      }
+
+      if (data['erros'] != null) {
+        return {'erro': (data['erros'] as List).join('\n'), 'alerta': null};
+      }
+
+      return {'erro': data['erro'] ?? 'Erro desconhecido', 'alerta': null};
+    } catch (e) {
+      return {'erro': 'Erro de conexão: ${e.toString()}', 'alerta': null};
+    }
+  }
+
+  //Buscar pet
   Future<List<PetModel>> buscarPetsUsuario(int idUsuario) async {
     final response = await http.get(
-      Uri.parse(
-        '${ApiConfig.baseUrl}/pets/usuario/$idUsuario',
-      ),
+      Uri.parse('${ApiConfig.baseUrl}/pets/usuario/$idUsuario'),
     );
 
     final List data = jsonDecode(response.body);
 
-    return data
-        .map((pet) => PetModel.fromJson(pet))
-        .toList();
+    return data.map((pet) => PetModel.fromJson(pet)).toList();
   }
 
-//Editar pet
+  //Editar pet
   Future<String?> atualizarPet(PetModel pet) async {
     final response = await http.put(
       Uri.parse('${ApiConfig.baseUrl}/pets/${pet.idPet}'),
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: {'Content-Type': 'application/json'},
       body: jsonEncode(pet.toJson()),
     );
 
@@ -69,12 +89,40 @@ class PetService {
     return null;
   }
 
+  //Atualiza pet e retorna mensagem + alerta de saúde
+  Future<Map<String, String?>> atualizarPetComRetornoCompleto(
+    PetModel pet,
+  ) async {
+    try {
+      final response = await http.put(
+        Uri.parse('${ApiConfig.baseUrl}/pets/${pet.idPet}'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(pet.toJson()),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        return {
+          'mensagem': data['mensagem'] ?? 'Pet atualizado com sucesso!',
+          'alerta': data['alerta'],
+        };
+      }
+
+      if (data['erros'] != null) {
+        return {'erro': (data['erros'] as List).join('\n'), 'alerta': null};
+      }
+
+      return {'erro': data['erro'] ?? 'Erro desconhecido', 'alerta': null};
+    } catch (e) {
+      return {'erro': 'Erro de conexão: ${e.toString()}', 'alerta': null};
+    }
+  }
+
   //Deletar pet
   Future<String?> deletarPet(int idPet) async {
     final response = await http.delete(
-      Uri.parse(
-        '${ApiConfig.baseUrl}/pets/$idPet',
-      ),
+      Uri.parse('${ApiConfig.baseUrl}/pets/$idPet'),
     );
 
     final data = jsonDecode(response.body);
@@ -86,9 +134,33 @@ class PetService {
     return null;
   }
 
-  //Upload de foto
-  Future<String?> uploadFotoPet(int idPet, XFile imagem,) async {
+  //Carregar raças
+  Future<List<RacaModel>> listarRacas(String especie) async {
+    final url = Uri.parse('${ApiConfig.baseUrl}/pets/raca?especie=$especie');
+    final response = await http.get(url);
 
+    if (response.statusCode == 200) {
+      final List<dynamic> dados = jsonDecode(response.body);
+
+      // Filtra apenas os campos necessários
+      final dadosFiltrados = dados
+          .map(
+            (item) => {
+              'id': item['id'],
+              'nome': item['nome'],
+              'especie': item['especie'],
+            },
+          )
+          .toList();
+
+      return dadosFiltrados.map((item) => RacaModel.fromJson(item)).toList();
+    }
+
+    throw Exception('Erro ao carregar raças');
+  }
+
+  //Upload de foto
+  Future<String?> uploadFotoPet(int idPet, XFile imagem) async {
     final bytes = await imagem.readAsBytes();
 
     //debugagem
@@ -97,9 +169,7 @@ class PetService {
 
     final request = http.MultipartRequest(
       'POST',
-      Uri.parse(
-        '${ApiConfig.baseUrl}/pets/$idPet/photo',
-      ),
+      Uri.parse('${ApiConfig.baseUrl}/pets/$idPet/photo'),
     );
 
     final mime = imagem.mimeType ?? 'image/jpeg';
@@ -118,8 +188,6 @@ class PetService {
     final body = await response.stream.bytesToString();
 
     if (response.statusCode != 200) {
-      print(body);
-
       try {
         final data = jsonDecode(body);
         return data['error'];
@@ -129,12 +197,10 @@ class PetService {
     }
   }
 
-    //Deletar foto
-Future<String?> removerFotoPet(int idPet) async {
+  //Deletar foto
+  Future<String?> removerFotoPet(int idPet) async {
     final response = await http.delete(
-      Uri.parse(
-        '${ApiConfig.baseUrl}/pets/$idPet/photo',
-      ),
+      Uri.parse('${ApiConfig.baseUrl}/pets/$idPet/photo'),
     );
 
     final data = jsonDecode(response.body);
@@ -146,4 +212,3 @@ Future<String?> removerFotoPet(int idPet) async {
     return null;
   }
 }
-
