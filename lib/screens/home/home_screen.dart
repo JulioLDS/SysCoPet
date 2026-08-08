@@ -222,7 +222,6 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
 
-    // ✅ Listener para atualizar o dot ativo enquanto rola
     _petScrollController.addListener(_onPetScroll);
 
     Future.microtask(() async {
@@ -233,9 +232,17 @@ class _HomeScreenState extends State<HomeScreen> {
         listen: false,
       );
 
-      await petProvider.carregarPets(auth.currentUser!.id);
-      await reminderProvider.carregarLembretesDosPets(petProvider.pets);
-      print("Pets carregados: ${petProvider.pets.length}");
+      if (auth.currentUser != null) {
+        // 1. Carrega os pets PRIMEIRO
+        await petProvider.carregarPets(auth.currentUser!.id);
+        print(
+          "✅ INIT: Pets carregados com sucesso. Total: ${petProvider.pets.length}",
+        );
+
+        // 2. Só depois carrega os lembretes usando a lista de pets que já está preenchida
+        await reminderProvider.carregarLembretesDosPets(petProvider.pets);
+        print("✅ INIT: Lembretes carregados.");
+      }
     });
   }
 
@@ -1193,7 +1200,6 @@ class _HomeScreenState extends State<HomeScreen> {
       width: 150,
       child: CustomPaint(
         foregroundPainter: DashedBorderPainter(
-          // ✅ TROQUE AQUI
           color: const Color(0xFF0D9488),
           strokeWidth: 2.5,
           dashLength: 8,
@@ -1213,15 +1219,30 @@ class _HomeScreenState extends State<HomeScreen> {
                   builder: (context) => const PetFormDialog(),
                 );
 
+                print("🔍 Resultado do Dialog: $result"); // DEBUG
+
                 if (result == true) {
                   final auth = Provider.of<AuthProvider>(
                     context,
                     listen: false,
                   );
-                  await Provider.of<PetProvider>(
+                  final petProvider = Provider.of<PetProvider>(
                     context,
                     listen: false,
-                  ).carregarPets(auth.currentUser!.id);
+                  );
+
+                  if (auth.currentUser != null) {
+                    // 1. Recarrega os pets do banco
+                    await petProvider.carregarPets(auth.currentUser!.id);
+                    print(
+                      "🔍 Pets após recarregar: ${petProvider.pets.length}",
+                    ); // DEBUG
+
+                    // 2. Força a Home Screen a redesenhar com os novos dados
+                    if (mounted) {
+                      setState(() {});
+                    }
+                  }
                 }
               },
               borderRadius: BorderRadius.circular(20),
