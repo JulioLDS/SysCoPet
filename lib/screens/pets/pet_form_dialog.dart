@@ -147,7 +147,7 @@ class _PetFormDialogState extends State<PetFormDialog> {
       color: const Color(0xFF047857),
     );
 
-    Navigator.pop(context);
+    Navigator.pop(context, true);
   }
 
   @override

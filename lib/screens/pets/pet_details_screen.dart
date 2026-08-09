@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:syscopet/providers/pet_provider.dart';
+<<<<<<< HEAD
 import '../../models/reminder_ocurrence_model.dart';
+=======
+import 'package:syscopet/screens/home/home_screen.dart';
+>>>>>>> 776deb97ed6a71da8b2025862a80560ad05ca9da
 import 'package:syscopet/widgets/common/health_alert_banner.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/reminder_provider.dart';
@@ -211,6 +215,23 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
     }
 
     return '$anos anos';
+  }
+
+  String _formatarTipo(String tipo) {
+    switch (tipo) {
+      case 'alimentacao':
+        return 'Alimentação';
+      case 'banho':
+        return 'Banho';
+      case 'medicamento':
+        return 'Medicamento';
+      case 'consulta':
+        return 'Consulta';
+      case 'vacina':
+        return 'Vacina';
+      default:
+        return tipo;
+    }
   }
 
   @override
@@ -521,7 +542,7 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
                         );
                       }
 
-                      // 5. Lista de Lembretes Reais
+                      // 5. Lista de Lembretes Reais (Estilo Home com Timeline)
                       return Container(
                         decoration: BoxDecoration(
                           color: Colors.white,
@@ -536,6 +557,7 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
                         ),
                         child: Column(
                           children: [
+<<<<<<< HEAD
                             ...lembretesParaMostrar.asMap().entries.map((entry) {
                               final index = entry.key;
                               final ocorrencia = entry.value;
@@ -553,6 +575,41 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
                                 ],
                               );
                             }).toList(),
+=======
+                            ...List.generate(lembretesParaMostrar.length, (
+                              index,
+                            ) {
+                              final lembrete = lembretesParaMostrar[index];
+                              return Padding(
+                                padding: EdgeInsets.only(
+                                  bottom:
+                                      index == lembretesParaMostrar.length - 1
+                                      ? 0
+                                      : 16,
+                                ),
+                                child: _buildReminderWithTimeline(
+                                  icon: _getIconByType(lembrete.tipo),
+                                  iconBg: _getBgColorByType(lembrete.tipo),
+                                  iconColor: _getColorByType(lembrete.tipo),
+                                  title: lembrete.titulo,
+                                  pet: _currentPet
+                                      .nome, // ✅ Usa o nome do pet atual diretamente
+                                  badge: _formatarTipo(lembrete.tipo),
+                                  badgeColor: _getBgColorByType(lembrete.tipo),
+                                  badgeTextColor: _getColorByType(
+                                    lembrete.tipo,
+                                  ),
+                                  date: _formatarDataLembrete(
+                                    lembrete.dataHora,
+                                  ),
+                                  time: _formatarHoraLembrete(
+                                    lembrete.dataHora,
+                                  ),
+                                  isFirst: index == 0,
+                                ),
+                              );
+                            }),
+>>>>>>> 776deb97ed6a71da8b2025862a80560ad05ca9da
 
                             // Botão "Ver todos" (só aparece se tiver mais de 2)
                             if (proximasOcorrencias.length > 2)
@@ -571,10 +628,10 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
                                     decoration: BoxDecoration(
                                       color: Colors.transparent,
                                     ),
-                                    child: Row(
+                                    child: const Row(
                                       mainAxisAlignment:
                                           MainAxisAlignment.center,
-                                      children: const [
+                                      children: [
                                         Text(
                                           'Ver todos os lembretes',
                                           style: TextStyle(
@@ -1317,6 +1374,7 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
         '${data.minute.toString().padLeft(2, '0')}';
   }
 
+<<<<<<< HEAD
   // ✅ Widget do Item de Lembrete (Agora recebe o Model direto)
   Widget _buildReminderItemDynamic(ReminderOccurrenceModel ocorrencia) {
     final icon = _getIconByType(ocorrencia.tipo);
@@ -1345,16 +1403,213 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
                     color: Color(0xFF1E293B),
+=======
+  // ✅ Widget do Item de Lembrete com Timeline (Igual à Home)
+  Widget _buildReminderWithTimeline({
+    required IconData icon,
+    required Color iconBg,
+    required Color iconColor,
+    required String title,
+    required String pet,
+    required String badge,
+    required Color badgeColor,
+    required Color badgeTextColor,
+    required String date,
+    required String time,
+    required bool isFirst,
+  }) {
+    return HoverBuilder(
+      builder: (context, isHovered) {
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ✅ Timeline (bolinha)
+              SizedBox(
+                width: 24,
+                child: Column(
+                  children: [
+                    Container(
+                      width: 12,
+                      height: 12,
+                      margin: const EdgeInsets.only(top: 20),
+                      decoration: BoxDecoration(
+                        color: iconColor,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 2),
+                        boxShadow: [
+                          BoxShadow(
+                            color: iconColor.withOpacity(0.3),
+                            blurRadius: 4,
+                            offset: const Offset(0, 1),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+
+              // ✅ Card do lembrete com hover e clique
+              Expanded(
+                child: MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: GestureDetector(
+                    onTap: () {
+                      print('Clicou no lembrete: $title');
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: isHovered ? Colors.grey.shade50 : Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: isHovered
+                              ? iconColor.withOpacity(0.3)
+                              : Colors.grey.shade200,
+                          width: 1,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: isHovered
+                                ? iconColor.withOpacity(0.1)
+                                : Colors.black.withOpacity(0.03),
+                            blurRadius: isHovered ? 12 : 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          // Ícone
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: iconBg,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Icon(icon, color: iconColor, size: 24),
+                          ),
+                          const SizedBox(width: 16),
+
+                          // Texto
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  title,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                    color: Color(0xFF1E293B),
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.pets,
+                                      color: iconColor,
+                                      size: 14,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      pet,
+                                      style: TextStyle(
+                                        color: Colors.grey[600],
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          // Badge
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: badgeColor,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              badge,
+                              style: TextStyle(
+                                color: badgeTextColor,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+
+                          // Data/Hora
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.calendar_today,
+                                    color: Colors.grey[600],
+                                    size: 14,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    date,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 13,
+                                      color: Color(0xFF475569),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                time,
+                                style: TextStyle(
+                                  color: Colors.grey[500],
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(width: 12),
+
+                          // Seta animada no hover
+                          AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: isHovered ? iconColor : iconBg,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.chevron_right,
+                              color: isHovered ? Colors.white : iconColor,
+                              size: 18,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+>>>>>>> 776deb97ed6a71da8b2025862a80560ad05ca9da
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  _currentPet.nome,
-                  style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
+<<<<<<< HEAD
           // Data/Hora
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -1385,6 +1640,10 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
           const Icon(Icons.chevron_right, color: Color(0xFF0D9488), size: 20),
         ],
       ),
+=======
+        );
+      },
+>>>>>>> 776deb97ed6a71da8b2025862a80560ad05ca9da
     );
   }
 }

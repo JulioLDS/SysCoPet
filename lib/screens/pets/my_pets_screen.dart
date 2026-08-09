@@ -43,26 +43,101 @@ class _MeusPetsScreenState extends State<MeusPetsScreen> {
     }
   }
 
+  // ✅ FUNÇÃO DE IDADE PADRONIZADA (IGUAL À DA HOME)
   String _calcularIdade(String? dataNascimento) {
-    if (dataNascimento == null || dataNascimento.isEmpty)
+    if (dataNascimento == null || dataNascimento.isEmpty) {
       return 'Idade não informada';
-
-    String dataCompleta = dataNascimento;
-    if (RegExp(r'^\d{4}$').hasMatch(dataNascimento)) {
-      dataCompleta = '$dataNascimento-01-01';
-    } else if (RegExp(r'^\d{4}-\d{2}$').hasMatch(dataNascimento)) {
-      dataCompleta = '$dataNascimento-01';
     }
 
-    final nascimento = DateTime.parse(dataCompleta);
+    String data = dataNascimento.trim();
+    String dataCompleta = data;
+    bool temMes = false;
+    bool temDia = false;
+
+    // Caso venha só o ano: 2024
+    if (RegExp(r'^\d{4}$').hasMatch(data)) {
+      dataCompleta = '$data-01-01';
+    }
+    // Caso venha ano e mês: 2024-05
+    else if (RegExp(r'^\d{4}-\d{1,2}$').hasMatch(data)) {
+      final partes = data.split('-');
+      final ano = partes[0];
+      final mes = partes[1].padLeft(2, '0');
+      dataCompleta = '$ano-$mes-01';
+      temMes = true;
+    }
+    // Caso venha data no formato ISO: 2024-05-20
+    else if (RegExp(r'^\d{4}-\d{1,2}-\d{1,2}').hasMatch(data)) {
+      final match = RegExp(r'^(\d{4})-(\d{1,2})-(\d{1,2})').firstMatch(data);
+      if (match == null) return 'Data inválida';
+      final ano = match.group(1)!;
+      final mes = match.group(2)!.padLeft(2, '0');
+      final dia = match.group(3)!.padLeft(2, '0');
+      dataCompleta = '$ano-$mes-$dia';
+      temMes = true;
+      temDia = true;
+    }
+    // Caso venha no formato brasileiro: 20/05/2024
+    else if (RegExp(r'^\d{1,2}/\d{1,2}/\d{4}$').hasMatch(data)) {
+      final partes = data.split('/');
+      final dia = partes[0].padLeft(2, '0');
+      final mes = partes[1].padLeft(2, '0');
+      final ano = partes[2];
+      dataCompleta = '$ano-$mes-$dia';
+      temMes = true;
+      temDia = true;
+    } else {
+      return 'Data inválida';
+    }
+
+    final nascimento = DateTime.tryParse(dataCompleta);
+    if (nascimento == null) return 'Data inválida';
+
     final hoje = DateTime.now();
-    int anos = hoje.year - nascimento.year;
+    if (nascimento.isAfter(hoje)) return 'Data inválida';
 
-    if (hoje.month < nascimento.month ||
-        (hoje.month == nascimento.month && hoje.day < nascimento.day)) {
-      anos--;
+    int anos = hoje.year - nascimento.year;
+    int meses = hoje.month - nascimento.month;
+    int dias = hoje.day - nascimento.day;
+
+    if (dias < 0) {
+      meses--;
+      final ultimoDiaMesAnterior = DateTime(hoje.year, hoje.month, 0);
+      dias += ultimoDiaMesAnterior.day;
     }
-    return '$anos ${anos == 1 ? "ano" : "anos"}';
+
+    if (meses < 0) {
+      anos--;
+      meses += 12;
+    }
+
+    final partesIdade = <String>[];
+
+    // Se tiver 1 ano ou mais, mostra anos e meses
+    if (anos > 0) {
+      partesIdade.add('$anos ${anos == 1 ? 'ano' : 'anos'}');
+      if (temMes && meses > 0) {
+        partesIdade.add('$meses ${meses == 1 ? 'mês' : 'meses'}');
+      }
+      return partesIdade.join(' e ');
+    }
+
+    // Se tiver menos de 1 ano, mostra meses e dias
+    if (temMes && meses > 0) {
+      partesIdade.add('$meses ${meses == 1 ? 'mês' : 'meses'}');
+    }
+
+    if (temDia && dias > 0) {
+      partesIdade.add('$dias ${dias == 1 ? 'dia' : 'dias'}');
+    }
+
+    if (partesIdade.isEmpty) {
+      if (temDia) return 'Menos de 1 dia';
+      if (temMes) return 'Menos de 1 mês';
+      return 'Menos de 1 ano';
+    }
+
+    return partesIdade.join(' e ');
   }
 
   String _obterNomeRaca(PetModel pet) {
@@ -220,7 +295,9 @@ class _MeusPetsScreenState extends State<MeusPetsScreen> {
   // ✅ CARD DE PET (Estilo Vertical com Foto Grande)
   Widget _buildPetCard(PetModel pet, int index) {
     final especieFormatada = _formatarEspecie(pet.especie);
-    final idade = _calcularIdade(pet.dataNascimento);
+    final idade = _calcularIdade(
+      pet.dataNascimento,
+    ); // ✅ Agora usa a função completa
     final raca = _obterNomeRaca(pet);
 
     return HoverBuilder(
@@ -285,8 +362,8 @@ class _MeusPetsScreenState extends State<MeusPetsScreen> {
                               child: Image.network(
                                 pet.urlFoto!,
                                 fit: BoxFit.cover,
-                                width: 100,
-                                height: 100,
+                                width: 120,
+                                height: 120,
                               ),
                             )
                           : const Icon(
@@ -351,10 +428,13 @@ class _MeusPetsScreenState extends State<MeusPetsScreen> {
                     ),
                     const SizedBox(height: 12),
 
-                    // ✅ IDADE (Badge esticado e centralizado)
+                    // ✅ IDADE (Badge esticado, com padding horizontal para textos longos)
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ), // ✅ Ajustado
                       decoration: BoxDecoration(
                         color: const Color(0xFFECFDF5),
                         borderRadius: BorderRadius.circular(12),
