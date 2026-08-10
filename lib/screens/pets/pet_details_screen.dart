@@ -2,11 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:syscopet/providers/pet_provider.dart';
-<<<<<<< HEAD
+import 'package:syscopet/screens/pets/reminder_details_screen.dart';
 import '../../models/reminder_ocurrence_model.dart';
-=======
 import 'package:syscopet/screens/home/home_screen.dart';
->>>>>>> 776deb97ed6a71da8b2025862a80560ad05ca9da
 import 'package:syscopet/widgets/common/health_alert_banner.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/reminder_provider.dart';
@@ -557,25 +555,6 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
                         ),
                         child: Column(
                           children: [
-<<<<<<< HEAD
-                            ...lembretesParaMostrar.asMap().entries.map((entry) {
-                              final index = entry.key;
-                              final ocorrencia = entry.value;
-                              
-                              return Column(
-                                children: [
-                                  _buildReminderItemDynamic(ocorrencia),
-                                  if (index < lembretesParaMostrar.length - 1 ||
-                                      proximasOcorrencias.length > 2)
-                                    Divider(
-                                      height: 1,
-                                      thickness: 1,
-                                      color: Colors.grey.shade200,
-                                    ),
-                                ],
-                              );
-                            }).toList(),
-=======
                             ...List.generate(lembretesParaMostrar.length, (
                               index,
                             ) {
@@ -588,6 +567,8 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
                                       : 16,
                                 ),
                                 child: _buildReminderWithTimeline(
+                                  idLembrete: lembrete.id,
+                                  idPet: lembrete.idPet,
                                   icon: _getIconByType(lembrete.tipo),
                                   iconBg: _getBgColorByType(lembrete.tipo),
                                   iconColor: _getColorByType(lembrete.tipo),
@@ -609,7 +590,6 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
                                 ),
                               );
                             }),
->>>>>>> 776deb97ed6a71da8b2025862a80560ad05ca9da
 
                             // Botão "Ver todos" (só aparece se tiver mais de 2)
                             if (proximasOcorrencias.length > 2)
@@ -1374,38 +1354,10 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
         '${data.minute.toString().padLeft(2, '0')}';
   }
 
-<<<<<<< HEAD
-  // ✅ Widget do Item de Lembrete (Agora recebe o Model direto)
-  Widget _buildReminderItemDynamic(ReminderOccurrenceModel ocorrencia) {
-    final icon = _getIconByType(ocorrencia.tipo);
-    final color = _getColorByType(ocorrencia.tipo);
-    final bgColor = _getBgColorByType(ocorrencia.tipo);
-
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          // Ícone
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: bgColor, shape: BoxShape.circle),
-            child: Icon(icon, color: color, size: 22),
-          ),
-          const SizedBox(width: 14),
-          // Texto
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  ocorrencia.titulo,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF1E293B),
-=======
   // ✅ Widget do Item de Lembrete com Timeline (Igual à Home)
   Widget _buildReminderWithTimeline({
+    required int idLembrete,
+    required int idPet,
     required IconData icon,
     required Color iconBg,
     required Color iconColor,
@@ -1457,8 +1409,28 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
                 child: MouseRegion(
                   cursor: SystemMouseCursors.click,
                   child: GestureDetector(
-                    onTap: () {
+                    onTap: () async {
                       print('Clicou no lembrete: $title');
+
+                      final atualizou =
+                          await Navigator.push<bool>(context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              ReminderDetailsScreen(
+                            idLembrete: idLembrete,
+                            idPet: idPet,
+                          ),
+                        ),
+                      );
+
+                      if (atualizou == true) {
+                        await Provider.of<ReminderProvider>(
+                          context,
+                          listen: false,
+                        ).carregarOcorrenciasDoPet(
+                          _currentPet.idPet!,
+                        );
+                      }
                     },
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
@@ -1603,47 +1575,13 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
                         ],
                       ),
                     ),
->>>>>>> 776deb97ed6a71da8b2025862a80560ad05ca9da
                   ),
                 ),
               ),
             ],
           ),
-<<<<<<< HEAD
-          // Data/Hora
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: bgColor,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  _formatarDataLembrete(ocorrencia.dataHora),
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: color,
-                  ),
-                ),
-                Text(
-                  _formatarHoraLembrete(ocorrencia.dataHora),
-                  style: TextStyle(fontSize: 11, color: color.withOpacity(0.8)),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          // Seta
-          const Icon(Icons.chevron_right, color: Color(0xFF0D9488), size: 20),
-        ],
-      ),
-=======
         );
       },
->>>>>>> 776deb97ed6a71da8b2025862a80560ad05ca9da
     );
   }
 }

@@ -13,6 +13,7 @@ class ReminderService {
       final response = await http.get(
         Uri.parse('${ApiConfig.baseUrl}/pets/lembretes/$idPet'),
       );
+      
 
       if (response.statusCode != 200) {
         throw Exception('Erro ao buscar lembretes');
@@ -26,6 +27,37 @@ class ReminderService {
     } catch (e) {
       print('Erro: $e');
       throw Exception('Erro ao buscar lembretes');
+    }
+  }
+
+  //Buscar lembrete por ID
+  Future<ReminderModel?> buscarLembretePorId(int idPet, int idLembrete,) async {
+    print('Buscando lembrete completo');
+    print('ID PET: $idPet');
+    print('ID LEMBRETE: $idLembrete');
+
+    final lembretes = await buscarLembretesDoPet(idPet);
+
+    print('Quantidade encontrada para o pet: ${lembretes.length}',);
+
+    for (final lembrete in lembretes) {
+      print(
+        'Lembrete encontrado -> '
+        'id: ${lembrete.idLembrete}, '
+        'titulo: ${lembrete.titulo}',
+      );
+    }
+
+    try {
+      return lembretes.firstWhere(
+        (lembrete) => lembrete.idLembrete == idLembrete,
+      );
+    } catch (_) {
+      print(
+        'Não encontrei o lembrete $idLembrete '
+        'entre os lembretes do pet $idPet',
+      );
+      return null;
     }
   }
 
@@ -79,19 +111,69 @@ class ReminderService {
     return null;
   }
 
-  //Deletar lembrete
-  Future<String?> deletarLembrete(int idLembrete) async {
-    final response = await http.delete(
-      Uri.parse('${ApiConfig.baseUrl}/pets/lembretes/$idLembrete'),
+  //Atualizar lembrete
+  Future<String?> atualizarLembrete( ReminderModel lembrete,) async {
+    final response = await http.put(
+      Uri.parse(
+        '${ApiConfig.baseUrl}/pets/lembretes/${lembrete.idLembrete}',
+      ),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(
+        lembrete.toJson(),
+      ),
     );
 
-    final data = jsonDecode(response.body);
+    final data = jsonDecode(
+      response.body,
+    );
 
     if (response.statusCode != 200) {
-      return data['erro'] ?? data['error'] ?? 'Erro ao excluir lembrete';
+      if (data['erros'] != null) {
+        return (data['erros'] as List)
+            .join('\n');
+      }
+
+      return data['erro'] ??
+          data['error'] ??
+          'Erro ao atualizar lembrete';
     }
 
     return null;
+  }
+
+  //Deletar lembrete
+  Future<String?> deletarLembrete(int idLembrete) async {
+    final url = Uri.parse('${ApiConfig.baseUrl}/pets/lembretes/$idLembrete',);
+
+    print('DELETE lembrete: $url');
+    print('ID enviado para exclusão: $idLembrete');
+
+    final response = await http.delete(url);
+
+    print('Status DELETE: ${response.statusCode}');
+    print('Body DELETE: ${response.body}');
+
+    Map<String, dynamic>? data;
+
+    try {
+      final decoded = jsonDecode(response.body);
+
+      if (decoded is Map<String, dynamic>) {
+        data = decoded;
+      }
+    } catch (_) {
+      return 'Resposta inválida da API';
+    }
+
+    if (response.statusCode != 200) {
+      return data?['erro'] ??
+          data?['error'] ??
+          'Erro ao excluir lembrete';
+    }
+
+  return null;
   }
 
   //Buscar ocorrência

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:syscopet/providers/pet_provider.dart';
 import 'package:syscopet/providers/reminder_provider.dart';
+import 'package:syscopet/screens/pets/reminder_details_screen.dart';
 import '../pets/pet_form_dialog.dart';
 import '../../providers/auth_provider.dart';
 import '../auth/auth_screen.dart';
@@ -232,11 +233,6 @@ class _HomeScreenState extends State<HomeScreen> {
         listen: false,
       );
 
-<<<<<<< HEAD
-      await petProvider.carregarPets(auth.currentUser!.id);
-      await reminderProvider.carregarOcorrenciasDosPets(petProvider.pets);
-      print("Pets carregados: ${petProvider.pets.length}");
-=======
       if (auth.currentUser != null) {
         // 1. Carrega os pets PRIMEIRO
         await petProvider.carregarPets(auth.currentUser!.id);
@@ -248,7 +244,6 @@ class _HomeScreenState extends State<HomeScreen> {
         await reminderProvider.carregarLembretesDosPets(petProvider.pets);
         print("✅ INIT: Lembretes carregados.");
       }
->>>>>>> 776deb97ed6a71da8b2025862a80560ad05ca9da
     });
   }
 
@@ -901,6 +896,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                                   : 16,
                                             ),
                                             child: _buildReminderWithTimeline(
+                                              idLembrete: lembrete.id,
+                                              idPet: lembrete.idPet,
                                               icon: _iconePorTipo(
                                                 lembrete.tipo,
                                               ),
@@ -1315,7 +1312,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
           if (atualizou == true) {
             final auth = Provider.of<AuthProvider>(context, listen: false);
-<<<<<<< HEAD
             final petProvider = Provider.of<PetProvider>(context,listen: false,);
 
               final reminderProvider = Provider.of<ReminderProvider>(context,listen: false,);
@@ -1325,12 +1321,6 @@ class _HomeScreenState extends State<HomeScreen> {
               await reminderProvider.carregarOcorrenciasDosPets(
                 petProvider.pets,
               );
-=======
-            await Provider.of<PetProvider>(
-              context,
-              listen: false,
-            ).carregarPets(auth.currentUser!.id);
->>>>>>> 776deb97ed6a71da8b2025862a80560ad05ca9da
           }
         },
         borderRadius: BorderRadius.circular(16),
@@ -1616,6 +1606,8 @@ Widget _buildQuickActionCard({
 }
 
 Widget _buildReminderWithTimeline({
+  required int idLembrete,
+  required int idPet,
   required IconData icon,
   required Color iconBg,
   required Color iconColor,
@@ -1668,9 +1660,39 @@ Widget _buildReminderWithTimeline({
               child: MouseRegion(
                 cursor: SystemMouseCursors.click,
                 child: GestureDetector(
-                  onTap: () {
+                  onTap: () async {
                     print('Clicou no lembrete: $title');
-                    // Aqui você pode navegar para a tela de detalhes
+                    final atualizou =
+                      await Navigator.push<bool>(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) =>
+                            ReminderDetailsScreen(
+                          idLembrete: idLembrete,
+                          idPet: idPet,
+                        ),
+                      ),
+                    );
+
+                    if (atualizou == true) {
+                      final petProvider =
+                          Provider.of<PetProvider>(
+                        context,
+                        listen: false,
+                      );
+
+                      final reminderProvider = Provider.of<ReminderProvider>(
+                        context,
+                        listen: false,
+                      );
+
+                      await Provider.of<ReminderProvider>(
+                        context,
+                        listen: false,
+                      ).carregarOcorrenciasDosPets(
+                        petProvider.pets,
+                      );
+                    }
                   },
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),

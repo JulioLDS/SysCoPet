@@ -29,6 +29,14 @@ class ReminderProvider extends ChangeNotifier {
     }
   }
 
+  //buscar lembrete por id
+  Future<ReminderModel?> buscarLembretePorId(int idPet, int idLembrete,) async {
+    return await _service.buscarLembretePorId(
+      idPet,
+      idLembrete,
+    );
+  }
+
   //Carregar lembretes DOS pets
   Future<void> carregarLembretesDosPets(
     List<PetModel> pets,) async {isLoading = true;notifyListeners();
@@ -136,6 +144,28 @@ class ReminderProvider extends ChangeNotifier {
     return null;
   }
 
+  //Atualizar lembrete
+  Future<String?> atualizarLembrete(ReminderModel lembrete,) async {
+    isLoading = true;
+    notifyListeners();
+
+    final erro =
+        await _service.atualizarLembrete(
+      lembrete,
+    );
+
+    if (erro == null) {
+      await carregarOcorrenciasDoPet(
+        lembrete.idPet,
+      );
+    } else {
+      isLoading = false;
+      notifyListeners();
+    }
+
+    return erro;
+  }
+
   //Deletar lembrete
   Future<String?> deletarLembrete(int idLembrete, int idPet) async {
     isLoading = true;
@@ -144,7 +174,7 @@ class ReminderProvider extends ChangeNotifier {
     final erro = await _service.deletarLembrete(idLembrete);
 
     if (erro == null) {
-      await carregarLembretesDoPet(idPet);
+      await carregarOcorrenciasDoPet(idPet);
     } else {
       isLoading = false;
       notifyListeners();
