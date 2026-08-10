@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:syscopet/screens/pets/reminder_form_dialog.dart';
 
 import '../../models/reminder_model.dart';
 import '../../providers/reminder_provider.dart';
@@ -27,6 +28,7 @@ class _ReminderDetailsScreenState
   bool _carregando = true;
   bool _houveAlteracao = false;
 
+  //Excluir
   Future<void> _confirmarExclusao() async {
     final confirmar = await showDialog<bool>(
       context: context,
@@ -78,6 +80,35 @@ class _ReminderDetailsScreenState
     );
 
     Navigator.pop(context,true,);
+  }
+
+  //Editar
+  Future<void> _editarLembrete() async {
+    if (_lembrete == null) return;
+
+    final atualizou = await showDialog<bool>(
+      context: context,
+      builder: (_) => ReminderFormDialog(
+        idPet: widget.idPet,
+        lembrete: _lembrete!,
+      ),
+    );
+
+    if (atualizou != true) return;
+
+    await _carregarLembrete();
+
+    if (!mounted) return;
+
+    setState(() {
+      _houveAlteracao = true;
+    });
+
+    CustomSnackbar.showSuccess(
+      context,
+      'Lembrete atualizado com sucesso!',
+      color: const Color(0xFF047857),
+    );
   }
 
   
@@ -470,6 +501,4 @@ class _ReminderDetailsScreenState
       ),
     );
   }
-
-  void _editarLembrete() {}
 }

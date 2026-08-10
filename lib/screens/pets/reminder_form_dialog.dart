@@ -8,14 +8,18 @@ import '../../widgets/common/custom_snackbar.dart';
 
 class ReminderFormDialog extends StatefulWidget {
   final int idPet;
+  final ReminderModel? lembrete;
 
-  const ReminderFormDialog({super.key, required this.idPet});
+  const ReminderFormDialog({super.key, required this.idPet, this.lembrete});
 
   @override
   State<ReminderFormDialog> createState() => _ReminderFormDialogState();
 }
 
 class _ReminderFormDialogState extends State<ReminderFormDialog> {
+
+  bool get _editando => widget.lembrete != null;
+
   final _formKey = GlobalKey<FormState>();
 
   final FocusNode _tituloFocus = FocusNode();
@@ -48,6 +52,34 @@ class _ReminderFormDialogState extends State<ReminderFormDialog> {
     super.initState();
     tituloController.addListener(_updateTituloLength);
     descricaoController.addListener(_updateDescricaoLength);
+
+    // Se estiver editando, preenche os campos
+    if (widget.lembrete != null) {
+      final lembrete = widget.lembrete!;
+
+      tituloController.text = lembrete.titulo;
+      descricaoController.text = lembrete.descricao ?? '';
+
+      tipoSelecionado = lembrete.tipo;
+      recorrenciaSelecionada = lembrete.recorrencia;
+
+      final data = lembrete.dataHora;
+
+      dataSelecionada = DateTime(
+        data.year,
+        data.month,
+        data.day,
+      );
+
+      horaSelecionada = TimeOfDay(
+        hour: data.hour,
+        minute: data.minute,
+      );
+
+      // Atualiza os contadores logo ao abrir
+      tituloLength = tituloController.text.length;
+      descricaoLength = descricaoController.text.length;
+    }
   }
 
   void _updateTituloLength() {
@@ -190,6 +222,7 @@ class _ReminderFormDialogState extends State<ReminderFormDialog> {
     }
 
     final lembrete = ReminderModel(
+      idLembrete: widget.lembrete?.idLembrete,
       idPet: widget.idPet,
       titulo: tituloController.text.trim(),
       descricao: descricaoController.text.trim().isEmpty
@@ -198,11 +231,17 @@ class _ReminderFormDialogState extends State<ReminderFormDialog> {
       dataHora: dataHora,
       tipo: tipoSelecionado,
       recorrencia: recorrenciaSelecionada,
-      ativo: true,
+      ativo: widget.lembrete?.ativo ?? true,
     );
 
     final provider = Provider.of<ReminderProvider>(context, listen: false);
-    final erro = await provider.criarLembrete(lembrete);
+
+    final String? erro;
+    if (_editando) {
+      erro = await provider.atualizarLembrete(lembrete,);
+    } else {
+      erro = await provider.criarLembrete(lembrete,);
+    }
 
     if (!mounted) return;
 
@@ -416,7 +455,8 @@ class _ReminderFormDialogState extends State<ReminderFormDialog> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
+                        _editando ? 'Editar Lembrete' :
                         'Novo lembrete',
                         style: TextStyle(
                           fontSize: 18,
@@ -425,6 +465,7 @@ class _ReminderFormDialogState extends State<ReminderFormDialog> {
                         ),
                       ),
                       Text(
+                        _editando ? 'Edite o seu lembrete' :
                         'Crie um lembrete para cuidar ainda melhor do seu pet.',
                         style: TextStyle(
                           fontSize: 12,

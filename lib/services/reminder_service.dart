@@ -113,30 +113,52 @@ class ReminderService {
 
   //Atualizar lembrete
   Future<String?> atualizarLembrete( ReminderModel lembrete,) async {
+    final url = Uri.parse(
+      '${ApiConfig.baseUrl}/pets/lembretes/${lembrete.idLembrete}',
+    );
+
+    final bodyJson = jsonEncode({
+      'id_pet': lembrete.idPet,
+      'titulo': lembrete.titulo,
+      'descricao': lembrete.descricao,
+      'data_hora': lembrete.dataHora.toUtc().toIso8601String(),
+      'tipo': lembrete.tipo,
+      'recorrencia': lembrete.recorrencia,
+    });
+
+    print('PUT lembrete: $url');
+    print('Body enviado: $bodyJson');
+
     final response = await http.put(
-      Uri.parse(
-        '${ApiConfig.baseUrl}/pets/lembretes/${lembrete.idLembrete}',
-      ),
+      url,
       headers: {
         'Content-Type': 'application/json',
       },
-      body: jsonEncode(
-        lembrete.toJson(),
-      ),
+      body: bodyJson,
     );
 
-    final data = jsonDecode(
-      response.body,
-    );
+    print('Status UPDATE: ${response.statusCode}');
+    print('Body UPDATE: ${response.body}');
+
+    Map<String, dynamic>? data;
+
+    try {
+      final decoded = jsonDecode(response.body);
+
+      if (decoded is Map<String, dynamic>) {
+        data = decoded;
+      }
+    } catch (_) {
+      return 'A API retornou uma resposta inválida.';
+    }
 
     if (response.statusCode != 200) {
-      if (data['erros'] != null) {
-        return (data['erros'] as List)
-            .join('\n');
+      if (data?['erros'] != null) {
+        return (data!['erros'] as List).join('\n');
       }
 
-      return data['erro'] ??
-          data['error'] ??
+      return data?['erro'] ??
+          data?['error'] ??
           'Erro ao atualizar lembrete';
     }
 

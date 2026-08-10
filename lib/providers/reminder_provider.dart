@@ -154,16 +154,17 @@ class ReminderProvider extends ChangeNotifier {
       lembrete,
     );
 
-    if (erro == null) {
-      await carregarOcorrenciasDoPet(
-        lembrete.idPet,
-      );
-    } else {
+    if (erro != null) {
       isLoading = false;
       notifyListeners();
+      return erro;
     }
 
-    return erro;
+    await carregarOcorrenciasDoPet(
+      lembrete.idPet,
+    );
+
+    return null;
   }
 
   //Deletar lembrete
