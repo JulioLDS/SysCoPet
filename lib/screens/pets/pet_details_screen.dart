@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:syscopet/providers/pet_provider.dart';
+import 'package:syscopet/screens/pets/pet_reminders_screen.dart';
 import 'package:syscopet/screens/pets/reminder_details_screen.dart';
 import '../../models/reminder_ocurrence_model.dart';
 import 'package:syscopet/screens/home/home_screen.dart';
@@ -626,8 +627,24 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
                               MouseRegion(
                                 cursor: SystemMouseCursors.click,
                                 child: GestureDetector(
-                                  onTap: () {
-                                    // TODO: Navegar para tela de todos os lembretes
+                                  onTap: () async {
+                                    await Navigator.push(context,
+                                      MaterialPageRoute(
+                                        builder: (_) =>
+                                            PetRemindersScreen(
+                                          pet: _currentPet,
+                                        ),
+                                      ),
+                                    );
+
+                                    if (!mounted) return;
+
+                                    await Provider.of<ReminderProvider>(
+                                      context,
+                                      listen: false,
+                                    ).carregarOcorrenciasDoPet(
+                                      _currentPet.idPet!,
+                                    );
                                   },
                                   child: AnimatedContainer(
                                     duration: const Duration(milliseconds: 200),

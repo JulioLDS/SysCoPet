@@ -6,6 +6,7 @@ import 'package:syscopet/models/reminder_ocurrence_model.dart';
 import 'package:syscopet/providers/pet_provider.dart';
 import 'package:syscopet/providers/reminder_provider.dart';
 import 'package:syscopet/screens/pets/reminder_details_screen.dart';
+import 'package:syscopet/screens/pets/reminders_all_screen.dart';
 import '../pets/pet_form_dialog.dart';
 import '../../providers/auth_provider.dart';
 import '../auth/auth_screen.dart';
@@ -307,22 +308,6 @@ class _HomeScreenState extends State<HomeScreen> {
     final user = authProvider.currentUser;
     final reminderProvider = Provider.of<ReminderProvider>(context);
 
-    //debug
-    print(
-      'HOME -> global: ${reminderProvider.ocorrencias.length} | '
-      'pet: ${reminderProvider.ocorrenciasPet.length}',
-    );
-
-    for (final lembrete in reminderProvider.ocorrencias) {
-      print(
-        'HOME LEMBRETE -> '
-        'id=${lembrete.id}, '
-        'titulo=${lembrete.titulo}, '
-        'dataHora=${lembrete.dataHora}, '
-        'proximas=${lembrete.proximasOcorrencias.length}',
-      );
-    }
-
     final proximosLembretes =
         reminderProvider.ocorrencias
             .where(
@@ -336,8 +321,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
             return dataA.compareTo(dataB);
           });
-
-          print('HOME -> depois do filtro: ${proximosLembretes.length}',);
 
     //mude o número do take para mudar quantos lembretes aparecem na tela
     final lembretesParaMostrar = proximosLembretes.take(2).toList();
@@ -997,6 +980,13 @@ class _HomeScreenState extends State<HomeScreen> {
                                         child: InkWell(
                                           onTap: () {
                                             print('Ver todos os lembretes');
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (_) =>
+                                                    const AllRemindersScreen(),
+                                              ),
+                                            );
                                           },
                                           borderRadius: BorderRadius.circular(
                                             12,
