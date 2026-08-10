@@ -232,6 +232,28 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
     }
   }
 
+  DateTime? _getProximaData(
+    ReminderOccurrenceModel lembrete,
+  ) {
+    final agora = DateTime.now();
+
+    // A data original ainda não aconteceu
+    if (lembrete.dataHora.isAfter(agora)) {
+      return lembrete.dataHora;
+    }
+
+    // A data original já passou:
+    // procura a próxima recorrência futura
+    for (final data in lembrete.proximasOcorrencias) {
+      if (data.isAfter(agora)) {
+        return data;
+      }
+    }
+
+    // Não existe mais nenhuma ocorrência futura
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     final especieFormatada = _formatarEspecie(_currentPet.especie);
@@ -474,15 +496,20 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
                     builder: (context, reminderProvider, child) {
                       // 1. Filtrar lembretes deste pet, ativos e futuros
                       final proximasOcorrencias =
-                          reminderProvider.ocorrencias
+                          reminderProvider.ocorrenciasPet
                               .where(
                                 (ocorrencia) =>
                                     ocorrencia.idPet == _currentPet.idPet &&
                                     ocorrencia.ativo &&
-                                    ocorrencia.dataHora.isAfter(DateTime.now()),
+                                    _getProximaData(ocorrencia) !=null,
                               )
                               .toList()
-                            ..sort((a, b) => a.dataHora.compareTo(b.dataHora));
+                            ..sort((a, b) {
+                              final dataA = _getProximaData(a)!;
+                              final dataB = _getProximaData(b)!;
+
+                              return dataA.compareTo(dataB);
+                            });
 
                       // 2. Pegar apenas os 2 primeiros
                       final lembretesParaMostrar = proximasOcorrencias
@@ -558,7 +585,10 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
                             ...List.generate(lembretesParaMostrar.length, (
                               index,
                             ) {
+
                               final lembrete = lembretesParaMostrar[index];
+                              final proximaData =_getProximaData(lembrete)!;
+
                               return Padding(
                                 padding: EdgeInsets.only(
                                   bottom:
@@ -581,10 +611,10 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
                                     lembrete.tipo,
                                   ),
                                   date: _formatarDataLembrete(
-                                    lembrete.dataHora,
+                                    proximaData,
                                   ),
                                   time: _formatarHoraLembrete(
-                                    lembrete.dataHora,
+                                    proximaData,
                                   ),
                                   isFirst: index == 0,
                                 ),

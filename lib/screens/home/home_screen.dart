@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:syscopet/models/reminder_ocurrence_model.dart';
 import 'package:syscopet/providers/pet_provider.dart';
 import 'package:syscopet/providers/reminder_provider.dart';
 import 'package:syscopet/screens/pets/reminder_details_screen.dart';
@@ -219,6 +220,27 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  DateTime? _getProximaData(
+    ReminderOccurrenceModel lembrete,
+  ) {
+    final agora = DateTime.now();
+
+    // A ocorrência original ainda é futura
+    if (lembrete.dataHora.isAfter(agora)) {
+      return lembrete.dataHora;
+    }
+
+    // A original passou, procura a próxima recorrência
+    for (final data in lembrete.proximasOcorrencias) {
+      if (data.isAfter(agora)) {
+        return data;
+      }
+    }
+
+    // Não possui nenhuma ocorrência futura
+    return null;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -241,8 +263,11 @@ class _HomeScreenState extends State<HomeScreen> {
         );
 
         // 2. Só depois carrega os lembretes usando a lista de pets que já está preenchida
-        await reminderProvider.carregarLembretesDosPets(petProvider.pets);
+        await reminderProvider.carregarOcorrenciasDosPets(petProvider.pets);
         print("✅ INIT: Lembretes carregados.");
+
+        print('DEPOIS DE CARREGAR HOME -> ''${reminderProvider.ocorrencias.length}',
+        );
       }
     });
   }
@@ -282,14 +307,37 @@ class _HomeScreenState extends State<HomeScreen> {
     final user = authProvider.currentUser;
     final reminderProvider = Provider.of<ReminderProvider>(context);
 
+    //debug
+    print(
+      'HOME -> global: ${reminderProvider.ocorrencias.length} | '
+      'pet: ${reminderProvider.ocorrenciasPet.length}',
+    );
+
+    for (final lembrete in reminderProvider.ocorrencias) {
+      print(
+        'HOME LEMBRETE -> '
+        'id=${lembrete.id}, '
+        'titulo=${lembrete.titulo}, '
+        'dataHora=${lembrete.dataHora}, '
+        'proximas=${lembrete.proximasOcorrencias.length}',
+      );
+    }
+
     final proximosLembretes =
         reminderProvider.ocorrencias
             .where(
               (lembrete) =>
-                  lembrete.ativo && lembrete.dataHora.isAfter(DateTime.now()),
+                  lembrete.ativo && _getProximaData(lembrete)!=null,
             )
             .toList()
-          ..sort((a, b) => a.dataHora.compareTo(b.dataHora));
+          ..sort((a, b) {
+            final dataA = _getProximaData(a)!;
+            final dataB = _getProximaData(b)!;
+
+            return dataA.compareTo(dataB);
+          });
+
+          print('HOME -> depois do filtro: ${proximosLembretes.length}',);
 
     //mude o número do take para mudar quantos lembretes aparecem na tela
     final lembretesParaMostrar = proximosLembretes.take(2).toList();
@@ -884,6 +932,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                         (index) {
                                           final lembrete =
                                               lembretesParaMostrar[index];
+                                          
+                                          final proximaData =
+                                              _getProximaData(lembrete)!;
 
                                           return Padding(
                                             padding: EdgeInsets.only(
@@ -921,10 +972,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                                 lembrete.tipo,
                                               ),
                                               date: _formatarDataLembrete(
-                                                lembrete.dataHora,
+                                                proximaData,
                                               ),
                                               time: _formatarHoraLembrete(
-                                                lembrete.dataHora,
+                                                proximaData,
                                               ),
                                               isFirst: index == 0,
                                             ),
@@ -1686,10 +1737,7 @@ Widget _buildReminderWithTimeline({
                         listen: false,
                       );
 
-                      await Provider.of<ReminderProvider>(
-                        context,
-                        listen: false,
-                      ).carregarOcorrenciasDosPets(
+                      await reminderProvider.carregarOcorrenciasDosPets(
                         petProvider.pets,
                       );
                     }

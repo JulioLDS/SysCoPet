@@ -9,7 +9,11 @@ class ReminderProvider extends ChangeNotifier {
   final ReminderService _service = ReminderService();
 
   List<ReminderModel> lembretes = [];
+  //Usada pela home
   List<ReminderOccurrenceModel> ocorrencias = [];
+  //Usada pela petDetails
+  List<ReminderOccurrenceModel> ocorrenciasPet = [];
+  
   bool isLoading = false;
 
   //Carregar lembretes de um pet
@@ -74,14 +78,17 @@ class ReminderProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      ocorrencias = await _service.buscarOcorrencias(idPet);
+      ocorrenciasPet = await _service.buscarOcorrencias(idPet);
 
-      ocorrencias.sort(
+      ocorrenciasPet = ocorrenciasPet.where((o) => o.ativo).toList();
+
+      ocorrenciasPet.sort(
         (a, b) => a.dataHora.compareTo(b.dataHora),
       );
     } catch (e) {
       print('Erro ao carregar ocorrências do pet: $e');
-      ocorrencias = [];
+
+      ocorrenciasPet = [];
     } finally {
       isLoading = false;
       notifyListeners();
@@ -120,6 +127,7 @@ class ReminderProvider extends ChangeNotifier {
       );
     } catch (e) {
       print('Erro ao carregar ocorrências dos pets: $e');
+      
       ocorrencias = [];
     } finally {
       isLoading = false;

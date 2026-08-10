@@ -35,9 +35,9 @@ class ReminderOccurrenceModel {
       ativo: json['ativo'],
       dataHora: DateTime.parse(json['data_hora']),
       proximasOcorrencias:
-          (json['proximas_ocorrencias'] as List)
+          (json['proximas_ocorrencias'] as List? ??[])
               .map(
-                (e)=>DateTime.parse(e),
+                (e)=>DateTime.parse(e.toString(),).toLocal(),
               )
               .toList(),
     );
