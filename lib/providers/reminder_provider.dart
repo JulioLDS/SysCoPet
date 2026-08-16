@@ -3,11 +3,17 @@ import 'package:syscopet/models/pet_model.dart';
 
 import '../models/reminder_model.dart';
 import '../services/reminder_service.dart';
+import '../models/reminder_ocurrence_model.dart';
 
 class ReminderProvider extends ChangeNotifier {
   final ReminderService _service = ReminderService();
 
   List<ReminderModel> lembretes = [];
+  //Usada pela home
+  List<ReminderOccurrenceModel> ocorrencias = [];
+  //Usada pela petDetails
+  List<ReminderOccurrenceModel> ocorrenciasPet = [];
+  
   bool isLoading = false;
 
   //Carregar lembretes de um pet
@@ -25,6 +31,14 @@ class ReminderProvider extends ChangeNotifier {
       isLoading = false;
       notifyListeners();
     }
+  }
+
+  //buscar lembrete por id
+  Future<ReminderModel?> buscarLembretePorId(int idPet, int idLembrete,) async {
+    return await _service.buscarLembretePorId(
+      idPet,
+      idLembrete,
+    );
   }
 
   //Carregar lembretes DOS pets
@@ -58,6 +72,69 @@ class ReminderProvider extends ChangeNotifier {
     }
 }
 
+  //Carregar ocorrencia do pet
+  Future<void> carregarOcorrenciasDoPet(int idPet) async {
+    isLoading = true;
+    notifyListeners();
+
+    try {
+      ocorrenciasPet = await _service.buscarOcorrencias(idPet);
+
+      ocorrenciasPet = ocorrenciasPet.where((o) => o.ativo).toList();
+
+      ocorrenciasPet.sort(
+        (a, b) => a.dataHora.compareTo(b.dataHora),
+      );
+    } catch (e) {
+      print('Erro ao carregar ocorrências do pet: $e');
+
+      ocorrenciasPet = [];
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  //Carregar ocorrencia DE TODOS os pets
+  Future<void> carregarOcorrenciasDosPets(List<PetModel> pets,) async {
+    isLoading = true;
+    notifyListeners();
+
+    try {
+      final todasOcorrencias = <ReminderOccurrenceModel>[];
+
+      for (final pet in pets) {
+        print("Buscando ocorrências do pet ${pet.idPet}");
+
+        if (pet.idPet == null) continue;
+
+        final ocorrenciasDoPet =
+            await _service.buscarOcorrencias(pet.idPet!,);
+
+        print("Pet ${pet.idPet}: ${ocorrenciasDoPet.length} ocorrências",);
+
+        todasOcorrencias.addAll(ocorrenciasDoPet);
+      }
+      
+      print("TOTAL: ${todasOcorrencias.length}");
+
+      ocorrencias = todasOcorrencias
+          .where((ocorrencia) => ocorrencia.ativo)
+          .toList();
+
+      ocorrencias.sort(
+        (a, b) => a.dataHora.compareTo(b.dataHora),
+      );
+    } catch (e) {
+      print('Erro ao carregar ocorrências dos pets: $e');
+      
+      ocorrencias = [];
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
   //Criar lembrete
   Future<String?> criarLembrete(ReminderModel lembrete) async {
     isLoading = true;
@@ -65,14 +142,37 @@ class ReminderProvider extends ChangeNotifier {
 
     final erro = await _service.criarLembrete(lembrete);
 
-    if (erro == null) {
-      await carregarLembretesDoPet(lembrete.idPet);
-    } else {
+    if (erro != null) {
       isLoading = false;
       notifyListeners();
+      return erro;
+    }
+    await carregarOcorrenciasDoPet(lembrete.idPet);
+
+    return null;
+  }
+
+  //Atualizar lembrete
+  Future<String?> atualizarLembrete(ReminderModel lembrete,) async {
+    isLoading = true;
+    notifyListeners();
+
+    final erro =
+        await _service.atualizarLembrete(
+      lembrete,
+    );
+
+    if (erro != null) {
+      isLoading = false;
+      notifyListeners();
+      return erro;
     }
 
-    return erro;
+    await carregarOcorrenciasDoPet(
+      lembrete.idPet,
+    );
+
+    return null;
   }
 
   //Deletar lembrete
@@ -83,7 +183,7 @@ class ReminderProvider extends ChangeNotifier {
     final erro = await _service.deletarLembrete(idLembrete);
 
     if (erro == null) {
-      await carregarLembretesDoPet(idPet);
+      await carregarOcorrenciasDoPet(idPet);
     } else {
       isLoading = false;
       notifyListeners();

@@ -68,7 +68,7 @@ class AuthService {
   //Login com google
   final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
 
-  static const String googleClientId ='357380729178-ro75lhale3r65l1kecmmtvujim4qietq.apps.googleusercontent.com';
+  static const String googleClientId ='1067668566349-l5a8dqimvm6gmmnsfk4t1dgrhd21i000.apps.googleusercontent.com';
 
   static Future<void>? _googleInitFuture;
 

@@ -21,7 +21,11 @@ class ReminderModel {
 
   factory ReminderModel.fromJson(Map<String, dynamic> json) {
     return ReminderModel(
-      idLembrete: json['id_lembrete'] != null ? int.parse(json['id_lembrete'].toString()): null,
+      idLembrete: json['id'] != null
+      ? int.parse(json['id'].toString())
+      : json['id_lembrete'] != null
+          ? int.parse(json['id_lembrete'].toString())
+          : null,
       idPet: int.parse(json['id_pet'].toString()),
       titulo: json['titulo'] ?? '',
       descricao: json['descricao'],

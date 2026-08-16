@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:syscopet/providers/pet_provider.dart';
+import 'package:syscopet/screens/pets/pet_reminders_screen.dart';
+import 'package:syscopet/screens/pets/reminder_details_screen.dart';
+import '../../models/reminder_ocurrence_model.dart';
 import 'package:syscopet/screens/home/home_screen.dart';
 import 'package:syscopet/widgets/common/health_alert_banner.dart';
 import '../../providers/auth_provider.dart';
@@ -36,7 +39,7 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
       Provider.of<ReminderProvider>(
         context,
         listen: false,
-      ).carregarLembretesDoPet(_currentPet.idPet!);
+      ).carregarOcorrenciasDoPet(_currentPet.idPet!);
     });
   }
 
@@ -228,6 +231,28 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
       default:
         return tipo;
     }
+  }
+
+  DateTime? _getProximaData(
+    ReminderOccurrenceModel lembrete,
+  ) {
+    final agora = DateTime.now();
+
+    // A data original ainda não aconteceu
+    if (lembrete.dataHora.isAfter(agora)) {
+      return lembrete.dataHora;
+    }
+
+    // A data original já passou:
+    // procura a próxima recorrência futura
+    for (final data in lembrete.proximasOcorrencias) {
+      if (data.isAfter(agora)) {
+        return data;
+      }
+    }
+
+    // Não existe mais nenhuma ocorrência futura
+    return null;
   }
 
   @override
@@ -471,19 +496,24 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
                   Consumer<ReminderProvider>(
                     builder: (context, reminderProvider, child) {
                       // 1. Filtrar lembretes deste pet, ativos e futuros
-                      final lembretesDoPet =
-                          reminderProvider.lembretes
+                      final proximasOcorrencias =
+                          reminderProvider.ocorrenciasPet
                               .where(
-                                (lembrete) =>
-                                    lembrete.idPet == _currentPet.idPet &&
-                                    lembrete.ativo &&
-                                    lembrete.dataHora.isAfter(DateTime.now()),
+                                (ocorrencia) =>
+                                    ocorrencia.idPet == _currentPet.idPet &&
+                                    ocorrencia.ativo &&
+                                    _getProximaData(ocorrencia) !=null,
                               )
                               .toList()
-                            ..sort((a, b) => a.dataHora.compareTo(b.dataHora));
+                            ..sort((a, b) {
+                              final dataA = _getProximaData(a)!;
+                              final dataB = _getProximaData(b)!;
+
+                              return dataA.compareTo(dataB);
+                            });
 
                       // 2. Pegar apenas os 2 primeiros
-                      final lembretesParaMostrar = lembretesDoPet
+                      final lembretesParaMostrar = proximasOcorrencias
                           .take(2)
                           .toList();
 
@@ -556,7 +586,10 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
                             ...List.generate(lembretesParaMostrar.length, (
                               index,
                             ) {
+
                               final lembrete = lembretesParaMostrar[index];
+                              final proximaData =_getProximaData(lembrete)!;
+
                               return Padding(
                                 padding: EdgeInsets.only(
                                   bottom:
@@ -565,6 +598,8 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
                                       : 16,
                                 ),
                                 child: _buildReminderWithTimeline(
+                                  idLembrete: lembrete.id,
+                                  idPet: lembrete.idPet,
                                   icon: _getIconByType(lembrete.tipo),
                                   iconBg: _getBgColorByType(lembrete.tipo),
                                   iconColor: _getColorByType(lembrete.tipo),
@@ -577,10 +612,10 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
                                     lembrete.tipo,
                                   ),
                                   date: _formatarDataLembrete(
-                                    lembrete.dataHora,
+                                    proximaData,
                                   ),
                                   time: _formatarHoraLembrete(
-                                    lembrete.dataHora,
+                                    proximaData,
                                   ),
                                   isFirst: index == 0,
                                 ),
@@ -588,12 +623,28 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
                             }),
 
                             // Botão "Ver todos" (só aparece se tiver mais de 2)
-                            if (lembretesDoPet.length > 2)
+                            if (proximasOcorrencias.length > 2)
                               MouseRegion(
                                 cursor: SystemMouseCursors.click,
                                 child: GestureDetector(
-                                  onTap: () {
-                                    // TODO: Navegar para tela de todos os lembretes
+                                  onTap: () async {
+                                    await Navigator.push(context,
+                                      MaterialPageRoute(
+                                        builder: (_) =>
+                                            PetRemindersScreen(
+                                          pet: _currentPet,
+                                        ),
+                                      ),
+                                    );
+
+                                    if (!mounted) return;
+
+                                    await Provider.of<ReminderProvider>(
+                                      context,
+                                      listen: false,
+                                    ).carregarOcorrenciasDoPet(
+                                      _currentPet.idPet!,
+                                    );
                                   },
                                   child: AnimatedContainer(
                                     duration: const Duration(milliseconds: 200),
@@ -1352,6 +1403,8 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
 
   // ✅ Widget do Item de Lembrete com Timeline (Igual à Home)
   Widget _buildReminderWithTimeline({
+    required int idLembrete,
+    required int idPet,
     required IconData icon,
     required Color iconBg,
     required Color iconColor,
@@ -1403,8 +1456,28 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
                 child: MouseRegion(
                   cursor: SystemMouseCursors.click,
                   child: GestureDetector(
-                    onTap: () {
+                    onTap: () async {
                       print('Clicou no lembrete: $title');
+
+                      final atualizou =
+                          await Navigator.push<bool>(context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              ReminderDetailsScreen(
+                            idLembrete: idLembrete,
+                            idPet: idPet,
+                          ),
+                        ),
+                      );
+
+                      if (atualizou == true) {
+                        await Provider.of<ReminderProvider>(
+                          context,
+                          listen: false,
+                        ).carregarOcorrenciasDoPet(
+                          _currentPet.idPet!,
+                        );
+                      }
                     },
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
