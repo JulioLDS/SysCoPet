@@ -109,18 +109,16 @@ class _AllRemindersScreenState
     }
   }
 
-  String _buscarNomePet(
+PetModel? _buscarPet(
     int idPet,
     List<PetModel> pets,
   ) {
     try {
-      final pet = pets.firstWhere(
+      return pets.firstWhere(
         (pet) => pet.idPet == idPet,
       );
-
-      return pet.nome;
     } catch (_) {
-      return 'Pet';
+      return null;
     }
   }
 
@@ -199,8 +197,8 @@ class _AllRemindersScreenState
                         lembrete,
                       )!;
 
-                      final nomePet =
-                          _buscarNomePet(
+                      final pet =
+                          _buscarPet(
                         lembrete.idPet,
                         petProvider.pets,
                       );
@@ -208,7 +206,7 @@ class _AllRemindersScreenState
                       return _buildReminderCard(
                         lembrete: lembrete,
                         proximaData: proximaData,
-                        nomePet: nomePet,
+                        pet: pet,
                       );
                     },
                   ),
@@ -219,7 +217,7 @@ class _AllRemindersScreenState
   Widget _buildReminderCard({
     required ReminderOccurrenceModel lembrete,
     required DateTime proximaData,
-    required String nomePet,
+    required PetModel? pet,
   }) {
     return Material(
       color: Colors.white,
@@ -259,22 +257,35 @@ class _AllRemindersScreenState
           child: Row(
             children: [
               Container(
-                width: 50,
-                height: 50,
-
-                decoration: BoxDecoration(
-                  color: const Color(0xFFECFDF5),
-                  borderRadius:
-                      BorderRadius.circular(14),
-                ),
-
-                child: Icon(
-                  _getIconByType(
-                    lembrete.tipo,
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.grey.shade200,
                   ),
-                  color: const Color(0xFF0D9488),
+                  child: ClipOval(
+                    child: pet?.urlFoto != null &&
+                            pet!.urlFoto!.isNotEmpty
+                        ? Image.network(
+                            pet.urlFoto!,
+                            width: 52,
+                            height: 52,
+                            fit: BoxFit.cover,
+                            errorBuilder: (
+                              context,
+                              error,
+                              stackTrace,
+                            ) {
+                              return _buildPetFallback(
+                                lembrete.tipo,
+                              );
+                            },
+                          )
+                        : _buildPetFallback(
+                            lembrete.tipo,
+                          ),
+                  ),
                 ),
-              ),
 
               const SizedBox(width: 16),
 
@@ -296,7 +307,7 @@ class _AllRemindersScreenState
                     const SizedBox(height: 5),
 
                     Text(
-                      nomePet,
+                      pet?.nome ?? 'Pet',
                       style: TextStyle(
                         fontSize: 14,
                         color: Colors.grey.shade600,
@@ -369,6 +380,20 @@ class _AllRemindersScreenState
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildPetFallback(
+    String tipo,
+  ) {
+    return Container(
+      color: const Color(0xFFECFDF5),
+      alignment: Alignment.center,
+      child: Icon(
+        _getIconByType(tipo),
+        color: const Color(0xFF0D9488),
+        size: 24,
       ),
     );
   }
