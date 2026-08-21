@@ -1128,31 +1128,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ],
                     ),
                   ),
-                  PopupMenuButton<String>(
-                    icon: const Icon(
-                      Icons.settings_outlined,
-                      color: Colors.white,
-                      size: 26,
-                    ),
-                    offset: const Offset(0, 40),
-                    onSelected: (value) {
-                      if (value == 'logout') {
-                        _logout(context, authProvider);
-                      }
-                    },
-                    itemBuilder: (context) => [
-                      const PopupMenuItem<String>(
-                        value: 'logout',
-                        child: Row(
-                          children: [
-                            Icon(Icons.logout, color: Colors.red, size: 20),
-                            SizedBox(width: 8),
-                            Text('Sair da conta'),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
+                  _buildSettingsMenu(authProvider),
                 ],
               ),
             ),
@@ -1262,6 +1238,167 @@ class _HomeScreenState extends State<HomeScreen> {
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => const AuthScreen()),
+    );
+  }
+
+  // ✅ Widget do Menu de Configurações (estilo imagem de referência)
+  Widget _buildSettingsMenu(AuthProvider authProvider) {
+    return PopupMenuButton<String>(
+      // ❌ REMOVA O 'icon' - use apenas 'child'
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+        ),
+        child: const Icon(
+          Icons.settings_outlined,
+          color: Color(0xFF0D9488),
+          size: 24,
+        ),
+      ),
+      offset: const Offset(0, 50),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      itemBuilder: (context) => [
+        // ✅ Título "GERAL"
+        const PopupMenuItem<String>(
+          enabled: false,
+          child: Padding(
+            padding: EdgeInsets.only(bottom: 8),
+            child: Text(
+              'GERAL',
+              style: TextStyle(
+                color: Colors.grey,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ),
+
+        // ✅ Minha conta
+        PopupMenuItem<String>(
+          value: 'minha_conta',
+          padding: EdgeInsets.zero,
+          child: _buildMenuItem(
+            icon: Icons.person_outline,
+            title: 'Minha conta',
+          ),
+        ),
+
+        // ✅ Notificações
+        PopupMenuItem<String>(
+          value: 'notificacoes',
+          padding: EdgeInsets.zero,
+          child: _buildMenuItem(
+            icon: Icons.notifications_outlined,
+            title: 'Notificações',
+          ),
+        ),
+
+        // ✅ Privacidade
+        PopupMenuItem<String>(
+          value: 'privacidade',
+          padding: EdgeInsets.zero,
+          child: _buildMenuItem(
+            icon: Icons.shield_outlined,
+            title: 'Privacidade',
+          ),
+        ),
+
+        // ✅ Aparência
+        PopupMenuItem<String>(
+          value: 'aparência',
+          padding: EdgeInsets.zero,
+          child: _buildMenuItem(
+            icon: Icons.palette_outlined,
+            title: 'Aparência',
+          ),
+        ),
+
+        // ✅ Ajuda e suporte
+        PopupMenuItem<String>(
+          value: 'ajuda',
+          padding: EdgeInsets.zero,
+          child: _buildMenuItem(icon: Icons.help_outline, title: 'Ajuda'),
+        ),
+
+        // ✅ Sobre o app
+        PopupMenuItem<String>(
+          value: 'sobre',
+          padding: EdgeInsets.zero,
+          child: _buildMenuItem(icon: Icons.info_outline, title: 'Sobre o app'),
+        ),
+
+        // ✅ Linha divisória
+        const PopupMenuDivider(height: 1),
+
+        // ✅ Sair da conta (vermelho)
+        PopupMenuItem<String>(
+          value: 'logout',
+          padding: EdgeInsets.zero,
+          child: _buildMenuItem(
+            icon: Icons.logout,
+            title: 'Sair da conta',
+            isDanger: true,
+          ),
+        ),
+      ],
+      onSelected: (value) {
+        if (value == 'logout') {
+          _logout(context, authProvider);
+        } else {
+          print('Clicou em: $value');
+        }
+      },
+    );
+  }
+
+  // ✅ Widget auxiliar para itens do menu
+  Widget _buildMenuItem({
+    required IconData icon,
+    required String title,
+    bool isDanger = false,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      child: Row(
+        children: [
+          // ✅ Ícone em círculo teal claro
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: isDanger
+                  ? const Color(0xFFFEF2F2)
+                  : const Color(0xFFECFDF5),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              icon,
+              color: isDanger
+                  ? const Color(0xFFEF4444)
+                  : const Color(0xFF0D9488),
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          // ✅ Texto
+          Expanded(
+            child: Text(
+              title,
+              style: TextStyle(
+                color: isDanger
+                    ? const Color(0xFFEF4444)
+                    : const Color(0xFF1E293B),
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          // ✅ Seta
+          Icon(Icons.chevron_right, color: Colors.grey.shade400, size: 20),
+        ],
+      ),
     );
   }
 
