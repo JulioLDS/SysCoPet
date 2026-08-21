@@ -221,9 +221,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  DateTime? _getProximaData(
-    ReminderOccurrenceModel lembrete,
-  ) {
+  DateTime? _getProximaData(ReminderOccurrenceModel lembrete) {
     final agora = DateTime.now();
 
     // A ocorrência original ainda é futura
@@ -267,29 +265,18 @@ class _HomeScreenState extends State<HomeScreen> {
         await reminderProvider.carregarOcorrenciasDosPets(petProvider.pets);
         print("✅ INIT: Lembretes carregados.");
 
-        print('DEPOIS DE CARREGAR HOME -> ''${reminderProvider.ocorrencias.length}',
+        print(
+          'DEPOIS DE CARREGAR HOME -> '
+          '${reminderProvider.ocorrencias.length}',
         );
       }
     });
   }
 
-  // ✅ Método que calcula qual dot deve estar ativo
+  // ✅ Método que atualiza a UI quando o scroll muda (para mostrar/esconder setas)
   void _onPetScroll() {
-    if (_petScrollController.hasClients) {
-      // Largura média de um card (160) + padding (15) = 175
-      final itemWidth = 175.0;
-      final maxIndex = context.read<PetProvider>().pets.length;
-
-      final newIndex = (_petScrollController.offset / itemWidth).round().clamp(
-        0,
-        maxIndex,
-      );
-
-      if (newIndex != _currentPetIndex) {
-        setState(() {
-          _currentPetIndex = newIndex;
-        });
-      }
+    if (mounted) {
+      setState(() {});
     }
   }
 
@@ -311,8 +298,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final proximosLembretes =
         reminderProvider.ocorrencias
             .where(
-              (lembrete) =>
-                  lembrete.ativo && _getProximaData(lembrete)!=null,
+              (lembrete) => lembrete.ativo && _getProximaData(lembrete) != null,
             )
             .toList()
           ..sort((a, b) {
@@ -522,183 +508,224 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                               const SizedBox(height: 20),
 
+                              // ✅ CARROSSEL CENTRALIZADO COM GRADIENTES E SETAS CLICÁVEIS
                               SizedBox(
                                 height: 280,
                                 child: Stack(
                                   clipBehavior: Clip.none,
                                   children: [
-                                    // ✅ 1. Lista com Rolagem Suave
-                                    Positioned.fill(
-                                      child: ScrollConfiguration(
-                                        behavior:
-                                            ScrollConfiguration.of(
-                                              context,
-                                            ).copyWith(
-                                              dragDevices: {
-                                                PointerDeviceKind.touch,
-                                                PointerDeviceKind.mouse,
-                                                PointerDeviceKind.stylus,
-                                                PointerDeviceKind.trackpad,
-                                              },
-                                            ),
-                                        child: ListView(
-                                          controller: _petScrollController,
-                                          scrollDirection: Axis.horizontal,
+                                    // 1. Container centralizado (lista + gradientes)
+                                    Center(
+                                      child: Container(
+                                        width: 1250,
+                                        child: Stack(
                                           clipBehavior: Clip.none,
-                                          padding: const EdgeInsets.symmetric(
-                                            vertical: 20,
-                                          ),
                                           children: [
-                                            const SizedBox(width: 15),
-                                            _buildAddPetCard(),
-                                            const SizedBox(width: 15),
-                                            ...petProvider.pets.map(
-                                              (pet) => Padding(
-                                                padding: const EdgeInsets.only(
-                                                  right: 15,
-                                                ),
-                                                child: _buildPetCard(
-                                                  pet: pet,
-                                                  age: calcularIdade(
-                                                    pet.dataNascimento,
+                                            // Lista de Pets
+                                            Positioned.fill(
+                                              child: ListView(
+                                                controller:
+                                                    _petScrollController,
+                                                scrollDirection:
+                                                    Axis.horizontal,
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      vertical: 20,
+                                                      horizontal: 15,
+                                                    ),
+                                                children: [
+                                                  _buildAddPetCard(),
+                                                  const SizedBox(width: 15),
+                                                  ...petProvider.pets.map(
+                                                    (pet) => Padding(
+                                                      padding:
+                                                          const EdgeInsets.only(
+                                                            right: 15,
+                                                          ),
+                                                      child: _buildPetCard(
+                                                        pet: pet,
+                                                        age: calcularIdade(
+                                                          pet.dataNascimento,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+
+                                            // 2. Gradiente Esquerdo
+                                            Positioned(
+                                              left: -30,
+                                              top: 0,
+                                              bottom: 0,
+                                              width: 80,
+                                              child: IgnorePointer(
+                                                child: Container(
+                                                  decoration: BoxDecoration(
+                                                    gradient: LinearGradient(
+                                                      begin:
+                                                          Alignment.centerLeft,
+                                                      end:
+                                                          Alignment.centerRight,
+                                                      colors: [
+                                                        const Color(0xFFF8FAFC),
+                                                        const Color(
+                                                          0xFFF8FAFC,
+                                                        ).withOpacity(0.0),
+                                                      ],
+                                                    ),
                                                   ),
                                                 ),
                                               ),
                                             ),
-                                            const SizedBox(width: 15),
+
+                                            // 3. Gradiente Direito
+                                            Positioned(
+                                              right: 0,
+                                              top: 0,
+                                              bottom: 0,
+                                              width: 80,
+                                              child: IgnorePointer(
+                                                child: Container(
+                                                  decoration: BoxDecoration(
+                                                    gradient: LinearGradient(
+                                                      begin:
+                                                          Alignment.centerRight,
+                                                      end: Alignment.centerLeft,
+                                                      colors: [
+                                                        const Color(0xFFF8FAFC),
+                                                        const Color(
+                                                          0xFFF8FAFC,
+                                                        ).withOpacity(0.0),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
                                           ],
                                         ),
                                       ),
                                     ),
 
-                                    // ✅ 2. GRADIENTE FADE no canto direito (colado na borda)
-                                    // ✅ 2. GRADIENTE FADE BEM FORTE - COLADO TOTALMENTE NA DIREITA
-                                    if (petProvider.pets.isNotEmpty)
+                                    // 4. Seta Esquerda (só aparece se houver pets e scroll)
+                                    if (petProvider.pets.isNotEmpty &&
+                                        _petScrollController.hasClients &&
+                                        _petScrollController.offset > 10)
                                       Positioned(
-                                        right: -40,
+                                        left: 0,
                                         top: 0,
-                                        bottom: 10,
-                                        width:
-                                            100, // ✅ Aumentado de 80 para 100
-                                        child: IgnorePointer(
-                                          child: Container(
-                                            decoration: BoxDecoration(
-                                              gradient: LinearGradient(
-                                                begin: Alignment.centerLeft,
-                                                end: Alignment.centerRight,
-                                                stops: const [
-                                                  0.0,
-                                                  0.3,
-                                                  0.7,
-                                                  1.0,
-                                                ], // ✅ 4 pontos para transição mais agressiva
-                                                colors: [
-                                                  const Color(
-                                                    0xFFF8FAFC,
-                                                  ).withOpacity(0.0),
-                                                  const Color(
-                                                    0xFFF8FAFC,
-                                                  ).withOpacity(0.5),
-                                                  const Color(
-                                                    0xFFF8FAFC,
-                                                  ).withOpacity(0.9),
-                                                  const Color(
-                                                    0xFFF8FAFC,
-                                                  ).withOpacity(
-                                                    1.0,
-                                                  ), // ✅ Totalmente opaco
-                                                ],
+                                        bottom: 0,
+                                        child: Center(
+                                          child: _HoverButton(
+                                            onTap: () {
+                                              if (!_petScrollController
+                                                  .hasClients)
+                                                return;
+                                              final newOffset =
+                                                  (_petScrollController.offset -
+                                                          350)
+                                                      .clamp(
+                                                        0.0,
+                                                        _petScrollController
+                                                            .position
+                                                            .maxScrollExtent,
+                                                      );
+                                              _petScrollController.animateTo(
+                                                newOffset,
+                                                duration: const Duration(
+                                                  milliseconds: 400,
+                                                ),
+                                                curve: Curves.easeInOut,
+                                              );
+                                            },
+                                            hoverColor: const Color(
+                                              0xFF0D9488,
+                                            ).withOpacity(0.15),
+                                            child: Container(
+                                              width: 56,
+                                              height: 56,
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xFFECFDF5),
+                                                shape: BoxShape.circle,
+                                                border: Border.all(
+                                                  color: const Color(
+                                                    0xFF0D9488,
+                                                  ),
+                                                  width: 1.5,
+                                                ),
+                                              ),
+                                              child: const Icon(
+                                                Icons.chevron_left,
+                                                color: Color(0xFF0D9488),
+                                                size: 28,
                                               ),
                                             ),
                                           ),
                                         ),
                                       ),
 
-                                    // ✅ 3. BARRA COMPLETA COM ANIMAÇÃO SUAVE
-                                    Positioned(
-                                      bottom: -10,
-                                      left: 0,
-                                      right: 0,
-                                      child: LayoutBuilder(
-                                        builder: (context, constraints) {
-                                          final totalItems =
-                                              petProvider.pets.length + 1;
-                                          final itemWidth = 175.0;
-                                          final totalContentWidth =
-                                              (totalItems * itemWidth) + 30;
-                                          final visibleWidth =
-                                              constraints.maxWidth;
-
-                                          // ✅ Barra ocupa toda a largura disponível
-                                          final barWidth = visibleWidth;
-
-                                          // ✅ Alça proporcional (mínimo 40px, máximo 30% da barra)
-                                          final thumbWidth =
-                                              (visibleWidth /
-                                                      totalContentWidth *
-                                                      barWidth)
-                                                  .clamp(40.0, barWidth * 0.3);
-
-                                          final maxScroll =
-                                              (totalContentWidth - visibleWidth)
-                                                  .clamp(0.0, double.infinity);
-                                          final scrollPosition =
-                                              _petScrollController.hasClients
-                                              ? _petScrollController.offset
-                                              : 0.0;
-
-                                          final maxThumbPosition =
-                                              barWidth - thumbWidth;
-                                          final thumbPosition = maxScroll > 0
-                                              ? (scrollPosition /
-                                                        maxScroll *
-                                                        maxThumbPosition)
-                                                    .clamp(
-                                                      0.0,
-                                                      maxThumbPosition,
-                                                    )
-                                              : 0.0;
-
-                                          return Container(
-                                            width: barWidth,
-                                            height: 6,
-                                            decoration: BoxDecoration(
-                                              color: Colors.grey.shade100,
-                                              borderRadius:
-                                                  BorderRadius.circular(3),
-                                              border: Border.all(
-                                                color: Colors.grey.shade300,
-                                                width: 1,
+                                    // 5. Seta Direita (só aparece se houver pets e scroll)
+                                    if (petProvider.pets.isNotEmpty &&
+                                        _petScrollController.hasClients &&
+                                        (_petScrollController
+                                                    .position
+                                                    .maxScrollExtent -
+                                                _petScrollController.offset) >
+                                            10)
+                                      Positioned(
+                                        right: 0,
+                                        top: 0,
+                                        bottom: 0,
+                                        child: Center(
+                                          child: _HoverButton(
+                                            onTap: () {
+                                              if (!_petScrollController
+                                                  .hasClients)
+                                                return;
+                                              final newOffset =
+                                                  (_petScrollController.offset +
+                                                          350)
+                                                      .clamp(
+                                                        0.0,
+                                                        _petScrollController
+                                                            .position
+                                                            .maxScrollExtent,
+                                                      );
+                                              _petScrollController.animateTo(
+                                                newOffset,
+                                                duration: const Duration(
+                                                  milliseconds: 400,
+                                                ),
+                                                curve: Curves.easeInOut,
+                                              );
+                                            },
+                                            hoverColor: const Color(
+                                              0xFF0D9488,
+                                            ).withOpacity(0.15),
+                                            child: Container(
+                                              width: 56,
+                                              height: 56,
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xFFECFDF5),
+                                                shape: BoxShape.circle,
+                                                border: Border.all(
+                                                  color: const Color(
+                                                    0xFF0D9488,
+                                                  ),
+                                                  width: 1.5,
+                                                ),
+                                              ),
+                                              child: const Icon(
+                                                Icons.chevron_right,
+                                                color: Color(0xFF0D9488),
+                                                size: 28,
                                               ),
                                             ),
-                                            child: Stack(
-                                              children: [
-                                                // ✅ Alça com animação suave
-                                                AnimatedContainer(
-                                                  duration: const Duration(
-                                                    milliseconds: 200,
-                                                  ),
-                                                  curve: Curves.easeOut,
-                                                  margin: EdgeInsets.only(
-                                                    left: thumbPosition,
-                                                  ),
-                                                  width: thumbWidth,
-                                                  decoration: BoxDecoration(
-                                                    color: const Color(
-                                                      0xFF0D9488,
-                                                    ).withOpacity(0.6),
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          3,
-                                                        ),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          );
-                                        },
+                                          ),
+                                        ),
                                       ),
-                                    ),
                                   ],
                                 ),
                               ),
@@ -915,9 +942,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                         (index) {
                                           final lembrete =
                                               lembretesParaMostrar[index];
-                                          
-                                          final proximaData =
-                                              _getProximaData(lembrete)!;
+
+                                          final proximaData = _getProximaData(
+                                            lembrete,
+                                          )!;
 
                                           return Padding(
                                             padding: EdgeInsets.only(
@@ -1100,31 +1128,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ],
                     ),
                   ),
-                  PopupMenuButton<String>(
-                    icon: const Icon(
-                      Icons.settings_outlined,
-                      color: Colors.white,
-                      size: 26,
-                    ),
-                    offset: const Offset(0, 40),
-                    onSelected: (value) {
-                      if (value == 'logout') {
-                        _logout(context, authProvider);
-                      }
-                    },
-                    itemBuilder: (context) => [
-                      const PopupMenuItem<String>(
-                        value: 'logout',
-                        child: Row(
-                          children: [
-                            Icon(Icons.logout, color: Colors.red, size: 20),
-                            SizedBox(width: 8),
-                            Text('Sair da conta'),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
+                  _buildSettingsMenu(authProvider),
                 ],
               ),
             ),
@@ -1234,6 +1238,175 @@ class _HomeScreenState extends State<HomeScreen> {
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => const AuthScreen()),
+    );
+  }
+
+  // ✅ Widget do Menu de Configurações (estilo imagem de referência)
+  Widget _buildSettingsMenu(AuthProvider authProvider) {
+    return PopupMenuButton<String>(
+      // ❌ REMOVA O 'icon' - use apenas 'child'
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+        ),
+        child: const Icon(
+          Icons.settings_outlined,
+          color: Color(0xFF0D9488),
+          size: 24,
+        ),
+      ),
+      offset: const Offset(0, 50),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      itemBuilder: (context) => [
+        // ✅ Título "GERAL"
+        const PopupMenuItem<String>(
+          enabled: false,
+          child: Padding(
+            padding: EdgeInsets.only(bottom: 8),
+            child: Text(
+              'GERAL',
+              style: TextStyle(
+                color: Colors.grey,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ),
+
+        // ✅ Minha conta
+        PopupMenuItem<String>(
+          value: 'minha_conta',
+          padding: EdgeInsets.zero,
+          child: _buildMenuItem(
+            icon: Icons.person_outline,
+            title: 'Minha conta',
+          ),
+        ),
+
+        // ✅ Notificações
+        PopupMenuItem<String>(
+          value: 'notificacoes',
+          padding: EdgeInsets.zero,
+          child: _buildMenuItem(
+            icon: Icons.notifications_outlined,
+            title: 'Notificações',
+          ),
+        ),
+
+        // ✅ Privacidade
+        PopupMenuItem<String>(
+          value: 'privacidade',
+          padding: EdgeInsets.zero,
+          child: _buildMenuItem(
+            icon: Icons.shield_outlined,
+            title: 'Privacidade',
+          ),
+        ),
+
+        // ✅ Aparência
+        PopupMenuItem<String>(
+          value: 'aparência',
+          padding: EdgeInsets.zero,
+          child: _buildMenuItem(
+            icon: Icons.palette_outlined,
+            title: 'Aparência',
+          ),
+        ),
+
+        // ✅ Ajuda e suporte
+        PopupMenuItem<String>(
+          value: 'ajuda',
+          padding: EdgeInsets.zero,
+          child: _buildMenuItem(icon: Icons.help_outline, title: 'Ajuda'),
+        ),
+
+        // ✅ Sobre o app
+        PopupMenuItem<String>(
+          value: 'sobre',
+          padding: EdgeInsets.zero,
+          child: _buildMenuItem(icon: Icons.info_outline, title: 'Sobre o app'),
+        ),
+
+        // ✅ Linha divisória
+        const PopupMenuDivider(height: 1),
+
+        // ✅ Sair da conta (vermelho)
+        PopupMenuItem<String>(
+          value: 'logout',
+          padding: EdgeInsets.zero,
+          child: _buildMenuItem(
+            icon: Icons.logout,
+            title: 'Sair da conta',
+            isDanger: true,
+          ),
+        ),
+      ],
+      onSelected: (value) {
+        if (value == 'logout') {
+          // ✅ Abre o dialog de confirmação antes de sair
+          showDialog<bool>(
+            context: context,
+            builder: (_) => const LogoutConfirmationDialog(),
+          ).then((confirmou) {
+            if (confirmou == true && context.mounted) {
+              _logout(context, authProvider);
+            }
+          });
+        } else {
+          print('Clicou em: $value');
+        }
+      },
+    );
+  }
+
+  // ✅ Widget auxiliar para itens do menu
+  Widget _buildMenuItem({
+    required IconData icon,
+    required String title,
+    bool isDanger = false,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      child: Row(
+        children: [
+          // ✅ Ícone em círculo teal claro
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: isDanger
+                  ? const Color(0xFFFEF2F2)
+                  : const Color(0xFFECFDF5),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              icon,
+              color: isDanger
+                  ? const Color(0xFFEF4444)
+                  : const Color(0xFF0D9488),
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          // ✅ Texto
+          Expanded(
+            child: Text(
+              title,
+              style: TextStyle(
+                color: isDanger
+                    ? const Color(0xFFEF4444)
+                    : const Color(0xFF1E293B),
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          // ✅ Seta
+          Icon(Icons.chevron_right, color: Colors.grey.shade400, size: 20),
+        ],
+      ),
     );
   }
 
@@ -1353,15 +1526,19 @@ class _HomeScreenState extends State<HomeScreen> {
 
           if (atualizou == true) {
             final auth = Provider.of<AuthProvider>(context, listen: false);
-            final petProvider = Provider.of<PetProvider>(context,listen: false,);
+            final petProvider = Provider.of<PetProvider>(
+              context,
+              listen: false,
+            );
 
-              final reminderProvider = Provider.of<ReminderProvider>(context,listen: false,);
+            final reminderProvider = Provider.of<ReminderProvider>(
+              context,
+              listen: false,
+            );
 
-              await petProvider.carregarPets(auth.currentUser!.id);
+            await petProvider.carregarPets(auth.currentUser!.id);
 
-              await reminderProvider.carregarOcorrenciasDosPets(
-                petProvider.pets,
-              );
+            await reminderProvider.carregarOcorrenciasDosPets(petProvider.pets);
           }
         },
         borderRadius: BorderRadius.circular(16),
@@ -1703,12 +1880,10 @@ Widget _buildReminderWithTimeline({
                 child: GestureDetector(
                   onTap: () async {
                     print('Clicou no lembrete: $title');
-                    final atualizou =
-                      await Navigator.push<bool>(
+                    final atualizou = await Navigator.push<bool>(
                       context,
                       MaterialPageRoute(
-                        builder: (_) =>
-                            ReminderDetailsScreen(
+                        builder: (_) => ReminderDetailsScreen(
                           idLembrete: idLembrete,
                           idPet: idPet,
                         ),
@@ -1716,8 +1891,7 @@ Widget _buildReminderWithTimeline({
                     );
 
                     if (atualizou == true) {
-                      final petProvider =
-                          Provider.of<PetProvider>(
+                      final petProvider = Provider.of<PetProvider>(
                         context,
                         listen: false,
                       );
@@ -1999,4 +2173,228 @@ String calcularIdade(String? dataNascimento) {
   }
 
   return partesIdade.join(' e ');
+}
+
+// ✅ Widget de botão com hover (para as setas do carrossel)
+class _HoverButton extends StatefulWidget {
+  final Widget child;
+  final VoidCallback onTap;
+  final Color hoverColor;
+
+  const _HoverButton({
+    required this.child,
+    required this.onTap,
+    required this.hoverColor,
+  });
+
+  @override
+  State<_HoverButton> createState() => _HoverButtonState();
+}
+
+class _HoverButtonState extends State<_HoverButton> {
+  bool _isHovering = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _isHovering = true),
+      onExit: (_) => setState(() => _isHovering = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          transform: Matrix4.identity()..scale(_isHovering ? 1.05 : 1.0),
+          child: widget.child,
+        ),
+      ),
+    );
+  }
+}
+
+// ✅ Dialog de Confirmação de Logout (Padronizado com DeletePetDialog)
+class LogoutConfirmationDialog extends StatelessWidget {
+  const LogoutConfirmationDialog({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 450),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // ✅ Header
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFFEF2F2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.logout,
+                      color: Color(0xFFEF4444),
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Text(
+                      'Sair da conta',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF1E293B),
+                      ),
+                    ),
+                  ),
+                  MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFFEF2F2),
+                          borderRadius: BorderRadius.all(Radius.circular(8)),
+                        ),
+                        child: const Icon(
+                          Icons.close,
+                          color: Color(0xFFEF4444),
+                          size: 18,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+
+              // ✅ Mensagem de Aviso
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEF2F2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(
+                      Icons.warning_amber_rounded,
+                      color: Color(0xFFEF4444),
+                      size: 24,
+                    ),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Tem certeza que deseja sair?',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF1E293B),
+                            ),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            'Você precisará fazer login novamente para acessar sua conta.',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Color(0xFF64748B),
+                              height: 1.4,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // ✅ Botões
+              Row(
+                children: [
+                  Expanded(
+                    child: MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFF64748B),
+                          side: const BorderSide(color: Color(0xFFE2E8F0)),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          'Cancelar',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFEF4444),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.logout, size: 20),
+                            SizedBox(width: 8),
+                            Text(
+                              'Sair',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }

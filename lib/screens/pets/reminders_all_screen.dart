@@ -8,18 +8,13 @@ import '../../providers/reminder_provider.dart';
 import 'reminder_details_screen.dart';
 
 class AllRemindersScreen extends StatefulWidget {
-  const AllRemindersScreen({
-    super.key,
-  });
+  const AllRemindersScreen({super.key});
 
   @override
-  State<AllRemindersScreen> createState() =>
-      _AllRemindersScreenState();
+  State<AllRemindersScreen> createState() => _AllRemindersScreenState();
 }
 
-class _AllRemindersScreenState
-    extends State<AllRemindersScreen> {
-
+class _AllRemindersScreenState extends State<AllRemindersScreen> {
   @override
   void initState() {
     super.initState();
@@ -30,25 +25,17 @@ class _AllRemindersScreenState
   }
 
   Future<void> _carregarLembretes() async {
-    final petProvider = Provider.of<PetProvider>(
+    final petProvider = Provider.of<PetProvider>(context, listen: false);
+
+    final reminderProvider = Provider.of<ReminderProvider>(
       context,
       listen: false,
     );
 
-    final reminderProvider =
-        Provider.of<ReminderProvider>(
-      context,
-      listen: false,
-    );
-
-    await reminderProvider.carregarOcorrenciasDosPets(
-      petProvider.pets,
-    );
+    await reminderProvider.carregarOcorrenciasDosPets(petProvider.pets);
   }
 
-  DateTime? _getProximaData(
-    ReminderOccurrenceModel lembrete,
-  ) {
+  DateTime? _getProximaData(ReminderOccurrenceModel lembrete) {
     final agora = DateTime.now();
 
     if (lembrete.dataHora.isAfter(agora)) {
@@ -109,14 +96,9 @@ class _AllRemindersScreenState
     }
   }
 
-  String _buscarNomePet(
-    int idPet,
-    List<PetModel> pets,
-  ) {
+  String _buscarNomePet(int idPet, List<PetModel> pets) {
     try {
-      final pet = pets.firstWhere(
-        (pet) => pet.idPet == idPet,
-      );
+      final pet = pets.firstWhere((pet) => pet.idPet == idPet);
 
       return pet.nome;
     } catch (_) {
@@ -126,18 +108,14 @@ class _AllRemindersScreenState
 
   @override
   Widget build(BuildContext context) {
-    final reminderProvider =
-        Provider.of<ReminderProvider>(context);
+    final reminderProvider = Provider.of<ReminderProvider>(context);
 
-    final petProvider =
-        Provider.of<PetProvider>(context);
+    final petProvider = Provider.of<PetProvider>(context);
 
     final lembretes =
         reminderProvider.ocorrencias
             .where(
-              (lembrete) =>
-                  lembrete.ativo &&
-                  _getProximaData(lembrete) != null,
+              (lembrete) => lembrete.ativo && _getProximaData(lembrete) != null,
             )
             .toList()
           ..sort((a, b) {
@@ -150,57 +128,114 @@ class _AllRemindersScreenState
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
 
-      appBar: AppBar(
-        title: const Text(
-          'Todos os lembretes',
-        ),
-        backgroundColor: const Color(0xFF0D9488),
-        foregroundColor: Colors.white,
-      ),
-
-      body: reminderProvider.isLoading
-          ? const Center(
-              child: CircularProgressIndicator(),
-            )
-          : lembretes.isEmpty
-              ? const Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.notifications_none,
-                        size: 60,
-                        color: Colors.grey,
-                      ),
-                      SizedBox(height: 16),
-                      Text(
-                        'Nenhum lembrete próximo.',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.grey,
+      // ✅ HEADER COM GRADIENTE (padronizado com ReminderDetailsScreen)
+      body: CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(
+            child: Container(
+              height: 100,
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFF0D9488), Color(0xFF14B8A6)],
+                ),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: SafeArea(
+                bottom: false,
+                child: Row(
+                  children: [
+                    // ✅ Botão Voltar com hover
+                    _HoverButton(
+                      onTap: () => Navigator.pop(context),
+                      hoverColor: Colors.white.withOpacity(0.3),
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(100),
+                          border: Border.all(
+                            color: Colors.white.withOpacity(0.3),
+                            width: 1,
+                          ),
+                        ),
+                        child: const Icon(
+                          Icons.arrow_back,
+                          color: Colors.white,
+                          size: 22,
                         ),
                       ),
-                    ],
-                  ),
-                )
-              : RefreshIndicator(
-                  onRefresh: _carregarLembretes,
-                  child: ListView.separated(
+                    ),
+                    const SizedBox(width: 24),
+                    // Título
+                    const Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'Todos os lembretes',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(height: 4),
+                        Text(
+                          'Gerencie todos os seus lembretes',
+                          style: TextStyle(color: Colors.white, fontSize: 14),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          // ✅ CONTEÚDO (lista de lembretes)
+          SliverToBoxAdapter(
+            child: reminderProvider.isLoading
+                ? const Padding(
+                    padding: EdgeInsets.all(40),
+                    child: Center(child: CircularProgressIndicator()),
+                  )
+                : lembretes.isEmpty
+                ? const Padding(
+                    padding: EdgeInsets.all(40),
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.notifications_none,
+                            size: 60,
+                            color: Colors.grey,
+                          ),
+                          SizedBox(height: 16),
+                          Text(
+                            'Nenhum lembrete próximo.',
+                            style: TextStyle(fontSize: 16, color: Colors.grey),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                : ListView.separated(
+                    shrinkWrap: true, // ✅ Necessário dentro do CustomScrollView
+                    physics:
+                        const NeverScrollableScrollPhysics(), // ✅ Desabilita scroll interno
                     padding: const EdgeInsets.all(20),
                     itemCount: lembretes.length,
-                    separatorBuilder: (_, __) =>
-                        const SizedBox(height: 12),
+                    separatorBuilder: (_, __) => const SizedBox(height: 12),
                     itemBuilder: (context, index) {
-                      final lembrete =
-                          lembretes[index];
+                      final lembrete = lembretes[index];
 
-                      final proximaData =
-                          _getProximaData(
-                        lembrete,
-                      )!;
+                      final proximaData = _getProximaData(lembrete)!;
 
-                      final nomePet =
-                          _buscarNomePet(
+                      final nomePet = _buscarNomePet(
                         lembrete.idPet,
                         petProvider.pets,
                       );
@@ -212,7 +247,9 @@ class _AllRemindersScreenState
                       );
                     },
                   ),
-                ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -229,12 +266,10 @@ class _AllRemindersScreenState
         borderRadius: BorderRadius.circular(16),
 
         onTap: () async {
-          final atualizou =
-              await Navigator.push<bool>(
+          final atualizou = await Navigator.push<bool>(
             context,
             MaterialPageRoute(
-              builder: (_) =>
-                  ReminderDetailsScreen(
+              builder: (_) => ReminderDetailsScreen(
                 idLembrete: lembrete.id,
                 idPet: lembrete.idPet,
               ),
@@ -251,28 +286,24 @@ class _AllRemindersScreenState
 
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: Colors.grey.shade200,
-            ),
+            border: Border.all(color: Colors.grey.shade200),
           ),
 
           child: Row(
             children: [
               Container(
-                width: 50,
-                height: 50,
+                width: 75,
+                height: 75,
 
                 decoration: BoxDecoration(
                   color: const Color(0xFFECFDF5),
-                  borderRadius:
-                      BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(14),
                 ),
 
                 child: Icon(
-                  _getIconByType(
-                    lembrete.tipo,
-                  ),
+                  _getIconByType(lembrete.tipo),
                   color: const Color(0xFF0D9488),
+                  size: 28,
                 ),
               ),
 
@@ -280,8 +311,7 @@ class _AllRemindersScreenState
 
               Expanded(
                 child: Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
 
                   children: [
                     Text(
@@ -309,11 +339,7 @@ class _AllRemindersScreenState
                       spacing: 8,
                       runSpacing: 6,
                       children: [
-                        _buildBadge(
-                          _formatarTipo(
-                            lembrete.tipo,
-                          ),
-                        ),
+                        _buildBadge(_formatarTipo(lembrete.tipo)),
 
                         Row(
                           mainAxisSize: MainAxisSize.min,
@@ -325,9 +351,7 @@ class _AllRemindersScreenState
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              _formatarData(
-                                proximaData,
-                              ),
+                              _formatarData(proximaData),
                               style: const TextStyle(
                                 fontSize: 13,
                                 color: Colors.grey,
@@ -346,9 +370,7 @@ class _AllRemindersScreenState
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              _formatarHora(
-                                proximaData,
-                              ),
+                              _formatarHora(proximaData),
                               style: const TextStyle(
                                 fontSize: 13,
                                 color: Colors.grey,
@@ -364,7 +386,8 @@ class _AllRemindersScreenState
 
               const Icon(
                 Icons.chevron_right,
-                color: Colors.grey,
+                color: Color(0xFF0D9488), // ✅ Mudado de Colors.grey para teal
+                size: 24,
               ),
             ],
           ),
@@ -375,10 +398,7 @@ class _AllRemindersScreenState
 
   Widget _buildBadge(String texto) {
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 10,
-        vertical: 4,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: const Color(0xFFECFDF5),
         borderRadius: BorderRadius.circular(12),
@@ -389,6 +409,43 @@ class _AllRemindersScreenState
           color: Color(0xFF059669),
           fontSize: 12,
           fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+}
+
+// ✅ Widget para botão com hover (padronizado com PetDetailsScreen)
+class _HoverButton extends StatefulWidget {
+  final Widget child;
+  final VoidCallback onTap;
+  final Color hoverColor;
+
+  const _HoverButton({
+    required this.child,
+    required this.onTap,
+    required this.hoverColor,
+  });
+
+  @override
+  State<_HoverButton> createState() => _HoverButtonState();
+}
+
+class _HoverButtonState extends State<_HoverButton> {
+  bool _isHovering = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _isHovering = true),
+      onExit: (_) => setState(() => _isHovering = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          transform: Matrix4.identity()..scale(_isHovering ? 1.05 : 1.0),
+          child: widget.child,
         ),
       ),
     );
