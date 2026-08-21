@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/auth/register_form_widget.dart';
-import '../../widgets/auth/google_login_web_button.dart';
+import '../../widgets/auth/google_login_button.dart';
 import '../../widgets/common/custom_snackbar.dart';
 import '../home/home_screen.dart';
 
