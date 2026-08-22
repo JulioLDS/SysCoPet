@@ -13,7 +13,7 @@ class ReminderProvider extends ChangeNotifier {
   List<ReminderOccurrenceModel> ocorrencias = [];
   //Usada pela petDetails
   List<ReminderOccurrenceModel> ocorrenciasPet = [];
-  
+
   bool isLoading = false;
 
   //Carregar lembretes de um pet
@@ -24,9 +24,7 @@ class ReminderProvider extends ChangeNotifier {
     try {
       lembretes = await _service.buscarLembretesDoPet(idPet);
 
-      lembretes.sort(
-        (a, b) => a.dataHora.compareTo(b.dataHora),
-      );
+      lembretes.sort((a, b) => a.dataHora.compareTo(b.dataHora));
     } finally {
       isLoading = false;
       notifyListeners();
@@ -34,16 +32,14 @@ class ReminderProvider extends ChangeNotifier {
   }
 
   //buscar lembrete por id
-  Future<ReminderModel?> buscarLembretePorId(int idPet, int idLembrete,) async {
-    return await _service.buscarLembretePorId(
-      idPet,
-      idLembrete,
-    );
+  Future<ReminderModel?> buscarLembretePorId(int idPet, int idLembrete) async {
+    return await _service.buscarLembretePorId(idPet, idLembrete);
   }
 
   //Carregar lembretes DOS pets
-  Future<void> carregarLembretesDosPets(
-    List<PetModel> pets,) async {isLoading = true;notifyListeners();
+  Future<void> carregarLembretesDosPets(List<PetModel> pets) async {
+    isLoading = true;
+    notifyListeners();
 
     try {
       final todosLembretes = <ReminderModel>[];
@@ -51,26 +47,19 @@ class ReminderProvider extends ChangeNotifier {
       for (final pet in pets) {
         if (pet.idPet == null) continue;
 
-        final lembretesDoPet =
-            await _service.buscarLembretesDoPet(
-          pet.idPet!,
-        );
+        final lembretesDoPet = await _service.buscarLembretesDoPet(pet.idPet!);
 
         todosLembretes.addAll(lembretesDoPet);
       }
 
-      lembretes = todosLembretes
-          .where((lembrete) => lembrete.ativo)
-          .toList();
+      lembretes = todosLembretes.where((lembrete) => lembrete.ativo).toList();
 
-      lembretes.sort(
-        (a, b) => a.dataHora.compareTo(b.dataHora),
-      );
+      lembretes.sort((a, b) => a.dataHora.compareTo(b.dataHora));
     } finally {
       isLoading = false;
       notifyListeners();
     }
-}
+  }
 
   //Carregar ocorrencia do pet
   Future<void> carregarOcorrenciasDoPet(int idPet) async {
@@ -82,9 +71,7 @@ class ReminderProvider extends ChangeNotifier {
 
       ocorrenciasPet = ocorrenciasPet.where((o) => o.ativo).toList();
 
-      ocorrenciasPet.sort(
-        (a, b) => a.dataHora.compareTo(b.dataHora),
-      );
+      ocorrenciasPet.sort((a, b) => a.dataHora.compareTo(b.dataHora));
     } catch (e) {
       print('Erro ao carregar ocorrências do pet: $e');
 
@@ -96,7 +83,7 @@ class ReminderProvider extends ChangeNotifier {
   }
 
   //Carregar ocorrencia DE TODOS os pets
-  Future<void> carregarOcorrenciasDosPets(List<PetModel> pets,) async {
+  Future<void> carregarOcorrenciasDosPets(List<PetModel> pets) async {
     isLoading = true;
     notifyListeners();
 
@@ -108,26 +95,23 @@ class ReminderProvider extends ChangeNotifier {
 
         if (pet.idPet == null) continue;
 
-        final ocorrenciasDoPet =
-            await _service.buscarOcorrencias(pet.idPet!,);
+        final ocorrenciasDoPet = await _service.buscarOcorrencias(pet.idPet!);
 
-        print("Pet ${pet.idPet}: ${ocorrenciasDoPet.length} ocorrências",);
+        print("Pet ${pet.idPet}: ${ocorrenciasDoPet.length} ocorrências");
 
         todasOcorrencias.addAll(ocorrenciasDoPet);
       }
-      
+
       print("TOTAL: ${todasOcorrencias.length}");
 
       ocorrencias = todasOcorrencias
           .where((ocorrencia) => ocorrencia.ativo)
           .toList();
 
-      ocorrencias.sort(
-        (a, b) => a.dataHora.compareTo(b.dataHora),
-      );
+      ocorrencias.sort((a, b) => a.dataHora.compareTo(b.dataHora));
     } catch (e) {
       print('Erro ao carregar ocorrências dos pets: $e');
-      
+
       ocorrencias = [];
     } finally {
       isLoading = false;
@@ -153,14 +137,11 @@ class ReminderProvider extends ChangeNotifier {
   }
 
   //Atualizar lembrete
-  Future<String?> atualizarLembrete(ReminderModel lembrete,) async {
+  Future<String?> atualizarLembrete(ReminderModel lembrete) async {
     isLoading = true;
     notifyListeners();
 
-    final erro =
-        await _service.atualizarLembrete(
-      lembrete,
-    );
+    final erro = await _service.atualizarLembrete(lembrete);
 
     if (erro != null) {
       isLoading = false;
@@ -168,14 +149,13 @@ class ReminderProvider extends ChangeNotifier {
       return erro;
     }
 
-    await carregarOcorrenciasDoPet(
-      lembrete.idPet,
-    );
+    await carregarOcorrenciasDoPet(lembrete.idPet);
 
     return null;
   }
 
   //Deletar lembrete
+  // Deletar lembrete
   Future<String?> deletarLembrete(int idLembrete, int idPet) async {
     isLoading = true;
     notifyListeners();
@@ -183,7 +163,15 @@ class ReminderProvider extends ChangeNotifier {
     final erro = await _service.deletarLembrete(idLembrete);
 
     if (erro == null) {
+      // ✅ 1. Remove o lembrete das listas localmente para atualização INSTANTÂNEA em todas as telas
+      ocorrenciasPet.removeWhere((ocorrencia) => ocorrencia.id == idLembrete);
+      ocorrencias.removeWhere((ocorrencia) => ocorrencia.id == idLembrete);
+
+      // ✅ 2. Recarrega do backend para garantir consistência dos dados
       await carregarOcorrenciasDoPet(idPet);
+
+      // ✅ 3. Notifica todas as telas (Home, PetDetails, etc.) para redesenhar
+      notifyListeners();
     } else {
       isLoading = false;
       notifyListeners();
