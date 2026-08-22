@@ -54,6 +54,13 @@ class _ReminderDetailsScreenState extends State<ReminderDetailsScreen> {
       color: const Color(0xFF047857),
     );
 
+    // ✅ ADICIONE ESTAS LINHAS:
+    if (mounted) {
+      setState(() {
+        _houveAlteracao = true;
+      });
+    }
+
     Navigator.pop(context, true);
   }
 
