@@ -4,6 +4,7 @@ import 'package:syscopet/models/pet_model.dart';
 import '../models/reminder_model.dart';
 import '../services/reminder_service.dart';
 import '../models/reminder_ocurrence_model.dart';
+import '../services/notification_service.dart';
 
 class ReminderProvider extends ChangeNotifier {
   final ReminderService _service = ReminderService();
@@ -125,6 +126,25 @@ class ReminderProvider extends ChangeNotifier {
     notifyListeners();
 
     final erro = await _service.criarLembrete(lembrete);
+
+     if (erro == null) {
+      // ID local pra notificação
+      final idNotificacao =
+          NotificationService.gerarIdNotificacao(lembrete);
+
+      // Agenda a notificação
+      await NotificationService.agendarNotificacao(
+        id: idNotificacao,
+        titulo: lembrete.titulo,
+        descricao: lembrete.descricao,
+        dataHora: lembrete.dataHora,
+      );
+
+      await carregarLembretesDoPet(lembrete.idPet);
+    } else {
+      isLoading = false;
+      notifyListeners();
+    }
 
     if (erro != null) {
       isLoading = false;
