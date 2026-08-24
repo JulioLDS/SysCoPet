@@ -253,9 +253,7 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
     }
   }
 
-  DateTime? _getProximaData(
-    ReminderOccurrenceModel lembrete,
-  ) {
+  DateTime? _getProximaData(ReminderOccurrenceModel lembrete) {
     final agora = DateTime.now();
 
     // A data original ainda não aconteceu
@@ -561,7 +559,7 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
                                 (ocorrencia) =>
                                     ocorrencia.idPet == _currentPet.idPet &&
                                     ocorrencia.ativo &&
-                                    _getProximaData(ocorrencia) !=null,
+                                    _getProximaData(ocorrencia) != null,
                               )
                               .toList()
                             ..sort((a, b) {
@@ -645,9 +643,8 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
                             ...List.generate(lembretesParaMostrar.length, (
                               index,
                             ) {
-
                               final lembrete = lembretesParaMostrar[index];
-                              final proximaData =_getProximaData(lembrete)!;
+                              final proximaData = _getProximaData(lembrete)!;
 
                               return Padding(
                                 padding: EdgeInsets.only(
@@ -670,12 +667,8 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
                                   badgeTextColor: _getColorByType(
                                     lembrete.tipo,
                                   ),
-                                  date: _formatarDataLembrete(
-                                    proximaData,
-                                  ),
-                                  time: _formatarHoraLembrete(
-                                    proximaData,
-                                  ),
+                                  date: _formatarDataLembrete(proximaData),
+                                  time: _formatarHoraLembrete(proximaData),
                                   isFirst: index == 0,
                                 ),
                               );
@@ -687,10 +680,10 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
                                 cursor: SystemMouseCursors.click,
                                 child: GestureDetector(
                                   onTap: () async {
-                                    await Navigator.push(context,
+                                    await Navigator.push(
+                                      context,
                                       MaterialPageRoute(
-                                        builder: (_) =>
-                                            PetRemindersScreen(
+                                        builder: (_) => PetRemindersScreen(
                                           pet: _currentPet,
                                         ),
                                       ),
@@ -761,6 +754,16 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
                             'Lembrete criado com sucesso!',
                             color: const Color(0xFF047857),
                           );
+                          setState(() {
+                            _houveAlteracao =
+                                true; // Isso fará a PetDetailsScreen devolver 'true' para a Home
+                          });
+
+                          // Recarrega os lembretes nesta própria tela
+                          await Provider.of<ReminderProvider>(
+                            context,
+                            listen: false,
+                          ).carregarOcorrenciasDoPet(_currentPet.idPet!);
                         }
                       },
                       child: CustomPaint(
@@ -1518,11 +1521,10 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
                     onTap: () async {
                       print('Clicou no lembrete: $title');
 
-                      final atualizou =
-                          await Navigator.push<bool>(context,
+                      final atualizou = await Navigator.push<bool>(
+                        context,
                         MaterialPageRoute(
-                          builder: (_) =>
-                              ReminderDetailsScreen(
+                          builder: (_) => ReminderDetailsScreen(
                             idLembrete: idLembrete,
                             idPet: idPet,
                           ),
@@ -1533,9 +1535,7 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
                         await Provider.of<ReminderProvider>(
                           context,
                           listen: false,
-                        ).carregarOcorrenciasDoPet(
-                          _currentPet.idPet!,
-                        );
+                        ).carregarOcorrenciasDoPet(_currentPet.idPet!);
                       }
                     },
                     child: AnimatedContainer(
