@@ -4,11 +4,13 @@ import 'package:provider/provider.dart';
 import 'package:syscopet/providers/pet_provider.dart';
 import 'package:syscopet/screens/pets/pet_reminders_screen.dart';
 import 'package:syscopet/screens/pets/reminder_details_screen.dart';
+import 'package:syscopet/screens/vaccines/pet_vaccine_calendar_screen.dart';
 import '../../models/reminder_ocurrence_model.dart';
 import 'package:syscopet/screens/home/home_screen.dart';
 import 'package:syscopet/widgets/common/health_alert_banner.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/reminder_provider.dart';
+import '../../providers/vaccine_provider.dart';
 import '../../models/reminder_model.dart';
 import '../../models/pet_model.dart';
 import '../../widgets/common/custom_snackbar.dart';
@@ -35,11 +37,29 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
     _currentPet = widget.pet;
 
     //carregar lembretes
-    Future.microtask(() {
-      Provider.of<ReminderProvider>(
+    Future.microtask(() async {
+      final reminderProvider=
+       Provider.of<ReminderProvider>(
+          context,
+          listen: false,
+        );
+
+      final vaccineProvider =
+          Provider.of<VaccineProvider>(
         context,
         listen: false,
-      ).carregarOcorrenciasDoPet(_currentPet.idPet!);
+      );
+
+      await Future.wait([
+        reminderProvider
+            .carregarOcorrenciasDoPet(
+          _currentPet.idPet!,
+        ),
+
+        vaccineProvider.carregarCalendario(
+          _currentPet.idPet!,
+        ),
+      ]);
     });
   }
 
@@ -461,6 +481,45 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
                     badgeColor: const Color(0xFF10B981),
                     backgroundImage:
                         'assets/images/cuidados1.png', // ✅ CAMINHO COMPLETO OBRIGATÓRIO
+                  ),
+                  Row(
+                    mainAxisAlignment:
+                        MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Calendário de Vacinas',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+
+                      TextButton(
+                        onPressed: () async {
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  PetVaccineCalendarScreen(
+                                pet: _currentPet,
+                              ),
+                            ),
+                          );
+
+                          if (!mounted) return;
+
+                          await Provider.of<VaccineProvider>(
+                            context,
+                            listen: false,
+                          ).carregarCalendario(
+                            _currentPet.idPet!,
+                          );
+                        },
+                        child: const Text(
+                          'Ver calendário',
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 12),
                   _buildCareItem(
