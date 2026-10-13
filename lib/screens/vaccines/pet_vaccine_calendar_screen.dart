@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:printing/printing.dart';
 
 import '../../models/pet_model.dart';
 import '../../models/vaccine_calendar_model.dart';
 import '../../providers/vaccine_provider.dart';
+import '../../services/vaccine_pdf_service.dart';
 
 class PetVaccineCalendarScreen
     extends StatefulWidget {
@@ -35,6 +37,59 @@ class _PetVaccineCalendarScreenState
         widget.pet.idPet!,
       );
     });
+  }
+
+  //PDF provisorio
+  Future<void> _exportarPdf() async {
+    try {
+      final provider =
+          Provider.of<VaccineProvider>(
+        context,
+        listen: false,
+      );
+
+      if (provider.calendario.isEmpty) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Não há informações de vacinação para exportar.',
+            ),
+          ),
+        );
+
+        return;
+      }
+
+      final pdfBytes =
+          await VaccinePdfService
+              .gerarCarteiraVacinaPdf(
+        pet: widget.pet,
+        calendario: provider.calendario,
+      );
+
+      await Printing.sharePdf(
+        bytes: pdfBytes,
+        filename:
+            'carteira_vacinacao_${widget.pet.nome}.pdf',
+      );
+    } catch (e) {
+      print(
+        'Erro ao gerar PDF: $e',
+      );
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Não foi possível gerar a carteira de vacinação.',
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   String _formatarData(DateTime data) {
@@ -272,6 +327,19 @@ class _PetVaccineCalendarScreenState
         backgroundColor:
             const Color(0xFF0D9488),
         foregroundColor: Colors.white,
+
+        //botao pdf
+        actions: [
+          IconButton(
+            onPressed: _exportarPdf,
+            tooltip: 'Exportar PDF',
+            icon: const Icon(
+              Icons.picture_as_pdf,
+            ),
+          ),
+
+          const SizedBox(width: 8),
+        ],
       ),
 
       body: provider.isLoading
