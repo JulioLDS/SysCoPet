@@ -6,62 +6,34 @@ import '../models/chatbot_response_model.dart';
 
 class ChatbotService {
   // TROCAR QUANDO SUBIR API <---------------------------------
-  static const String baseUrl = 'https://URL-DO-CHATBOT.onrender.com';
-
-  //Temporario para teste de interface (pode apagar depois)
-  Future<ChatbotResponseModel> enviarMensagem(
-    String mensagem, ) async {
-
-    await Future.delayed(
-      const Duration(
-        seconds: 1,
-      ),
-    );
-
-    return ChatbotResponseModel(
-      contextoSuficiente: true,
-
-      resposta:
-          'Esta é uma resposta temporária do assistente 4UPet para testar a interface.',
-
-      fontes: const [
-        'Fonte de teste',
-      ],
-    );
-  }
+  static const String baseUrl = 'https://chatbot-4upet.onrender.com';
 
   //Ativar quando subir api
-  /*Future<ChatbotResponseModel> enviarMensagem(
-    String mensagem,
-  ) async {
-    final url = Uri.parse('$baseUrl/chat',);
+  Future<ChatbotResponseModel> enviarMensagem(String mensagem) async {
+    final url = Uri.parse('$baseUrl/chat');
 
     print('POST chatbot: $url');
     print('Pergunta: $mensagem');
 
     final response = await http.post(
       url,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode({
-        'mensagem': mensagem,
-      }),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'mensagem': mensagem}),
     );
 
-    print('Status chatbot: ${response.statusCode}',);
-    print('Body chatbot: ${response.body}',);
+    print('Status chatbot: ${response.statusCode}');
+    print('Body chatbot: ${response.body}');
 
     if (response.statusCode != 200) {
-      throw Exception('Erro ao consultar chatbot',);
+      throw Exception('Erro ao consultar chatbot');
     }
 
     final decoded = jsonDecode(response.body);
 
     if (decoded is! Map<String, dynamic>) {
-      throw Exception('Resposta inválida do chatbot',);
+      throw Exception('Resposta inválida do chatbot');
     }
 
-    return ChatbotResponseModel.fromJson(decoded,);
-  }*/
+    return ChatbotResponseModel.fromJson(decoded);
+  }
 }

@@ -14,6 +14,7 @@ import '../auth/auth_screen.dart';
 import '../pets/pet_edit_dialog.dart';
 import '../pets/pet_details_screen.dart';
 import '../pets/my_pets_screen.dart'; // ✅ Adicione esta linha
+import 'package:syscopet/screens/chatbot/chatbot_bottom_sheet.dart';
 
 // ✅ Widget helper para hover
 class HoverBuilder extends StatefulWidget {
@@ -107,6 +108,7 @@ class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
   final ScrollController _petScrollController = ScrollController();
   int _currentPetIndex = 0;
+  bool _chatbotAberto = false;
 
   //Métodos pro lembrete (nao sei um lugar pra por)
   String _nomePetPorId(int idPet) {
@@ -313,7 +315,6 @@ class _HomeScreenState extends State<HomeScreen> {
     final lembretesParaMostrar = proximosLembretes.take(2).toList();
 
     return Scaffold(
-      
       backgroundColor: const Color(0xFFF8FAFC),
       body: Stack(
         children: [
@@ -841,24 +842,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                               Navigator.push(
                                                 context,
                                                 MaterialPageRoute(
-                                                  builder: (_) => const AllRemindersScreen(),
-                                                ),
-                                              );
-                                            },
-                                          ),
-
-                                          // CHATBOT
-                                          _buildQuickActionCard(
-                                            title: 'Assistente 4UPet',
-                                            subtitle: 'Tire dúvidas sobre seu pet',
-                                            icon: Icons.smart_toy_outlined,
-                                            color: const Color(0xFFDBEAFE),
-                                            iconColor: const Color(0xFF2563EB),
-                                            onTap: () {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (_) => const ChatbotScreen(),
+                                                  builder: (_) =>
+                                                      const AllRemindersScreen(),
                                                 ),
                                               );
                                             },
@@ -1167,9 +1152,50 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ),
+          // ✅ OVERLAY ESCURO (para fechar ao clicar fora do chat)
+          if (_chatbotAberto)
+            Positioned.fill(
+              child: GestureDetector(
+                onTap: () => setState(() => _chatbotAberto = false),
+                child: Container(
+                  color: Colors.black.withOpacity(
+                    0.2,
+                  ), // Escurece levemente o fundo
+                ),
+              ),
+            ),
+
+          // ✅ PAINEL LATERAL DO CHATBOT (50% largura, 100% altura)
+          if (_chatbotAberto)
+            Positioned(
+              top: 0,
+              right: 0,
+              bottom: 0,
+              width:
+                  MediaQuery.of(context).size.width * 0.5, // ✅ Metade da tela
+              child: const ChatbotBottomSheet(),
+            ),
         ],
       ),
 
+      // ✅ FLOATING ACTION BUTTON DO CHATBOT
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          setState(() {
+            _chatbotAberto = !_chatbotAberto;
+          });
+        },
+        backgroundColor: const Color(0xFF0D9488),
+        elevation: 4,
+        child: Icon(
+          _chatbotAberto ? Icons.close : Icons.smart_toy_outlined,
+          color: Colors.white,
+          size: 28,
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+
+      // ... (mantenha todo o seu bottomNavigationBar como está)
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
           color: Colors.white,
@@ -1395,7 +1421,6 @@ class _HomeScreenState extends State<HomeScreen> {
       },
     );
   }
-  
 
   // ✅ Widget auxiliar para itens do menu
   Widget _buildMenuItem({
@@ -1746,6 +1771,20 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  void _abrirChatbotOverlay() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      isDismissible: true,
+      enableDrag: true,
+      constraints: BoxConstraints.expand(
+        height: MediaQuery.of(context).size.height,
+      ),
+      builder: (context) => const ChatbotBottomSheet(),
     );
   }
 }
