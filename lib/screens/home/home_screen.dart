@@ -7,6 +7,7 @@ import 'package:syscopet/providers/pet_provider.dart';
 import 'package:syscopet/providers/reminder_provider.dart';
 import 'package:syscopet/screens/pets/reminder_details_screen.dart';
 import 'package:syscopet/screens/pets/reminders_all_screen.dart';
+import 'package:syscopet/screens/chatbot/chatbot_screen.dart';
 import '../pets/pet_form_dialog.dart';
 import '../../providers/auth_provider.dart';
 import '../auth/auth_screen.dart';
@@ -312,6 +313,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final lembretesParaMostrar = proximosLembretes.take(2).toList();
 
     return Scaffold(
+      
       backgroundColor: const Color(0xFFF8FAFC),
       body: Stack(
         children: [
@@ -812,6 +814,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                             icon: Icons.vaccines,
                                             color: const Color(0xFFD1FAE5),
                                             iconColor: const Color(0xFF059669),
+                                            onTap: () {
+                                              // Depois podemos ligar à tela
+                                              // de vacinas.
+                                            },
                                           ),
                                           const SizedBox(width: 12),
                                           _buildQuickActionCard(
@@ -820,6 +826,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                             icon: Icons.calendar_month,
                                             color: const Color(0xFFE9D5FF),
                                             iconColor: const Color(0xFF9333EA),
+                                            onTap: () {
+                                              // Tela de consultas futuramente.
+                                            },
                                           ),
                                           const SizedBox(width: 12),
                                           _buildQuickActionCard(
@@ -828,6 +837,31 @@ class _HomeScreenState extends State<HomeScreen> {
                                             icon: Icons.notifications_active,
                                             color: const Color(0xFFFED7AA),
                                             iconColor: const Color(0xFFEA580C),
+                                            onTap: () {
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (_) => const AllRemindersScreen(),
+                                                ),
+                                              );
+                                            },
+                                          ),
+
+                                          // CHATBOT
+                                          _buildQuickActionCard(
+                                            title: 'Assistente 4UPet',
+                                            subtitle: 'Tire dúvidas sobre seu pet',
+                                            icon: Icons.smart_toy_outlined,
+                                            color: const Color(0xFFDBEAFE),
+                                            iconColor: const Color(0xFF2563EB),
+                                            onTap: () {
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (_) => const ChatbotScreen(),
+                                                ),
+                                              );
+                                            },
                                           ),
                                         ],
                                       ),
@@ -1361,6 +1395,7 @@ class _HomeScreenState extends State<HomeScreen> {
       },
     );
   }
+  
 
   // ✅ Widget auxiliar para itens do menu
   Widget _buildMenuItem({
@@ -1721,6 +1756,7 @@ Widget _buildQuickActionCard({
   required IconData icon,
   required Color color,
   required Color iconColor,
+  required VoidCallback onTap,
 }) {
   return Expanded(
     child: HoverBuilder(
@@ -1751,7 +1787,7 @@ Widget _buildQuickActionCard({
           child: Material(
             color: Colors.transparent,
             child: InkWell(
-              onTap: () {},
+              onTap: onTap,
               borderRadius: BorderRadius.circular(16),
               splashColor: iconColor.withOpacity(0.2),
               highlightColor: Colors.transparent,
