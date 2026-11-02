@@ -15,6 +15,11 @@ import '../pets/pet_edit_dialog.dart';
 import '../pets/pet_details_screen.dart';
 import '../pets/my_pets_screen.dart'; // ✅ Adicione esta linha
 import 'package:syscopet/screens/chatbot/chatbot_bottom_sheet.dart';
+import '../settings/account_screen.dart';
+import '../settings/notifications_screen.dart';
+import '../settings/privacy_screen.dart';
+import '../settings/help_screen.dart';
+import '../settings/about_screen.dart';
 
 // ✅ Widget helper para hover
 class HoverBuilder extends StatefulWidget {
@@ -1405,18 +1410,47 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ],
       onSelected: (value) {
-        if (value == 'logout') {
-          // ✅ Abre o dialog de confirmação antes de sair
-          showDialog<bool>(
-            context: context,
-            builder: (_) => const LogoutConfirmationDialog(),
-          ).then((confirmou) {
-            if (confirmou == true && context.mounted) {
-              _logout(context, authProvider);
-            }
-          });
-        } else {
-          print('Clicou em: $value');
+        switch (value) {
+          case 'minha_conta':
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const AccountScreen()),
+            );
+            break;
+          case 'notificacoes':
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+            );
+            break;
+          case 'privacidade':
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const PrivacyScreen()),
+            );
+            break;
+          case 'ajuda':
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const HelpScreen()),
+            );
+            break;
+          case 'sobre':
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const AboutScreen()),
+            );
+            break;
+          case 'logout':
+            showDialog<bool>(
+              context: context,
+              builder: (_) => const LogoutConfirmationDialog(),
+            ).then((confirmou) {
+              if (confirmou == true && context.mounted) {
+                _logout(context, authProvider);
+              }
+            });
+            break;
         }
       },
     );
