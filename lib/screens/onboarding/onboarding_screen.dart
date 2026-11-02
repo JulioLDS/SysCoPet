@@ -342,7 +342,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
       height: cardHeight,
       padding: EdgeInsets.all(20 * scaleFactor),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Colors.white.withOpacity(0.85),
         borderRadius: BorderRadius.circular(16 * scaleFactor),
         boxShadow: [
           BoxShadow(
@@ -414,6 +414,40 @@ class _OnboardingScreenState extends State<OnboardingScreen>
           ),
         ),
 
+        // Logo
+        Row(
+          children: [
+             Container(
+                margin: const EdgeInsets.only(left: 95, top: 55),
+                child: RotatedBox(
+                  quarterTurns: 1,
+                  child: Image.asset(
+                    'assets/icons/Logo_PI.png',
+                    height: 200,
+                  ),
+                ),
+              ),
+            ],
+        ),
+
+        const SizedBox(height: 50),
+
+        // Pets
+        Positioned(
+          bottom: -190,
+          left: 0,
+          right: 0,
+          child: IgnorePointer(
+            child: Image.asset(
+              'assets/images/pets.png',
+              width: double.infinity,
+              fit: BoxFit.fitWidth,
+            ),
+          ),
+        ),
+                
+        const SizedBox(height: 30),
+
         SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: FadeTransition(
@@ -421,24 +455,14 @@ class _OnboardingScreenState extends State<OnboardingScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 40),
-
-                // Logo
-                Center(
-                  child: Transform.rotate(
-                    angle: pi / 2,
-                    child: Image.asset('assets/icons/Logo_PI.png', height: 200),
-                  ),
-                ),
-
-                const SizedBox(height: 30),
+                const SizedBox(height: 115),
 
                 // Título
                 const Text.rich(
                   TextSpan(
                     text: 'Mais cuidado,\n',
                     style: TextStyle(
-                      fontSize: 32,
+                      fontSize: 30,
                       fontWeight: FontWeight.w800,
                       color: Color(0xFF1E293B),
                       height: 1.2,
@@ -447,7 +471,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                       TextSpan(
                         text: 'mais amor,\n',
                         style: TextStyle(
-                          fontSize: 32,
+                          fontSize: 30,
                           fontWeight: FontWeight.w800,
                           color: Color(0xFF0D9488),
                         ),
@@ -455,7 +479,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                       TextSpan(
                         text: 'mais conexão.',
                         style: TextStyle(
-                          fontSize: 32,
+                          fontSize: 30,
                           fontWeight: FontWeight.w800,
                           color: Color(0xFF1E293B),
                         ),
@@ -474,15 +498,6 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                     color: Colors.grey,
                     height: 1.5,
                   ),
-                ),
-
-                const SizedBox(height: 30),
-
-                // Pets
-                Image.asset(
-                  'assets/images/pets.png',
-                  width: double.infinity,
-                  fit: BoxFit.contain,
                 ),
 
                 const SizedBox(height: 30),
@@ -539,7 +554,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                       Navigator.pushReplacementNamed(context, '/auth');
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF0D9488),
+                      backgroundColor: const Color(0xFF0D9488).withOpacity(0.85),
                       foregroundColor: Colors.white,
                       elevation: 6,
                       shadowColor: const Color(0xFF0D9488).withOpacity(0.4),

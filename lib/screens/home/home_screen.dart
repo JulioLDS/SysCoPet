@@ -7,12 +7,14 @@ import 'package:syscopet/providers/pet_provider.dart';
 import 'package:syscopet/providers/reminder_provider.dart';
 import 'package:syscopet/screens/pets/reminder_details_screen.dart';
 import 'package:syscopet/screens/pets/reminders_all_screen.dart';
+import 'package:syscopet/screens/chatbot/chatbot_screen.dart';
 import '../pets/pet_form_dialog.dart';
 import '../../providers/auth_provider.dart';
 import '../auth/auth_screen.dart';
 import '../pets/pet_edit_dialog.dart';
 import '../pets/pet_details_screen.dart';
 import '../pets/my_pets_screen.dart'; // ✅ Adicione esta linha
+import 'package:syscopet/screens/chatbot/chatbot_bottom_sheet.dart';
 
 // ✅ Widget helper para hover
 class HoverBuilder extends StatefulWidget {
@@ -106,6 +108,7 @@ class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
   final ScrollController _petScrollController = ScrollController();
   int _currentPetIndex = 0;
+  bool _chatbotAberto = false;
 
   //Métodos pro lembrete (nao sei um lugar pra por)
   String _nomePetPorId(int idPet) {
@@ -812,6 +815,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                             icon: Icons.vaccines,
                                             color: const Color(0xFFD1FAE5),
                                             iconColor: const Color(0xFF059669),
+                                            onTap: () {
+                                              // Depois podemos ligar à tela
+                                              // de vacinas.
+                                            },
                                           ),
                                           const SizedBox(width: 12),
                                           _buildQuickActionCard(
@@ -820,6 +827,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                             icon: Icons.calendar_month,
                                             color: const Color(0xFFE9D5FF),
                                             iconColor: const Color(0xFF9333EA),
+                                            onTap: () {
+                                              // Tela de consultas futuramente.
+                                            },
                                           ),
                                           const SizedBox(width: 12),
                                           _buildQuickActionCard(
@@ -828,6 +838,15 @@ class _HomeScreenState extends State<HomeScreen> {
                                             icon: Icons.notifications_active,
                                             color: const Color(0xFFFED7AA),
                                             iconColor: const Color(0xFFEA580C),
+                                            onTap: () {
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (_) =>
+                                                      const AllRemindersScreen(),
+                                                ),
+                                              );
+                                            },
                                           ),
                                         ],
                                       ),
@@ -1133,9 +1152,50 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ),
+          // ✅ OVERLAY ESCURO (para fechar ao clicar fora do chat)
+          if (_chatbotAberto)
+            Positioned.fill(
+              child: GestureDetector(
+                onTap: () => setState(() => _chatbotAberto = false),
+                child: Container(
+                  color: Colors.black.withOpacity(
+                    0.2,
+                  ), // Escurece levemente o fundo
+                ),
+              ),
+            ),
+
+          // ✅ PAINEL LATERAL DO CHATBOT (50% largura, 100% altura)
+          if (_chatbotAberto)
+            Positioned(
+              top: 0,
+              right: 0,
+              bottom: 0,
+              width:
+                  MediaQuery.of(context).size.width * 0.5, // ✅ Metade da tela
+              child: const ChatbotBottomSheet(),
+            ),
         ],
       ),
 
+      // ✅ FLOATING ACTION BUTTON DO CHATBOT
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          setState(() {
+            _chatbotAberto = !_chatbotAberto;
+          });
+        },
+        backgroundColor: const Color(0xFF0D9488),
+        elevation: 4,
+        child: Icon(
+          _chatbotAberto ? Icons.close : Icons.smart_toy_outlined,
+          color: Colors.white,
+          size: 28,
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+
+      // ... (mantenha todo o seu bottomNavigationBar como está)
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
           color: Colors.white,
@@ -1713,6 +1773,20 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
+
+  void _abrirChatbotOverlay() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      isDismissible: true,
+      enableDrag: true,
+      constraints: BoxConstraints.expand(
+        height: MediaQuery.of(context).size.height,
+      ),
+      builder: (context) => const ChatbotBottomSheet(),
+    );
+  }
 }
 
 Widget _buildQuickActionCard({
@@ -1721,6 +1795,7 @@ Widget _buildQuickActionCard({
   required IconData icon,
   required Color color,
   required Color iconColor,
+  required VoidCallback onTap,
 }) {
   return Expanded(
     child: HoverBuilder(
@@ -1751,7 +1826,7 @@ Widget _buildQuickActionCard({
           child: Material(
             color: Colors.transparent,
             child: InkWell(
-              onTap: () {},
+              onTap: onTap,
               borderRadius: BorderRadius.circular(16),
               splashColor: iconColor.withOpacity(0.2),
               highlightColor: Colors.transparent,
