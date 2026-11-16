@@ -1,22 +1,23 @@
 #!/bin/bash
-
-# Sai do script se qualquer comando falhar
 set -e
 
-# Define a versão estável do Flutter que vamos usar
-FLUTTER_VERSION="3.24.0"  # Você pode mudar para a versão que usa localmente
+echo "🔧 Preparando ambiente Flutter..."
 
-echo "Baixando Flutter $FLUTTER_VERSION..."
+# O Netlify guarda em cache a pasta 'flutter' do build anterior.
+# Para evitar conflitos de git (como branches diferentes ou estados 'detached'),
+# a estratégia mais segura e rápida é remover a pasta antiga e baixar de novo.
+# Como usamos '--depth 1', esse download leva menos de 40 segundos.
+if [ -d "flutter" ]; then
+  echo "Limpando cache antigo do Flutter para garantir um build limpo..."
+  rm -rf flutter
+fi
 
-# Baixa o Flutter (versão estável)
+echo "Baixando Flutter (versão estável)..."
 git clone https://github.com/flutter/flutter.git -b stable --depth 1
 
-# Adiciona o Flutter ao PATH
 export PATH="$PATH:$PWD/flutter/bin"
 
 echo "Configurando Flutter..."
-
-# Roda o doctor e aceita as licenças
 flutter precache --web
 flutter config --no-analytics
 
@@ -26,4 +27,4 @@ flutter pub get
 echo "Buildando o Flutter Web..."
 flutter build web --release
 
-echo "Build concluído!"
+echo "Build concluído com sucesso!"
