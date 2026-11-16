@@ -21,7 +21,6 @@ import '../settings/privacy_screen.dart';
 import '../settings/help_screen.dart';
 import '../settings/about_screen.dart';
 import '../agenda/agenda_screen.dart';
-import '../profile/profile_screen.dart';
 
 // ✅ Widget helper para hover
 class HoverBuilder extends StatefulWidget {
@@ -325,8 +324,6 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: const Color(0xFFF8FAFC),
       body: _selectedIndex == 1
           ? const AgendaScreen()
-          : _selectedIndex == 2
-          ? const ProfileScreen()
           : Stack(
               children: [
                 // ✅ CONTEÚDO SCROLLÁVEL (por baixo)
@@ -1272,7 +1269,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
 
       // ✅ FLOATING ACTION BUTTON DO CHATBOT
-      floatingActionButton: _selectedIndex != 0
+      floatingActionButton: _selectedIndex == 1
           ? null
           : FloatingActionButton(
               onPressed: () {
@@ -1361,7 +1358,7 @@ class _HomeScreenState extends State<HomeScreen> {
               onTap: (index) {
                 setState(() {
                   _selectedIndex = index;
-                  if (index != 0) _chatbotAberto = false;
+                  if (index == 1) _chatbotAberto = false;
                 });
               },
               type: BottomNavigationBarType.fixed,
