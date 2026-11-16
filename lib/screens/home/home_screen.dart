@@ -13,8 +13,14 @@ import '../../providers/auth_provider.dart';
 import '../auth/auth_screen.dart';
 import '../pets/pet_edit_dialog.dart';
 import '../pets/pet_details_screen.dart';
-import '../pets/my_pets_screen.dart'; // ✅ Adicione esta linha
+import '../pets/my_pets_screen.dart';
 import 'package:syscopet/screens/chatbot/chatbot_bottom_sheet.dart';
+import '../settings/account_screen.dart';
+import '../settings/notifications_screen.dart';
+import '../settings/privacy_screen.dart';
+import '../settings/help_screen.dart';
+import '../settings/about_screen.dart';
+import '../agenda/agenda_screen.dart';
 
 // ✅ Widget helper para hover
 class HoverBuilder extends StatefulWidget {
@@ -316,574 +322,161 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
-      body: Stack(
-        children: [
-          // ✅ CONTEÚDO SCROLLÁVEL (por baixo)
-          Positioned.fill(
-            top: 78, // ✅ Altura do header
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // ✅ SEÇÃO 1: BOAS-VINDAS
-                  Container(
-                    width: double.infinity,
-                    child: Stack(
-                      clipBehavior: Clip.hardEdge,
+      body: _selectedIndex == 1
+          ? const AgendaScreen()
+          : Stack(
+              children: [
+                // ✅ CONTEÚDO SCROLLÁVEL (por baixo)
+                Positioned.fill(
+                  top: 78, // ✅ Altura do header
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // ✅ Background2 como fundo da seção
-                        Positioned.fill(
-                          child: Image.asset(
-                            'assets/images/background2.png',
-                            fit: BoxFit.cover,
-                            alignment: Alignment.topCenter,
-                            errorBuilder: (context, error, stackTrace) {
-                              return const SizedBox.shrink();
-                            },
-                          ),
-                        ),
-
-                        // ✅ Pets grandes
-                        Positioned(
-                          right: 300,
-                          bottom: -220,
-                          child: Image.asset(
-                            'assets/images/pets_lado_esquerdo.png',
-                            height: 600,
-                            fit: BoxFit.contain,
-                            errorBuilder: (context, error, stackTrace) {
-                              return const SizedBox.shrink();
-                            },
-                          ),
-                        ),
-
-                        // ✅ Conteúdo de texto com card suave
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(200, 50, 40, 60),
-                          child: Container(
-                            padding: const EdgeInsets.all(30),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.85),
-                              borderRadius: BorderRadius.circular(30),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.08),
-                                  blurRadius: 20,
-                                  offset: const Offset(0, 8),
+                        // ✅ SEÇÃO 1: BOAS-VINDAS
+                        Container(
+                          width: double.infinity,
+                          child: Stack(
+                            clipBehavior: Clip.hardEdge,
+                            children: [
+                              // ✅ Background2 como fundo da seção
+                              Positioned.fill(
+                                child: Image.asset(
+                                  'assets/images/background2.png',
+                                  fit: BoxFit.cover,
+                                  alignment: Alignment.topCenter,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return const SizedBox.shrink();
+                                  },
                                 ),
-                              ],
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text.rich(
-                                  TextSpan(
-                                    children: [
-                                      const TextSpan(
-                                        text:
-                                            'Que alegria ter\nvocê por aqui, ',
-                                        style: TextStyle(
-                                          fontSize: 32,
-                                          fontWeight: FontWeight.w800,
-                                          color: Color(0xFF1E293B),
-                                          height: 1.2,
-                                        ),
-                                      ),
-                                      TextSpan(
-                                        text:
-                                            '${user?.nome?.split(' ').first ?? 'Usuário'}!',
-                                        style: const TextStyle(
-                                          fontSize: 32,
-                                          fontWeight: FontWeight.w800,
-                                          color: Color(0xFF0D9488),
-                                          height: 1.2,
-                                        ),
+                              ),
+
+                              // ✅ Pets grandes
+                              Positioned(
+                                right: 300,
+                                bottom: -220,
+                                child: Image.asset(
+                                  'assets/images/pets_lado_esquerdo.png',
+                                  height: 600,
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return const SizedBox.shrink();
+                                  },
+                                ),
+                              ),
+
+                              // ✅ Conteúdo de texto com card suave
+                              Padding(
+                                padding: const EdgeInsets.fromLTRB(
+                                  200,
+                                  50,
+                                  40,
+                                  60,
+                                ),
+                                child: Container(
+                                  padding: const EdgeInsets.all(30),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.85),
+                                    borderRadius: BorderRadius.circular(30),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.08),
+                                        blurRadius: 20,
+                                        offset: const Offset(0, 8),
                                       ),
                                     ],
                                   ),
-                                ),
-                                const SizedBox(height: 12),
-                                Text(
-                                  'Aqui, cada detalhe é pensado para o\nbem-estar e a saúde do seu pet.',
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    color: Colors.grey[600],
-                                    height: 1.5,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // ✅ SEÇÃO 2: MEUS PETS + AÇÕES + LEMBRETES
-                  Container(
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: const Color(
-                        0xFFF8FAFC,
-                      ), // ✅ Volta a cor original do fundo
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(40),
-                        topRight: Radius.circular(40),
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.08),
-                          blurRadius: 20,
-                          offset: const Offset(0, -5),
-                        ),
-                      ],
-                    ),
-                    child: Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        // ✅ Conteúdo da seção
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(60, 30, 40, 20),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.pets,
-                                    color: const Color(0xFF0D9488),
-                                    size: 24,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  const Text(
-                                    'Meus Pets',
-                                    style: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
-                                      color: Color(0xFF1E293B),
-                                    ),
-                                  ),
-                                  const Spacer(),
-                                  TextButton(
-                                    onPressed: () async {
-                                      final atualizou =
-                                          await Navigator.push<bool>(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) =>
-                                                  const MeusPetsScreen(),
-                                            ),
-                                          );
-
-                                      if (atualizou == true && mounted) {
-                                        final auth = Provider.of<AuthProvider>(
-                                          context,
-                                          listen: false,
-                                        );
-                                        await Provider.of<PetProvider>(
-                                          context,
-                                          listen: false,
-                                        ).carregarPets(auth.currentUser!.id);
-                                      }
-                                    },
-                                    child: const Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Text(
-                                          'Ver todos',
-                                          style: TextStyle(
-                                            color: Color(0xFF14B8A6),
-                                            fontWeight: FontWeight.w600,
-                                            fontSize: 16,
-                                          ),
-                                        ),
-                                        SizedBox(width: 4),
-                                        Icon(
-                                          Icons.chevron_right,
-                                          color: Color(0xFF14B8A6),
-                                          size: 35,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 20),
-
-                              // ✅ CARROSSEL CENTRALIZADO COM GRADIENTES E SETAS CLICÁVEIS
-                              SizedBox(
-                                height: 280,
-                                child: Stack(
-                                  clipBehavior: Clip.none,
-                                  children: [
-                                    // 1. Container centralizado (lista + gradientes)
-                                    Center(
-                                      child: Container(
-                                        width: 1250,
-                                        child: Stack(
-                                          clipBehavior: Clip.none,
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text.rich(
+                                        TextSpan(
                                           children: [
-                                            // Lista de Pets
-                                            Positioned.fill(
-                                              child: ListView(
-                                                controller:
-                                                    _petScrollController,
-                                                scrollDirection:
-                                                    Axis.horizontal,
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                      vertical: 20,
-                                                      horizontal: 15,
-                                                    ),
-                                                children: [
-                                                  _buildAddPetCard(),
-                                                  const SizedBox(width: 15),
-                                                  ...petProvider.pets.map(
-                                                    (pet) => Padding(
-                                                      padding:
-                                                          const EdgeInsets.only(
-                                                            right: 15,
-                                                          ),
-                                                      child: _buildPetCard(
-                                                        pet: pet,
-                                                        age: calcularIdade(
-                                                          pet.dataNascimento,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ],
+                                            const TextSpan(
+                                              text:
+                                                  'Que alegria ter\nvocê por aqui, ',
+                                              style: TextStyle(
+                                                fontSize: 32,
+                                                fontWeight: FontWeight.w800,
+                                                color: Color(0xFF1E293B),
+                                                height: 1.2,
                                               ),
                                             ),
-
-                                            // 2. Gradiente Esquerdo
-                                            Positioned(
-                                              left: -30,
-                                              top: 0,
-                                              bottom: 0,
-                                              width: 80,
-                                              child: IgnorePointer(
-                                                child: Container(
-                                                  decoration: BoxDecoration(
-                                                    gradient: LinearGradient(
-                                                      begin:
-                                                          Alignment.centerLeft,
-                                                      end:
-                                                          Alignment.centerRight,
-                                                      colors: [
-                                                        const Color(0xFFF8FAFC),
-                                                        const Color(
-                                                          0xFFF8FAFC,
-                                                        ).withOpacity(0.0),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-
-                                            // 3. Gradiente Direito
-                                            Positioned(
-                                              right: 0,
-                                              top: 0,
-                                              bottom: 0,
-                                              width: 80,
-                                              child: IgnorePointer(
-                                                child: Container(
-                                                  decoration: BoxDecoration(
-                                                    gradient: LinearGradient(
-                                                      begin:
-                                                          Alignment.centerRight,
-                                                      end: Alignment.centerLeft,
-                                                      colors: [
-                                                        const Color(0xFFF8FAFC),
-                                                        const Color(
-                                                          0xFFF8FAFC,
-                                                        ).withOpacity(0.0),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                ),
+                                            TextSpan(
+                                              text:
+                                                  '${user?.nome?.split(' ').first ?? 'Usuário'}!',
+                                              style: const TextStyle(
+                                                fontSize: 32,
+                                                fontWeight: FontWeight.w800,
+                                                color: Color(0xFF0D9488),
+                                                height: 1.2,
                                               ),
                                             ),
                                           ],
                                         ),
                                       ),
-                                    ),
-
-                                    // 4. Seta Esquerda (só aparece se houver pets e scroll)
-                                    if (petProvider.pets.isNotEmpty &&
-                                        _petScrollController.hasClients &&
-                                        _petScrollController.offset > 10)
-                                      Positioned(
-                                        left: 0,
-                                        top: 0,
-                                        bottom: 0,
-                                        child: Center(
-                                          child: _HoverButton(
-                                            onTap: () {
-                                              if (!_petScrollController
-                                                  .hasClients)
-                                                return;
-                                              final newOffset =
-                                                  (_petScrollController.offset -
-                                                          350)
-                                                      .clamp(
-                                                        0.0,
-                                                        _petScrollController
-                                                            .position
-                                                            .maxScrollExtent,
-                                                      );
-                                              _petScrollController.animateTo(
-                                                newOffset,
-                                                duration: const Duration(
-                                                  milliseconds: 400,
-                                                ),
-                                                curve: Curves.easeInOut,
-                                              );
-                                            },
-                                            hoverColor: const Color(
-                                              0xFF0D9488,
-                                            ).withOpacity(0.15),
-                                            child: Container(
-                                              width: 56,
-                                              height: 56,
-                                              decoration: BoxDecoration(
-                                                color: const Color(0xFFECFDF5),
-                                                shape: BoxShape.circle,
-                                                border: Border.all(
-                                                  color: const Color(
-                                                    0xFF0D9488,
-                                                  ),
-                                                  width: 1.5,
-                                                ),
-                                              ),
-                                              child: const Icon(
-                                                Icons.chevron_left,
-                                                color: Color(0xFF0D9488),
-                                                size: 28,
-                                              ),
-                                            ),
-                                          ),
+                                      const SizedBox(height: 12),
+                                      Text(
+                                        'Aqui, cada detalhe é pensado para o\nbem-estar e a saúde do seu pet.',
+                                        style: TextStyle(
+                                          fontSize: 15,
+                                          color: Colors.grey[600],
+                                          height: 1.5,
                                         ),
                                       ),
-
-                                    // 5. Seta Direita (só aparece se houver pets e scroll)
-                                    if (petProvider.pets.isNotEmpty &&
-                                        _petScrollController.hasClients &&
-                                        (_petScrollController
-                                                    .position
-                                                    .maxScrollExtent -
-                                                _petScrollController.offset) >
-                                            10)
-                                      Positioned(
-                                        right: 0,
-                                        top: 0,
-                                        bottom: 0,
-                                        child: Center(
-                                          child: _HoverButton(
-                                            onTap: () {
-                                              if (!_petScrollController
-                                                  .hasClients)
-                                                return;
-                                              final newOffset =
-                                                  (_petScrollController.offset +
-                                                          350)
-                                                      .clamp(
-                                                        0.0,
-                                                        _petScrollController
-                                                            .position
-                                                            .maxScrollExtent,
-                                                      );
-                                              _petScrollController.animateTo(
-                                                newOffset,
-                                                duration: const Duration(
-                                                  milliseconds: 400,
-                                                ),
-                                                curve: Curves.easeInOut,
-                                              );
-                                            },
-                                            hoverColor: const Color(
-                                              0xFF0D9488,
-                                            ).withOpacity(0.15),
-                                            child: Container(
-                                              width: 56,
-                                              height: 56,
-                                              decoration: BoxDecoration(
-                                                color: const Color(0xFFECFDF5),
-                                                shape: BoxShape.circle,
-                                                border: Border.all(
-                                                  color: const Color(
-                                                    0xFF0D9488,
-                                                  ),
-                                                  width: 1.5,
-                                                ),
-                                              ),
-                                              child: const Icon(
-                                                Icons.chevron_right,
-                                                color: Color(0xFF0D9488),
-                                                size: 28,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
                               ),
-                              const SizedBox(height: 30),
+                            ],
+                          ),
+                        ),
 
-                              // ✅ SEÇÃO AÇÕES RÁPIDAS - OPÇÃO 2
-                              Container(
-                                padding: const EdgeInsets.all(20),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(20),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.03),
-                                      blurRadius: 10,
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ],
-                                ),
-                                child: Row(
-                                  children: [
-                                    // ✅ Título à esquerda
-                                    Expanded(
-                                      flex: 1,
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Row(
-                                            children: [
-                                              Icon(
-                                                Icons.bolt,
-                                                color: const Color(0xFF14B8A6),
-                                                size: 28,
-                                              ),
-                                              const SizedBox(width: 8),
-                                              const Text(
-                                                'Ações rápidas',
-                                                style: TextStyle(
-                                                  fontSize: 20,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Color(0xFF1E293B),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          const SizedBox(height: 8),
-                                          // ✅ Texto com padding left de 10
-                                          Padding(
-                                            padding: const EdgeInsets.only(
-                                              left: 15,
-                                            ),
-                                            child: Text(
-                                              'Acesso fácil ao que\nimporta para o seu pet',
-                                              style: TextStyle(
-                                                fontSize: 13,
-                                                color: Colors.grey[600],
-                                                height: 1.4,
-                                              ),
-                                            ),
-                                          ),
-                                          const SizedBox(height: 12),
-                                          Icon(
-                                            Icons.pets,
-                                            color: const Color(
-                                              0xFF14B8A6,
-                                            ).withOpacity(0.15),
-                                            size: 40,
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-
-                                    const SizedBox(width: 20),
-
-                                    // ✅ Cards à direita
-                                    Expanded(
-                                      flex: 3,
-                                      child: Row(
-                                        children: [
-                                          _buildQuickActionCard(
-                                            title: 'Vacinas',
-                                            subtitle: 'Ver e agendar vacinas',
-                                            icon: Icons.vaccines,
-                                            color: const Color(0xFFD1FAE5),
-                                            iconColor: const Color(0xFF059669),
-                                            onTap: () {
-                                              // Depois podemos ligar à tela
-                                              // de vacinas.
-                                            },
-                                          ),
-                                          const SizedBox(width: 12),
-                                          _buildQuickActionCard(
-                                            title: 'Consultas',
-                                            subtitle: 'Agendar visita',
-                                            icon: Icons.calendar_month,
-                                            color: const Color(0xFFE9D5FF),
-                                            iconColor: const Color(0xFF9333EA),
-                                            onTap: () {
-                                              // Tela de consultas futuramente.
-                                            },
-                                          ),
-                                          const SizedBox(width: 12),
-                                          _buildQuickActionCard(
-                                            title: 'Lembretes',
-                                            subtitle: 'Ver lembretes e alertas',
-                                            icon: Icons.notifications_active,
-                                            color: const Color(0xFFFED7AA),
-                                            iconColor: const Color(0xFFEA580C),
-                                            onTap: () {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (_) =>
-                                                      const AllRemindersScreen(),
-                                                ),
-                                              );
-                                            },
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                        // ✅ SEÇÃO 2: MEUS PETS + AÇÕES + LEMBRETES
+                        Container(
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: const Color(
+                              0xFFF8FAFC,
+                            ), // ✅ Volta a cor original do fundo
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(40),
+                              topRight: Radius.circular(40),
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.08),
+                                blurRadius: 20,
+                                offset: const Offset(0, -5),
                               ),
-                              const SizedBox(height: 30),
-
-                              // ✅ SEÇÃO PRÓXIMOS LEMBRETES - OPÇÃO 1 + TIMELINE
-                              Container(
-                                padding: const EdgeInsets.all(20),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(20),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.03),
-                                      blurRadius: 10,
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ],
+                            ],
+                          ),
+                          child: Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              // ✅ Conteúdo da seção
+                              Padding(
+                                padding: const EdgeInsets.fromLTRB(
+                                  60,
+                                  30,
+                                  40,
+                                  20,
                                 ),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    // ✅ Header
                                     Row(
                                       children: [
                                         Icon(
-                                          Icons.calendar_today_outlined,
-                                          color: const Color(0xFF14B8A6),
-                                          size: 28,
+                                          Icons.pets,
+                                          color: const Color(0xFF0D9488),
+                                          size: 24,
                                         ),
                                         const SizedBox(width: 8),
                                         const Text(
-                                          'Próximos lembretes',
+                                          'Meus Pets',
                                           style: TextStyle(
                                             fontSize: 20,
                                             fontWeight: FontWeight.bold,
@@ -891,308 +484,807 @@ class _HomeScreenState extends State<HomeScreen> {
                                           ),
                                         ),
                                         const Spacer(),
-                                        Icon(
-                                          Icons.pets,
-                                          color: const Color(
-                                            0xFF14B8A6,
-                                          ).withOpacity(0.15),
-                                          size: 32,
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Padding(
-                                      padding: const EdgeInsets.only(left: 36),
-                                      child: Text(
-                                        'Fique por dentro dos próximos cuidados do seu pet.',
-                                        style: TextStyle(
-                                          fontSize: 13,
-                                          color: Colors.grey[600],
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 20),
+                                        TextButton(
+                                          onPressed: () async {
+                                            final atualizou =
+                                                await Navigator.push<bool>(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        const MeusPetsScreen(),
+                                                  ),
+                                                );
 
-                                    // ✅ Lista de lembretes com timeline
-                                    if (reminderProvider.isLoading)
-                                      const Padding(
-                                        padding: EdgeInsets.symmetric(
-                                          vertical: 24,
-                                        ),
-                                        child: Center(
-                                          child: CircularProgressIndicator(),
-                                        ),
-                                      )
-                                    else if (lembretesParaMostrar.isEmpty)
-                                      Container(
-                                        width: double.infinity,
-                                        padding: const EdgeInsets.all(20),
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xFFF8FAFC),
-                                          borderRadius: BorderRadius.circular(
-                                            14,
-                                          ),
-                                          border: Border.all(
-                                            color: Colors.grey.shade200,
-                                          ),
-                                        ),
-                                        child: Row(
-                                          children: [
-                                            Icon(
-                                              Icons.notifications_none,
-                                              color: Colors.grey.shade500,
-                                            ),
-                                            const SizedBox(width: 12),
-                                            Expanded(
-                                              child: Text(
-                                                'Nenhum lembrete próximo encontrado.',
-                                                style: TextStyle(
-                                                  color: Colors.grey.shade600,
-                                                  fontSize: 14,
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      )
-                                    else
-                                      ...List.generate(
-                                        lembretesParaMostrar.length,
-                                        (index) {
-                                          final lembrete =
-                                              lembretesParaMostrar[index];
-
-                                          final proximaData = _getProximaData(
-                                            lembrete,
-                                          )!;
-
-                                          return Padding(
-                                            padding: EdgeInsets.only(
-                                              bottom:
-                                                  index ==
-                                                      lembretesParaMostrar
-                                                              .length -
-                                                          1
-                                                  ? 0
-                                                  : 16,
-                                            ),
-                                            child: _buildReminderWithTimeline(
-                                              idLembrete: lembrete.id,
-                                              idPet: lembrete.idPet,
-                                              icon: _iconePorTipo(
-                                                lembrete.tipo,
-                                              ),
-                                              iconBg: _corFundoPorTipo(
-                                                lembrete.tipo,
-                                              ),
-                                              iconColor: _corPorTipo(
-                                                lembrete.tipo,
-                                              ),
-                                              title: lembrete.titulo,
-                                              pet: _nomePetPorId(
-                                                lembrete.idPet,
-                                              ),
-                                              badge: _formatarTipo(
-                                                lembrete.tipo,
-                                              ),
-                                              badgeColor: _corFundoPorTipo(
-                                                lembrete.tipo,
-                                              ),
-                                              badgeTextColor: _corPorTipo(
-                                                lembrete.tipo,
-                                              ),
-                                              date: _formatarDataLembrete(
-                                                proximaData,
-                                              ),
-                                              time: _formatarHoraLembrete(
-                                                proximaData,
-                                              ),
-                                              isFirst: index == 0,
-                                            ),
-                                          );
-                                        },
-                                      ),
-                                    const SizedBox(height: 16),
-
-                                    Container(
-                                      width: double.infinity,
-                                      height: 50, // ✅ Altura fixa maior
-                                      margin: const EdgeInsets.only(top: 8),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFFECFDF5),
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: Material(
-                                        color: Colors.transparent,
-                                        child: InkWell(
-                                          onTap: () {
-                                            print('Ver todos os lembretes');
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (_) =>
-                                                    const AllRemindersScreen(),
-                                              ),
-                                            );
+                                            if (atualizou == true && mounted) {
+                                              final auth =
+                                                  Provider.of<AuthProvider>(
+                                                    context,
+                                                    listen: false,
+                                                  );
+                                              await Provider.of<PetProvider>(
+                                                context,
+                                                listen: false,
+                                              ).carregarPets(
+                                                auth.currentUser!.id,
+                                              );
+                                            }
                                           },
-                                          borderRadius: BorderRadius.circular(
-                                            12,
-                                          ),
-                                          splashColor: const Color(
-                                            0xFF0D9488,
-                                          ).withOpacity(0.1),
-                                          child: Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
+                                          child: const Row(
+                                            mainAxisSize: MainAxisSize.min,
                                             children: [
-                                              Icon(
-                                                Icons.list_alt_outlined,
-                                                color: const Color(0xFF0D9488),
-                                                size: 20,
-                                              ),
-                                              const SizedBox(width: 8),
-                                              const Text(
-                                                'Ver todos os lembretes',
+                                              Text(
+                                                'Ver todos',
                                                 style: TextStyle(
-                                                  color: Color(0xFF0D9488),
+                                                  color: Color(0xFF14B8A6),
                                                   fontWeight: FontWeight.w600,
-                                                  fontSize: 14,
+                                                  fontSize: 16,
                                                 ),
+                                              ),
+                                              SizedBox(width: 4),
+                                              Icon(
+                                                Icons.chevron_right,
+                                                color: Color(0xFF14B8A6),
+                                                size: 35,
                                               ),
                                             ],
                                           ),
                                         ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 20),
+
+                                    // ✅ CARROSSEL CENTRALIZADO COM GRADIENTES E SETAS CLICÁVEIS
+                                    SizedBox(
+                                      height: 280,
+                                      child: Stack(
+                                        clipBehavior: Clip.none,
+                                        children: [
+                                          // 1. Container centralizado (lista + gradientes)
+                                          Center(
+                                            child: Container(
+                                              width: 1250,
+                                              child: Stack(
+                                                clipBehavior: Clip.none,
+                                                children: [
+                                                  // Lista de Pets
+                                                  Positioned.fill(
+                                                    child: ListView(
+                                                      controller:
+                                                          _petScrollController,
+                                                      scrollDirection:
+                                                          Axis.horizontal,
+                                                      padding:
+                                                          const EdgeInsets.symmetric(
+                                                            vertical: 20,
+                                                            horizontal: 15,
+                                                          ),
+                                                      children: [
+                                                        _buildAddPetCard(),
+                                                        const SizedBox(
+                                                          width: 15,
+                                                        ),
+                                                        ...petProvider.pets.map(
+                                                          (pet) => Padding(
+                                                            padding:
+                                                                const EdgeInsets.only(
+                                                                  right: 15,
+                                                                ),
+                                                            child: _buildPetCard(
+                                                              pet: pet,
+                                                              age: calcularIdade(
+                                                                pet.dataNascimento,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+
+                                                  // 2. Gradiente Esquerdo
+                                                  Positioned(
+                                                    left: -30,
+                                                    top: 0,
+                                                    bottom: 0,
+                                                    width: 80,
+                                                    child: IgnorePointer(
+                                                      child: Container(
+                                                        decoration: BoxDecoration(
+                                                          gradient:
+                                                              LinearGradient(
+                                                                begin: Alignment
+                                                                    .centerLeft,
+                                                                end: Alignment
+                                                                    .centerRight,
+                                                                colors: [
+                                                                  const Color(
+                                                                    0xFFF8FAFC,
+                                                                  ),
+                                                                  const Color(
+                                                                    0xFFF8FAFC,
+                                                                  ).withOpacity(
+                                                                    0.0,
+                                                                  ),
+                                                                ],
+                                                              ),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+
+                                                  // 3. Gradiente Direito
+                                                  Positioned(
+                                                    right: 0,
+                                                    top: 0,
+                                                    bottom: 0,
+                                                    width: 80,
+                                                    child: IgnorePointer(
+                                                      child: Container(
+                                                        decoration: BoxDecoration(
+                                                          gradient:
+                                                              LinearGradient(
+                                                                begin: Alignment
+                                                                    .centerRight,
+                                                                end: Alignment
+                                                                    .centerLeft,
+                                                                colors: [
+                                                                  const Color(
+                                                                    0xFFF8FAFC,
+                                                                  ),
+                                                                  const Color(
+                                                                    0xFFF8FAFC,
+                                                                  ).withOpacity(
+                                                                    0.0,
+                                                                  ),
+                                                                ],
+                                                              ),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+
+                                          // 4. Seta Esquerda (só aparece se houver pets e scroll)
+                                          if (petProvider.pets.isNotEmpty &&
+                                              _petScrollController.hasClients &&
+                                              _petScrollController.offset > 10)
+                                            Positioned(
+                                              left: 0,
+                                              top: 0,
+                                              bottom: 0,
+                                              child: Center(
+                                                child: _HoverButton(
+                                                  onTap: () {
+                                                    if (!_petScrollController
+                                                        .hasClients)
+                                                      return;
+                                                    final newOffset =
+                                                        (_petScrollController
+                                                                    .offset -
+                                                                350)
+                                                            .clamp(
+                                                              0.0,
+                                                              _petScrollController
+                                                                  .position
+                                                                  .maxScrollExtent,
+                                                            );
+                                                    _petScrollController
+                                                        .animateTo(
+                                                          newOffset,
+                                                          duration:
+                                                              const Duration(
+                                                                milliseconds:
+                                                                    400,
+                                                              ),
+                                                          curve:
+                                                              Curves.easeInOut,
+                                                        );
+                                                  },
+                                                  hoverColor: const Color(
+                                                    0xFF0D9488,
+                                                  ).withOpacity(0.15),
+                                                  child: Container(
+                                                    width: 56,
+                                                    height: 56,
+                                                    decoration: BoxDecoration(
+                                                      color: const Color(
+                                                        0xFFECFDF5,
+                                                      ),
+                                                      shape: BoxShape.circle,
+                                                      border: Border.all(
+                                                        color: const Color(
+                                                          0xFF0D9488,
+                                                        ),
+                                                        width: 1.5,
+                                                      ),
+                                                    ),
+                                                    child: const Icon(
+                                                      Icons.chevron_left,
+                                                      color: Color(0xFF0D9488),
+                                                      size: 28,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+
+                                          // 5. Seta Direita (só aparece se houver pets e scroll)
+                                          if (petProvider.pets.isNotEmpty &&
+                                              _petScrollController.hasClients &&
+                                              (_petScrollController
+                                                          .position
+                                                          .maxScrollExtent -
+                                                      _petScrollController
+                                                          .offset) >
+                                                  10)
+                                            Positioned(
+                                              right: 0,
+                                              top: 0,
+                                              bottom: 0,
+                                              child: Center(
+                                                child: _HoverButton(
+                                                  onTap: () {
+                                                    if (!_petScrollController
+                                                        .hasClients)
+                                                      return;
+                                                    final newOffset =
+                                                        (_petScrollController
+                                                                    .offset +
+                                                                350)
+                                                            .clamp(
+                                                              0.0,
+                                                              _petScrollController
+                                                                  .position
+                                                                  .maxScrollExtent,
+                                                            );
+                                                    _petScrollController
+                                                        .animateTo(
+                                                          newOffset,
+                                                          duration:
+                                                              const Duration(
+                                                                milliseconds:
+                                                                    400,
+                                                              ),
+                                                          curve:
+                                                              Curves.easeInOut,
+                                                        );
+                                                  },
+                                                  hoverColor: const Color(
+                                                    0xFF0D9488,
+                                                  ).withOpacity(0.15),
+                                                  child: Container(
+                                                    width: 56,
+                                                    height: 56,
+                                                    decoration: BoxDecoration(
+                                                      color: const Color(
+                                                        0xFFECFDF5,
+                                                      ),
+                                                      shape: BoxShape.circle,
+                                                      border: Border.all(
+                                                        color: const Color(
+                                                          0xFF0D9488,
+                                                        ),
+                                                        width: 1.5,
+                                                      ),
+                                                    ),
+                                                    child: const Icon(
+                                                      Icons.chevron_right,
+                                                      color: Color(0xFF0D9488),
+                                                      size: 28,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                        ],
                                       ),
                                     ),
+                                    const SizedBox(height: 30),
+
+                                    // ✅ SEÇÃO AÇÕES RÁPIDAS - OPÇÃO 2
+                                    Container(
+                                      padding: const EdgeInsets.all(20),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(20),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black.withOpacity(
+                                              0.03,
+                                            ),
+                                            blurRadius: 10,
+                                            offset: const Offset(0, 2),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          // ✅ Título à esquerda
+                                          Expanded(
+                                            flex: 1,
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Row(
+                                                  children: [
+                                                    Icon(
+                                                      Icons.bolt,
+                                                      color: const Color(
+                                                        0xFF14B8A6,
+                                                      ),
+                                                      size: 28,
+                                                    ),
+                                                    const SizedBox(width: 8),
+                                                    const Text(
+                                                      'Ações rápidas',
+                                                      style: TextStyle(
+                                                        fontSize: 20,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        color: Color(
+                                                          0xFF1E293B,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                const SizedBox(height: 8),
+                                                // ✅ Texto com padding left de 10
+                                                Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                        left: 15,
+                                                      ),
+                                                  child: Text(
+                                                    'Acesso fácil ao que\nimporta para o seu pet',
+                                                    style: TextStyle(
+                                                      fontSize: 13,
+                                                      color: Colors.grey[600],
+                                                      height: 1.4,
+                                                    ),
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 12),
+                                                Icon(
+                                                  Icons.pets,
+                                                  color: const Color(
+                                                    0xFF14B8A6,
+                                                  ).withOpacity(0.15),
+                                                  size: 40,
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+
+                                          const SizedBox(width: 20),
+
+                                          // ✅ Cards à direita
+                                          Expanded(
+                                            flex: 3,
+                                            child: Row(
+                                              children: [
+                                                _buildQuickActionCard(
+                                                  title: 'Vacinas',
+                                                  subtitle:
+                                                      'Ver e agendar vacinas',
+                                                  icon: Icons.vaccines,
+                                                  color: const Color(
+                                                    0xFFD1FAE5,
+                                                  ),
+                                                  iconColor: const Color(
+                                                    0xFF059669,
+                                                  ),
+                                                  onTap: () {
+                                                    // Depois podemos ligar à tela
+                                                    // de vacinas.
+                                                  },
+                                                ),
+                                                const SizedBox(width: 12),
+                                                _buildQuickActionCard(
+                                                  title: 'Consultas',
+                                                  subtitle: 'Agendar visita',
+                                                  icon: Icons.calendar_month,
+                                                  color: const Color(
+                                                    0xFFE9D5FF,
+                                                  ),
+                                                  iconColor: const Color(
+                                                    0xFF9333EA,
+                                                  ),
+                                                  onTap: () {
+                                                    // Tela de consultas futuramente.
+                                                  },
+                                                ),
+                                                const SizedBox(width: 12),
+                                                _buildQuickActionCard(
+                                                  title: 'Lembretes',
+                                                  subtitle:
+                                                      'Ver lembretes e alertas',
+                                                  icon: Icons
+                                                      .notifications_active,
+                                                  color: const Color(
+                                                    0xFFFED7AA,
+                                                  ),
+                                                  iconColor: const Color(
+                                                    0xFFEA580C,
+                                                  ),
+                                                  onTap: () {
+                                                    Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                        builder: (_) =>
+                                                            const AllRemindersScreen(),
+                                                      ),
+                                                    );
+                                                  },
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(height: 30),
+
+                                    // ✅ SEÇÃO PRÓXIMOS LEMBRETES - OPÇÃO 1 + TIMELINE
+                                    Container(
+                                      padding: const EdgeInsets.all(20),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(20),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black.withOpacity(
+                                              0.03,
+                                            ),
+                                            blurRadius: 10,
+                                            offset: const Offset(0, 2),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          // ✅ Header
+                                          Row(
+                                            children: [
+                                              Icon(
+                                                Icons.calendar_today_outlined,
+                                                color: const Color(0xFF14B8A6),
+                                                size: 28,
+                                              ),
+                                              const SizedBox(width: 8),
+                                              const Text(
+                                                'Próximos lembretes',
+                                                style: TextStyle(
+                                                  fontSize: 20,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Color(0xFF1E293B),
+                                                ),
+                                              ),
+                                              const Spacer(),
+                                              Icon(
+                                                Icons.pets,
+                                                color: const Color(
+                                                  0xFF14B8A6,
+                                                ).withOpacity(0.15),
+                                                size: 32,
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                              left: 36,
+                                            ),
+                                            child: Text(
+                                              'Fique por dentro dos próximos cuidados do seu pet.',
+                                              style: TextStyle(
+                                                fontSize: 13,
+                                                color: Colors.grey[600],
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 20),
+
+                                          // ✅ Lista de lembretes com timeline
+                                          if (reminderProvider.isLoading)
+                                            const Padding(
+                                              padding: EdgeInsets.symmetric(
+                                                vertical: 24,
+                                              ),
+                                              child: Center(
+                                                child:
+                                                    CircularProgressIndicator(),
+                                              ),
+                                            )
+                                          else if (lembretesParaMostrar.isEmpty)
+                                            Container(
+                                              width: double.infinity,
+                                              padding: const EdgeInsets.all(20),
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xFFF8FAFC),
+                                                borderRadius:
+                                                    BorderRadius.circular(14),
+                                                border: Border.all(
+                                                  color: Colors.grey.shade200,
+                                                ),
+                                              ),
+                                              child: Row(
+                                                children: [
+                                                  Icon(
+                                                    Icons.notifications_none,
+                                                    color: Colors.grey.shade500,
+                                                  ),
+                                                  const SizedBox(width: 12),
+                                                  Expanded(
+                                                    child: Text(
+                                                      'Nenhum lembrete próximo encontrado.',
+                                                      style: TextStyle(
+                                                        color: Colors
+                                                            .grey
+                                                            .shade600,
+                                                        fontSize: 14,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            )
+                                          else
+                                            ...List.generate(
+                                              lembretesParaMostrar.length,
+                                              (index) {
+                                                final lembrete =
+                                                    lembretesParaMostrar[index];
+
+                                                final proximaData =
+                                                    _getProximaData(lembrete)!;
+
+                                                return Padding(
+                                                  padding: EdgeInsets.only(
+                                                    bottom:
+                                                        index ==
+                                                            lembretesParaMostrar
+                                                                    .length -
+                                                                1
+                                                        ? 0
+                                                        : 16,
+                                                  ),
+                                                  child: _buildReminderWithTimeline(
+                                                    idLembrete: lembrete.id,
+                                                    idPet: lembrete.idPet,
+                                                    icon: _iconePorTipo(
+                                                      lembrete.tipo,
+                                                    ),
+                                                    iconBg: _corFundoPorTipo(
+                                                      lembrete.tipo,
+                                                    ),
+                                                    iconColor: _corPorTipo(
+                                                      lembrete.tipo,
+                                                    ),
+                                                    title: lembrete.titulo,
+                                                    pet: _nomePetPorId(
+                                                      lembrete.idPet,
+                                                    ),
+                                                    badge: _formatarTipo(
+                                                      lembrete.tipo,
+                                                    ),
+                                                    badgeColor:
+                                                        _corFundoPorTipo(
+                                                          lembrete.tipo,
+                                                        ),
+                                                    badgeTextColor: _corPorTipo(
+                                                      lembrete.tipo,
+                                                    ),
+                                                    date: _formatarDataLembrete(
+                                                      proximaData,
+                                                    ),
+                                                    time: _formatarHoraLembrete(
+                                                      proximaData,
+                                                    ),
+                                                    isFirst: index == 0,
+                                                  ),
+                                                );
+                                              },
+                                            ),
+                                          const SizedBox(height: 16),
+
+                                          Container(
+                                            width: double.infinity,
+                                            height: 50, // ✅ Altura fixa maior
+                                            margin: const EdgeInsets.only(
+                                              top: 8,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFFECFDF5),
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
+                                            ),
+                                            child: Material(
+                                              color: Colors.transparent,
+                                              child: InkWell(
+                                                onTap: () {
+                                                  print(
+                                                    'Ver todos os lembretes',
+                                                  );
+                                                  Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                      builder: (_) =>
+                                                          const AllRemindersScreen(),
+                                                    ),
+                                                  );
+                                                },
+                                                borderRadius:
+                                                    BorderRadius.circular(12),
+                                                splashColor: const Color(
+                                                  0xFF0D9488,
+                                                ).withOpacity(0.1),
+                                                child: Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.center,
+                                                  children: [
+                                                    Icon(
+                                                      Icons.list_alt_outlined,
+                                                      color: const Color(
+                                                        0xFF0D9488,
+                                                      ),
+                                                      size: 20,
+                                                    ),
+                                                    const SizedBox(width: 8),
+                                                    const Text(
+                                                      'Ver todos os lembretes',
+                                                      style: TextStyle(
+                                                        color: Color(
+                                                          0xFF0D9488,
+                                                        ),
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                        fontSize: 14,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(height: 20),
                                   ],
                                 ),
                               ),
-                              const SizedBox(height: 20),
                             ],
                           ),
                         ),
                       ],
                     ),
                   ),
-                ],
-              ),
-            ),
-          ),
+                ),
 
-          // ✅ HEADER FIXO (por cima de tudo, com sombra)
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: Container(
-              decoration: BoxDecoration(
-                color: const Color(0xFF0D9488),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF0D9488).withOpacity(0.3),
-                    blurRadius: 20,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-              ),
-              padding: const EdgeInsets.only(
-                top: 15,
-                left: 20,
-                right: 20,
-                bottom: 15,
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 48,
-                    height: 48,
+                // ✅ HEADER FIXO (por cima de tudo, com sombra)
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  child: Container(
                     decoration: BoxDecoration(
                       color: const Color(0xFF0D9488),
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 2),
-                    ),
-                    child: Center(
-                      child: Text(
-                        user?.nome?.substring(0, 2).toUpperCase() ?? 'U',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          user?.nome ?? 'Usuário',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          user?.email ?? '',
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.8),
-                            fontSize: 12,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF0D9488).withOpacity(0.3),
+                          blurRadius: 20,
+                          offset: const Offset(0, 8),
                         ),
                       ],
                     ),
+                    padding: const EdgeInsets.only(
+                      top: 15,
+                      left: 20,
+                      right: 20,
+                      bottom: 15,
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF0D9488),
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 2),
+                          ),
+                          child: Center(
+                            child: Text(
+                              user?.nome?.substring(0, 2).toUpperCase() ?? 'U',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                user?.nome ?? 'Usuário',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                user?.email ?? '',
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.8),
+                                  fontSize: 12,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                        _buildSettingsMenu(authProvider),
+                      ],
+                    ),
                   ),
-                  _buildSettingsMenu(authProvider),
-                ],
-              ),
-            ),
-          ),
-          // ✅ OVERLAY ESCURO (para fechar ao clicar fora do chat)
-          if (_chatbotAberto)
-            Positioned.fill(
-              child: GestureDetector(
-                onTap: () => setState(() => _chatbotAberto = false),
-                child: Container(
-                  color: Colors.black.withOpacity(
-                    0.2,
-                  ), // Escurece levemente o fundo
                 ),
-              ),
-            ),
+                // ✅ OVERLAY ESCURO (para fechar ao clicar fora do chat)
+                if (_chatbotAberto)
+                  Positioned.fill(
+                    child: GestureDetector(
+                      onTap: () => setState(() => _chatbotAberto = false),
+                      child: Container(
+                        color: Colors.black.withOpacity(
+                          0.2,
+                        ), // Escurece levemente o fundo
+                      ),
+                    ),
+                  ),
 
-          // ✅ PAINEL LATERAL DO CHATBOT (50% largura, 100% altura)
-          if (_chatbotAberto)
-            Positioned(
-              top: 0,
-              right: 0,
-              bottom: 0,
-              width:
-                  MediaQuery.of(context).size.width * 0.5, // ✅ Metade da tela
-              child: const ChatbotBottomSheet(),
+                // ✅ PAINEL LATERAL DO CHATBOT (50% largura, 100% altura)
+                if (_chatbotAberto)
+                  Positioned(
+                    top: 0,
+                    right: 0,
+                    bottom: 0,
+                    width:
+                        MediaQuery.of(context).size.width *
+                        0.5, // ✅ Metade da tela
+                    child: const ChatbotBottomSheet(),
+                  ),
+              ],
             ),
-        ],
-      ),
 
       // ✅ FLOATING ACTION BUTTON DO CHATBOT
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          setState(() {
-            _chatbotAberto = !_chatbotAberto;
-          });
-        },
-        backgroundColor: const Color(0xFF0D9488),
-        elevation: 4,
-        child: Icon(
-          _chatbotAberto ? Icons.close : Icons.smart_toy_outlined,
-          color: Colors.white,
-          size: 28,
-        ),
-      ),
+      floatingActionButton: _selectedIndex == 1
+          ? null
+          : FloatingActionButton(
+              onPressed: () {
+                setState(() {
+                  _chatbotAberto = !_chatbotAberto;
+                });
+              },
+              backgroundColor: const Color(0xFF0D9488),
+              elevation: 4,
+              child: Icon(
+                _chatbotAberto ? Icons.close : Icons.smart_toy_outlined,
+                color: Colors.white,
+                size: 28,
+              ),
+            ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
 
       // ... (mantenha todo o seu bottomNavigationBar como está)
@@ -1263,7 +1355,12 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             BottomNavigationBar(
               currentIndex: _selectedIndex,
-              onTap: (index) => setState(() => _selectedIndex = index),
+              onTap: (index) {
+                setState(() {
+                  _selectedIndex = index;
+                  if (index == 1) _chatbotAberto = false;
+                });
+              },
               type: BottomNavigationBarType.fixed,
               selectedItemColor: const Color(0xFF0D9488),
               unselectedItemColor: Colors.grey,
@@ -1405,18 +1502,47 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ],
       onSelected: (value) {
-        if (value == 'logout') {
-          // ✅ Abre o dialog de confirmação antes de sair
-          showDialog<bool>(
-            context: context,
-            builder: (_) => const LogoutConfirmationDialog(),
-          ).then((confirmou) {
-            if (confirmou == true && context.mounted) {
-              _logout(context, authProvider);
-            }
-          });
-        } else {
-          print('Clicou em: $value');
+        switch (value) {
+          case 'minha_conta':
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const AccountScreen()),
+            );
+            break;
+          case 'notificacoes':
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+            );
+            break;
+          case 'privacidade':
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const PrivacyScreen()),
+            );
+            break;
+          case 'ajuda':
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const HelpScreen()),
+            );
+            break;
+          case 'sobre':
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const AboutScreen()),
+            );
+            break;
+          case 'logout':
+            showDialog<bool>(
+              context: context,
+              builder: (_) => const LogoutConfirmationDialog(),
+            ).then((confirmou) {
+              if (confirmou == true && context.mounted) {
+                _logout(context, authProvider);
+              }
+            });
+            break;
         }
       },
     );
