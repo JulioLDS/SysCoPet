@@ -4,9 +4,11 @@ import 'package:http/http.dart' as http;
 
 import '../models/chatbot_response_model.dart';
 
+import '../config/api_config.dart';
+
 class ChatbotService {
   // TROCAR QUANDO SUBIR API <---------------------------------
-  static const String baseUrl = 'https://chatbot-4upet.onrender.com';
+  final String baseUrl = ApiConfig.chatbotUrl;
 
   //Ativar quando subir api
   Future<ChatbotResponseModel> enviarMensagem(String mensagem) async {

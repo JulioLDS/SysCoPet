@@ -1,4 +1,5 @@
-import 'dart:io';
+import 'dart:typed_data'; // ✅ Uint8List (funciona em Web e mobile)
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
@@ -12,7 +13,8 @@ class AccountScreen extends StatefulWidget {
 }
 
 class _AccountScreenState extends State<AccountScreen> {
-  File? _imagemPerfil;
+  XFile? _imagemPerfil;
+  Uint8List? _bytesPerfil; // ✅ guarda os bytes da imagem (web-safe)
   final ImagePicker _picker = ImagePicker();
 
   Future<void> _selecionarFoto() async {
@@ -23,8 +25,13 @@ class _AccountScreenState extends State<AccountScreen> {
 
     if (imagem == null) return;
 
+    // ✅ lê os bytes uma única vez (funciona em Web e mobile)
+    final bytes = await imagem.readAsBytes();
+
+    if (!mounted) return;
     setState(() {
-      _imagemPerfil = File(imagem.path);
+      _imagemPerfil = imagem;
+      _bytesPerfil = bytes;
     });
   }
 
@@ -47,13 +54,11 @@ class _AccountScreenState extends State<AccountScreen> {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
-        // ✅ Ícone de editar removido daqui
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Center(
           child: SizedBox(
-            // ✅ Limita a largura dos widgets para 60% da tela
             width: MediaQuery.of(context).size.width * 0.6,
             child: Column(
               children: [
@@ -73,20 +78,16 @@ class _AccountScreenState extends State<AccountScreen> {
                   ),
                   child: Column(
                     children: [
-                      // Row com avatar, nome/email e botão editar
                       Row(
                         children: [
-                          // Avatar com badge de câmera
+                          // ✅ Avatar com badge de câmera (web-safe)
                           Stack(
                             alignment: Alignment.bottomRight,
                             children: [
                               CircleAvatar(
                                 radius: 50,
                                 backgroundColor: const Color(0xFFECFDF5),
-                                backgroundImage: _imagemPerfil != null
-                                    ? FileImage(_imagemPerfil!)
-                                    : null,
-                                child: _imagemPerfil == null
+                                child: _bytesPerfil == null
                                     ? Text(
                                         iniciais,
                                         style: const TextStyle(
@@ -95,9 +96,15 @@ class _AccountScreenState extends State<AccountScreen> {
                                           fontWeight: FontWeight.bold,
                                         ),
                                       )
-                                    : null,
+                                    : ClipOval(
+                                        child: Image.memory(
+                                          _bytesPerfil!,
+                                          width: 100,
+                                          height: 100,
+                                          fit: BoxFit.cover,
+                                        ),
+                                      ),
                               ),
-                              // Badge de câmera
                               Positioned(
                                 bottom: 0,
                                 right: 0,
@@ -121,7 +128,6 @@ class _AccountScreenState extends State<AccountScreen> {
                             ],
                           ),
                           const SizedBox(width: 16),
-                          // Nome e Email
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -159,14 +165,11 @@ class _AccountScreenState extends State<AccountScreen> {
                             ),
                           ),
                           const SizedBox(width: 12),
-                          // Botão Editar perfil
                           Material(
                             color: const Color(0xFFECFDF5),
                             borderRadius: BorderRadius.circular(24),
                             child: InkWell(
-                              onTap: () {
-                                // Ação de editar perfil
-                              },
+                              onTap: () {},
                               borderRadius: BorderRadius.circular(24),
                               child: Padding(
                                 padding: const EdgeInsets.symmetric(
@@ -219,7 +222,6 @@ class _AccountScreenState extends State<AccountScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Título da seção
                       Row(
                         children: [
                           Container(
@@ -248,11 +250,8 @@ class _AccountScreenState extends State<AccountScreen> {
                       const SizedBox(height: 20),
                       const Divider(height: 1),
                       const SizedBox(height: 20),
-
-                      // Duas colunas: Nome e Email
                       Row(
                         children: [
-                          // Coluna Nome
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -297,7 +296,6 @@ class _AccountScreenState extends State<AccountScreen> {
                             ),
                           ),
                           const SizedBox(width: 20),
-                          // Coluna Email
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -349,7 +347,7 @@ class _AccountScreenState extends State<AccountScreen> {
                 ),
                 const SizedBox(height: 20),
 
-                // ✅ CARD DE AÇÕES (Alterar foto e Alterar senha)
+                // ✅ CARD DE AÇÕES
                 Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
@@ -364,7 +362,6 @@ class _AccountScreenState extends State<AccountScreen> {
                   ),
                   child: Column(
                     children: [
-                      // Alterar foto
                       _buildActionTile(
                         icon: Icons.image_outlined,
                         title: 'Alterar foto',
@@ -372,14 +369,11 @@ class _AccountScreenState extends State<AccountScreen> {
                         onTap: _selecionarFoto,
                       ),
                       const Divider(height: 1, indent: 60),
-                      // Alterar senha
                       _buildActionTile(
                         icon: Icons.lock_outline,
                         title: 'Alterar senha',
                         subtitle: 'Mantenha sua conta ainda mais segura',
-                        onTap: () {
-                          // Navegar para tela de alterar senha
-                        },
+                        onTap: () {},
                       ),
                     ],
                   ),
@@ -392,7 +386,6 @@ class _AccountScreenState extends State<AccountScreen> {
     );
   }
 
-  // Widget auxiliar para as opções de ação
   Widget _buildActionTile({
     required IconData icon,
     required String title,
