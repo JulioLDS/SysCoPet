@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:syscopet/screens/pets/reminder_form_dialog.dart';
-
 import '../../models/reminder_model.dart';
 import '../../providers/reminder_provider.dart';
 import '../../widgets/common/custom_snackbar.dart';
