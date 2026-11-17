@@ -275,6 +275,10 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (MediaQuery.of(context).size.width < 600) {
+      return _buildMobileLayout();
+    }
+
     final especieFormatada = _formatarEspecie(_currentPet.especie);
     final idade = calcularIdade(_currentPet.dataNascimento);
 
@@ -907,6 +911,994 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildMobileLayout() {
+    final especieFormatada = _formatarEspecie(_currentPet.especie);
+    final idade = calcularIdade(_currentPet.dataNascimento);
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
+      body: CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 18),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color(0xFF0D9488),
+                    Color(0xFF14B8A6),
+                  ],
+                ),
+              ),
+              child: SafeArea(
+                bottom: false,
+                child: Row(
+                  children: [
+                    _HoverButton(
+                      onTap: () => Navigator.pop(
+                        context,
+                        _houveAlteracao ? true : null,
+                      ),
+                      hoverColor: Colors.white.withOpacity(0.3),
+                      child: Container(
+                        width: 42,
+                        height: 42,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.15),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: Colors.white.withOpacity(0.3),
+                          ),
+                        ),
+                        child: const Icon(
+                          Icons.arrow_back,
+                          color: Colors.white,
+                          size: 22,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _currentPet.nome,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 21,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '$especieFormatada • $idade',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.9),
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    _HoverButton(
+                      onTap: () async {
+                        final resultado =
+                            await showDialog<Map<String, String?>>(
+                          context: context,
+                          builder: (context) =>
+                              PetEditDialog(pet: _currentPet),
+                        );
+
+                        if (resultado != null && mounted) {
+                          if (resultado['erro'] != null) {
+                            CustomSnackbar.showError(
+                              context,
+                              resultado['erro']!,
+                            );
+                            return;
+                          }
+
+                          final petProvider = Provider.of<PetProvider>(
+                            context,
+                            listen: false,
+                          );
+
+                          await petProvider.carregarPets(
+                            _currentPet.idUsuario,
+                          );
+
+                          if (!mounted) return;
+
+                          final petAtualizado =
+                              petProvider.pets.firstWhere(
+                            (p) => p.idPet == _currentPet.idPet,
+                            orElse: () => _currentPet,
+                          );
+
+                          setState(() {
+                            _currentPet = petAtualizado;
+                            _houveAlteracao = true;
+                          });
+
+                          if (resultado['alerta'] != null &&
+                              resultado['alerta']!.isNotEmpty) {
+                            HealthAlertBanner.show(
+                              context,
+                              resultado['alerta']!,
+                            );
+                          }
+
+                          CustomSnackbar.showSuccess(
+                            context,
+                            resultado['mensagem'] ??
+                                'Pet atualizado com sucesso!',
+                            color: const Color(0xFF047857),
+                          );
+                        }
+                      },
+                      hoverColor: Colors.white,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 13,
+                          vertical: 10,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.edit,
+                              color: Color(0xFF0D9488),
+                              size: 16,
+                            ),
+                            SizedBox(width: 5),
+                            Text(
+                              'Editar',
+                              style: TextStyle(
+                                color: Color(0xFF0D9488),
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildMobileProfileCard(),
+
+                  const SizedBox(height: 26),
+
+                  _buildSectionTitle(
+                    'Visão geral',
+                    Icons.bar_chart,
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  _buildMobileOverview(),
+
+                  const SizedBox(height: 26),
+
+                  _buildCareItem(
+                    icon: Icons.vaccines_outlined,
+                    iconColor: const Color(0xFF10B981),
+                    iconBg: const Color(0xFFD1FAE5),
+                    title: 'Vacinas',
+                    subtitle: 'Controle de Vacinas',
+                    badge: 'Em desenvolvimento',
+                    badgeColor: const Color(0xFF10B981),
+                    backgroundImage: 'assets/images/cuidados1.png',
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Calendário de Vacinas',
+                          style: const TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF1E293B),
+                          ),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () async {
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => PetVaccineCalendarScreen(
+                                pet: _currentPet,
+                              ),
+                            ),
+                          );
+
+                          if (!mounted) return;
+
+                          await Provider.of<VaccineProvider>(
+                            context,
+                            listen: false,
+                          ).carregarCalendario(_currentPet.idPet!);
+                        },
+                        child: const Text(
+                          'Ver calendário',
+                          style: TextStyle(fontSize: 12),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  _buildCareItem(
+                    icon: Icons.calendar_today_outlined,
+                    iconColor: const Color(0xFF8B5CF6),
+                    iconBg: const Color(0xFFEDE9FE),
+                    title: 'Consultas',
+                    subtitle: 'Histórico de Consultas',
+                    badge: 'Em desenvolvimento',
+                    badgeColor: const Color(0xFF8B5CF6),
+                    backgroundImage: 'assets/images/cuidados2.png',
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  _buildCareItem(
+                    icon: Icons.notifications_outlined,
+                    iconColor: const Color(0xFFF59E0B),
+                    iconBg: const Color(0xFFFFEDD5),
+                    title: 'Lembretes',
+                    subtitle: 'Gerenciador de Lembretes',
+                    badge: 'Em desenvolvimento',
+                    badgeColor: const Color(0xFFF59E0B),
+                    backgroundImage: 'assets/images/cuidados3.png',
+                  ),
+
+                  const SizedBox(height: 26),
+
+                  _buildSectionTitle(
+                    'Próximos lembretes',
+                    Icons.access_time,
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  Consumer<ReminderProvider>(
+                    builder: (context, reminderProvider, child) {
+                      final proximasOcorrencias =
+                          reminderProvider.ocorrenciasPet
+                              .where(
+                                (ocorrencia) =>
+                                    ocorrencia.idPet == _currentPet.idPet &&
+                                    ocorrencia.ativo &&
+                                    _getProximaData(ocorrencia) != null,
+                              )
+                              .toList()
+                            ..sort((a, b) {
+                              return _getProximaData(a)!
+                                  .compareTo(_getProximaData(b)!);
+                            });
+
+                      final lembretesParaMostrar =
+                          proximasOcorrencias.take(2).toList();
+
+                      if (reminderProvider.isLoading) {
+                        return Container(
+                          padding: const EdgeInsets.all(30),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: const Center(
+                            child: CircularProgressIndicator(),
+                          ),
+                        );
+                      }
+
+                      if (lembretesParaMostrar.isEmpty) {
+                        return Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.03),
+                                blurRadius: 10,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.notifications_none,
+                                color: Colors.grey.shade500,
+                                size: 28,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  'Nenhum lembrete próximo para ${_currentPet.nome}.',
+                                  style: TextStyle(
+                                    color: Colors.grey.shade600,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+
+                      return Column(
+                        children: [
+                          ...List.generate(
+                            lembretesParaMostrar.length,
+                            (index) {
+                              final lembrete =
+                                  lembretesParaMostrar[index];
+                              final proximaData =
+                                  _getProximaData(lembrete)!;
+
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: _buildMobileReminderCard(
+                                  idLembrete: lembrete.id,
+                                  idPet: lembrete.idPet,
+                                  title: lembrete.titulo,
+                                  pet: _currentPet.nome,
+                                  icon: _getIconByType(lembrete.tipo),
+                                  iconColor: _getColorByType(lembrete.tipo),
+                                  iconBg: _getBgColorByType(lembrete.tipo),
+                                  badge: _formatarTipo(lembrete.tipo),
+                                  date: _formatarDataLembrete(proximaData),
+                                  time: _formatarHoraLembrete(proximaData),
+                                ),
+                              );
+                            },
+                          ),
+
+                          if (proximasOcorrencias.length > 2)
+                            TextButton(
+                              onPressed: () async {
+                                await Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => PetRemindersScreen(
+                                      pet: _currentPet,
+                                    ),
+                                  ),
+                                );
+
+                                if (!mounted) return;
+
+                                await Provider.of<ReminderProvider>(
+                                  context,
+                                  listen: false,
+                                ).carregarOcorrenciasDoPet(
+                                  _currentPet.idPet!,
+                                );
+                              },
+                              child: const Text(
+                                'Ver todos os lembretes →',
+                                style: TextStyle(
+                                  color: Color(0xFF0D9488),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                        ],
+                      );
+                    },
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  _buildMobileActionTile(
+                    icon: Icons.add,
+                    title: 'Adicionar lembrete',
+                    subtitle: 'Crie um novo lembrete para o seu pet',
+                    color: const Color(0xFF0D9488),
+                    background: const Color(0xFFECFDF5),
+                    onTap: () async {
+                      final criou = await showDialog<bool>(
+                        context: context,
+                        builder: (_) => ReminderFormDialog(
+                          idPet: _currentPet.idPet!,
+                        ),
+                      );
+
+                      if (criou == true && mounted) {
+                        CustomSnackbar.showSuccess(
+                          context,
+                          'Lembrete criado com sucesso!',
+                          color: const Color(0xFF047857),
+                        );
+
+                        setState(() {
+                          _houveAlteracao = true;
+                        });
+
+                        await Provider.of<ReminderProvider>(
+                          context,
+                          listen: false,
+                        ).carregarOcorrenciasDoPet(_currentPet.idPet!);
+                      }
+                    },
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  _buildMobileActionTile(
+                    icon: Icons.delete_outline,
+                    title: 'Excluir pet',
+                    subtitle: 'Remover ${_currentPet.nome} da sua conta',
+                    color: Colors.red,
+                    background: const Color(0xFFFEF2F2),
+                    onTap: () => _confirmarExclusao(context),
+                  ),
+
+                  SizedBox(
+                    height: MediaQuery.of(context).padding.bottom + 20,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMobileProfileCard() {
+    final especieFormatada = _formatarEspecie(_currentPet.especie);
+    final idade = calcularIdade(_currentPet.dataNascimento);
+
+    final temFoto = _currentPet.urlFoto != null &&
+        _currentPet.urlFoto!.isNotEmpty;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(
+        horizontal: 20,
+        vertical: 24,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Stack(
+            alignment: Alignment.bottomRight,
+            children: [
+              Container(
+                width: 210,
+                height: 210,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Colors.grey.shade200,
+                    width: 8,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.08),
+                      blurRadius: 12,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: ClipOval(
+                  child: temFoto
+                      ? Image.network(
+                          _currentPet.urlFoto!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Icon(
+                            Icons.pets,
+                            size: 65,
+                            color: Colors.grey.shade400,
+                          ),
+                        )
+                      : Container(
+                          color: Colors.white,
+                          child: Icon(
+                            Icons.pets,
+                            size: 65,
+                            color: Colors.grey.shade400,
+                          ),
+                        ),
+                ),
+              ),
+              GestureDetector(
+                onTap: _selecionarFoto,
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF0D9488),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.camera_alt,
+                    color: Colors.white,
+                    size: 22,
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 22),
+
+          SizedBox(
+            width: double.infinity,
+            child: CustomPaint(
+              painter: DashedBorder(
+                color: const Color(0xFF0D9488).withOpacity(0.3),
+                strokeWidth: 2.5,
+                dashLength: 6,
+                gapLength: 4,
+              ),
+              child: GestureDetector(
+                onTap: temFoto ? _removerFoto : _selecionarFoto,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFECFDF5),
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        temFoto ? Icons.delete_outline : Icons.camera_alt,
+                        color: const Color(0xFF0D9488),
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Text(
+                          temFoto
+                              ? 'Clique para remover foto'
+                              : 'Clique para adicionar foto',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Color(0xFF0D9488),
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 22),
+
+          Text(
+            _currentPet.nome,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 25,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF1E293B),
+            ),
+          ),
+
+          const SizedBox(height: 10),
+
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 18,
+              vertical: 8,
+            ),
+            decoration: BoxDecoration(
+              color: const Color(0xFFD1FAE5),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              especieFormatada,
+              style: const TextStyle(
+                color: Color(0xFF0D9488),
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 8),
+
+          Text(
+            idade,
+            style: TextStyle(
+              fontSize: 15,
+              color: Colors.grey.shade600,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMobileOverview() {
+    return Column(
+      children: [
+        _buildMobileOverviewItem(
+          icon: Icons.monitor_weight_outlined,
+          iconColor: const Color(0xFFEA580C),
+          iconBg: const Color(0xFFFFEDD5),
+          label: 'Peso',
+          value: '${_currentPet.peso.toStringAsFixed(1)} kg',
+        ),
+        _buildMobileOverviewItem(
+          icon: Icons.height,
+          iconColor: const Color(0xFF7C3AED),
+          iconBg: const Color(0xFFEDE9FE),
+          label: 'Altura',
+          value: _currentPet.altura != null
+              ? '${_currentPet.altura!.toStringAsFixed(1)} cm'
+              : 'N/A',
+        ),
+        _buildMobileOverviewItem(
+          icon: Icons.pets,
+          iconColor: const Color(0xFF0D9488),
+          iconBg: const Color(0xFFD1FAE5),
+          label: 'Raça',
+          value: _currentPet.nomeRaca ?? 'SRD',
+        ),
+        _buildMobileOverviewItem(
+          icon: Icons.cake_outlined,
+          iconColor: const Color(0xFFEF4444),
+          iconBg: const Color(0xFFFEE2E2),
+          label: 'Nascimento',
+          value: _formatarData(_currentPet.dataNascimento),
+        ),
+        _buildMobileOverviewItem(
+          icon: Icons.straighten,
+          iconColor: const Color(0xFF3B82F6),
+          iconBg: const Color(0xFFDBEAFE),
+          label: 'Porte',
+          value: _currentPet.porte.isNotEmpty
+              ? _currentPet.porte
+              : 'N/A',
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMobileOverviewItem({
+    required IconData icon,
+    required Color iconColor,
+    required Color iconBg,
+    required String label,
+    required String value,
+  }) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: iconBg,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: iconColor, size: 22),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey.shade600,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.end,
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF1E293B),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMobileReminderCard({
+    required int idLembrete,
+    required int idPet,
+    required String title,
+    required String pet,
+    required IconData icon,
+    required Color iconColor,
+    required Color iconBg,
+    required String badge,
+    required String date,
+    required String time,
+  }) {
+    return GestureDetector(
+      onTap: () async {
+        final atualizou = await Navigator.push<bool>(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ReminderDetailsScreen(
+              idLembrete: idLembrete,
+              idPet: idPet,
+            ),
+          ),
+        );
+
+        if (atualizou == true && mounted) {
+          await Provider.of<ReminderProvider>(
+            context,
+            listen: false,
+          ).carregarOcorrenciasDoPet(_currentPet.idPet!);
+        }
+      },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.grey.shade200),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: iconBg,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    icon,
+                    color: iconColor,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    title,
+                    softWrap: true,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: Color(0xFF1E293B),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                const Icon(
+                  Icons.chevron_right,
+                  color: Colors.grey,
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Icon(Icons.pets, color: iconColor, size: 15),
+                const SizedBox(width: 5),
+                Expanded(
+                  child: Text(
+                    pet,
+                    style: TextStyle(
+                      color: Colors.grey.shade600,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: iconBg,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    badge,
+                    style: TextStyle(
+                      color: iconColor,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Divider(color: Colors.grey.shade200, height: 1),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Icon(
+                  Icons.calendar_today,
+                  color: Colors.grey.shade600,
+                  size: 15,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  date,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                    color: Color(0xFF475569),
+                  ),
+                ),
+                const Spacer(),
+                Icon(
+                  Icons.access_time,
+                  color: Colors.grey.shade600,
+                  size: 15,
+                ),
+                const SizedBox(width: 5),
+                Text(
+                  time,
+                  style: TextStyle(
+                    color: Colors.grey.shade600,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMobileActionTile({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color color,
+    required Color background,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: CustomPaint(
+        painter: DashedBorderPainter(
+          color: color.withOpacity(0.5),
+          strokeWidth: 2.5,
+          dashLength: 8,
+          gapLength: 5,
+          radius: 16,
+        ),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: background,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(11),
+                decoration: BoxDecoration(
+                  color: color,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  icon,
+                  color: Colors.white,
+                  size: 21,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF1E293B),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Icon(
+                Icons.chevron_right,
+                color: color,
+                size: 24,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

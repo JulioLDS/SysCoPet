@@ -423,6 +423,346 @@ class _ReminderFormDialogState extends State<ReminderFormDialog> {
 
   @override
   Widget build(BuildContext context) {
+    if (MediaQuery.of(context).size.width < 600) {
+      return _buildMobileLayout(context);
+    }
+
+    return _buildWebLayout(context);
+  }
+
+  Widget _buildMobileLayout(BuildContext context) {
+    final media = MediaQuery.of(context);
+    final alturaDisponivel =
+        (media.size.height - media.viewInsets.bottom - 32)
+            .clamp(200.0, media.size.height)
+            .toDouble();
+
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: 16,
+      ),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: alturaDisponivel,
+        ),
+        child: SingleChildScrollView(
+          keyboardDismissBehavior:
+              ScrollViewKeyboardDismissBehavior.onDrag,
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFECFDF5),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.notifications,
+                        color: Color(0xFF0D9488),
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _editando
+                                ? 'Editar Lembrete'
+                                : 'Novo lembrete',
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF1E293B),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            _editando
+                                ? 'Edite o seu lembrete'
+                                : 'Crie um lembrete para cuidar ainda melhor do seu pet.',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFECFDF5),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(
+                          Icons.close,
+                          color: Color(0xFF0D9488),
+                          size: 20,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildCompactInputField(
+                        label: 'Título',
+                        icon: Icons.edit,
+                        iconColor: const Color(0xFF0D9488),
+                        iconBg: const Color(0xFFECFDF5),
+                        controller: tituloController,
+                        focusNode: _tituloFocus,
+                        maxLength: 250,
+                        currentLength: tituloLength,
+                        textInputAction: TextInputAction.next,
+                        onFieldSubmitted: (_) =>
+                            FocusScope.of(context)
+                                .requestFocus(_descricaoFocus),
+                        validator: (value) =>
+                            (value == null || value.trim().isEmpty)
+                                ? 'Informe o título'
+                                : null,
+                      ),
+                      const SizedBox(height: 12),
+                      _buildCompactInputField(
+                        label: 'Descrição',
+                        icon: Icons.description,
+                        iconColor: const Color(0xFF8B5CF6),
+                        iconBg: const Color(0xFFEDE9FE),
+                        controller: descricaoController,
+                        focusNode: _descricaoFocus,
+                        maxLength: 500,
+                        currentLength: descricaoLength,
+                        maxLines: 3,
+                        textInputAction: TextInputAction.done,
+                        onFieldSubmitted: (_) =>
+                            FocusScope.of(context).unfocus(),
+                      ),
+                      const SizedBox(height: 12),
+                      _buildCompactDropdown(
+                        label: 'Tipo',
+                        icon: _getTipoIcon(tipoSelecionado),
+                        iconColor: _getTipoColor(tipoSelecionado),
+                        iconBg: _getTipoColor(tipoSelecionado)
+                            .withOpacity(0.1),
+                        value: _formatarTexto(tipoSelecionado),
+                        items: tipos
+                            .map((tipo) => _formatarTexto(tipo))
+                            .toList(),
+                        getIconForItem: _getTipoIconByLabel,
+                        getColorForItem: _getTipoColorByLabel,
+                        onChanged: (value) {
+                          setState(() {
+                            tipoSelecionado = tipos[
+                                tipos.indexWhere(
+                              (t) => _formatarTexto(t) == value,
+                            )];
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      _buildCompactDropdown(
+                        label: 'Recorrência',
+                        icon: _getRecorrenciaIcon(
+                            recorrenciaSelecionada),
+                        iconColor: _getRecorrenciaColor(
+                            recorrenciaSelecionada),
+                        iconBg: _getRecorrenciaColor(
+                          recorrenciaSelecionada,
+                        ).withOpacity(0.1),
+                        value: _formatarTexto(
+                            recorrenciaSelecionada),
+                        items: recorrencias
+                            .map((r) => _formatarTexto(r))
+                            .toList(),
+                        getIconForItem:
+                            _getRecorrenciaIconByLabel,
+                        getColorForItem:
+                            _getRecorrenciaColorByLabel,
+                        onChanged: (value) {
+                          setState(() {
+                            recorrenciaSelecionada =
+                                recorrencias[
+                                    recorrencias.indexWhere(
+                              (r) => _formatarTexto(r) == value,
+                            )];
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildMobileDateTimeField(
+                              label: 'Data',
+                              icon: Icons.calendar_today,
+                              iconColor: const Color(0xFF0D9488),
+                              iconBg: const Color(0xFFECFDF5),
+                              value: _formatarData(dataSelecionada),
+                              onTap: _selecionarData,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: _buildMobileDateTimeField(
+                              label: 'Horário',
+                              icon: Icons.access_time,
+                              iconColor: const Color(0xFF8B5CF6),
+                              iconBg: const Color(0xFFEDE9FE),
+                              value: _formatarHora(horaSelecionada),
+                              onTap: _selecionarHora,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text(
+                        'Cancelar',
+                        style: TextStyle(
+                          color: Color(0xFF0D9488),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton(
+                      onPressed: _salvar,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF0D9488),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 12,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.check, size: 18),
+                          SizedBox(width: 6),
+                          Text(
+                            'Salvar',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMobileDateTimeField({
+    required String label,
+    required IconData icon,
+    required Color iconColor,
+    required Color iconBg,
+    required String value,
+    required VoidCallback onTap,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            color: Colors.grey.shade600,
+          ),
+        ),
+        const SizedBox(height: 6),
+        GestureDetector(
+          onTap: onTap,
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(
+              horizontal: 8,
+              vertical: 9,
+            ),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey.shade200),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(5),
+                  decoration: BoxDecoration(
+                    color: iconBg,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Icon(
+                    icon,
+                    color: iconColor,
+                    size: 16,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    value.isEmpty ? 'Selecionar' : value,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: value.isEmpty
+                          ? Colors.grey.shade400
+                          : const Color(0xFF1E293B),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  @override
+  Widget _buildWebLayout(BuildContext context) {
     return Dialog(
       backgroundColor: Colors.transparent,
       child: Container(
@@ -698,6 +1038,9 @@ class _ReminderFormDialogState extends State<ReminderFormDialog> {
               const SizedBox(width: 10),
               Expanded(
                 child: TextFormField(
+                  onTapOutside: (_) {
+                    FocusScope.of(context).unfocus();
+                  },
                   controller: controller,
                   focusNode: focusNode,
                   textInputAction: textInputAction,
