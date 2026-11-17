@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:syscopet/screens/home/home_screen.dart';
 import '../../providers/auth_provider.dart';
+import '../../models/user_model.dart';
+import '../../widgets/common/user_avatar.dart';
 import '../../providers/pet_provider.dart';
 import '../../providers/reminder_provider.dart';
 import '../../models/reminder_ocurrence_model.dart';
@@ -390,7 +392,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // ============ WIDGETS ============
 
-  Widget _cardUsuario(dynamic user) {
+  Widget _cardUsuario(UserModel? user) {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: _cardDecoration(),
@@ -399,17 +401,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Stack(
             alignment: Alignment.bottomRight,
             children: [
-              CircleAvatar(
+              UserAvatar(
+                user: user,
                 radius: 48,
-                backgroundColor: const Color(0xFFECFDF5),
-                child: Text(
-                  user?.nome?.substring(0, 2).toUpperCase() ?? 'U',
-                  style: const TextStyle(
-                    color: Color(0xFF0D9488),
-                    fontSize: 26,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                fontSize: 26,
               ),
               Container(
                 padding: const EdgeInsets.all(7),
