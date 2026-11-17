@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import '../../models/chat_message_model.dart';
+import '../../models/chatbot_response_model.dart';
 import '../../services/chatbot_service.dart';
 
 class ChatbotBottomSheet extends StatefulWidget {
-  const ChatbotBottomSheet({super.key});
+  // ✅ Callback para fechar (ao invés de Navigator.pop)
+  final VoidCallback onClose;
+
+  const ChatbotBottomSheet({super.key, required this.onClose});
 
   @override
   State<ChatbotBottomSheet> createState() => _ChatbotBottomSheetState();
@@ -15,7 +19,7 @@ class _ChatbotBottomSheetState extends State<ChatbotBottomSheet> {
   final ChatbotService _service = ChatbotService();
 
   final List<ChatMessageModel> _messages = [
-    ChatMessageModel(
+    const ChatMessageModel(
       texto:
           'Olá! Sou o assistente 4UPet. Como posso ajudar com a saúde do seu pet hoje?',
       usuario: false,
@@ -23,31 +27,50 @@ class _ChatbotBottomSheetState extends State<ChatbotBottomSheet> {
   ];
 
   bool _isTyping = false;
+  int _expandedMessageIndex = -1;
+
+  // ✅ Sugestões rápidas
+  final List<Map<String, dynamic>> _sugestoesRapidas = [
+    {'icone': Icons.pets, 'texto': 'Quais são as vacinas?'},
+    {'icone': Icons.calendar_today, 'texto': 'Quando aplicar?'},
+    {'icone': Icons.vaccines, 'texto': 'Agendar vacina'},
+  ];
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   void _scrollToBottom() {
     if (_scrollController.hasClients) {
-      _scrollController.animateTo(
-        _scrollController.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-      );
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if (_scrollController.hasClients) {
+          _scrollController.animateTo(
+            _scrollController.position.maxScrollExtent,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          );
+        }
+      });
     }
   }
 
-  Future<void> _sendMessage() async {
-    final text = _controller.text.trim();
-    if (text.isEmpty || _isTyping) return;
+  Future<void> _enviarMensagem(String texto) async {
+    if (texto.trim().isEmpty || _isTyping) return;
 
     setState(() {
-      _messages.add(ChatMessageModel(texto: text, usuario: true));
-      _messages.add(ChatMessageModel(texto: '...', usuario: false));
+      _messages.add(ChatMessageModel(texto: texto, usuario: true));
+      _messages.add(const ChatMessageModel(texto: '...', usuario: false));
       _isTyping = true;
+      _expandedMessageIndex = -1;
       _controller.clear();
     });
     _scrollToBottom();
 
     try {
-      final response = await _service.enviarMensagem(text);
+      final response = await _service.enviarMensagem(texto);
 
       setState(() {
         _messages.removeLast();
@@ -64,9 +87,10 @@ class _ChatbotBottomSheetState extends State<ChatbotBottomSheet> {
           _messages.add(
             ChatMessageModel(
               texto: response.resposta.isEmpty
-                  ? 'Desculpe, não encontrei essa informação na minha base de conhecimento veterinária. Tente reformular a pergunta.'
+                  ? 'Desculpe, não encontrei essa informação na base de conhecimento do 4UPet. Para dúvidas sobre a saúde do seu pet, lembre-se de sempre consultar um médico-veterinário!'
                   : response.resposta,
               usuario: false,
+              ehErro: true,
             ),
           );
         }
@@ -75,10 +99,11 @@ class _ChatbotBottomSheetState extends State<ChatbotBottomSheet> {
       setState(() {
         _messages.removeLast();
         _messages.add(
-          ChatMessageModel(
+          const ChatMessageModel(
             texto:
                 'Ops! Tive um problema de conexão. Verifique sua internet e tente novamente.',
             usuario: false,
+            ehErro: true,
           ),
         );
       });
@@ -88,231 +113,403 @@ class _ChatbotBottomSheetState extends State<ChatbotBottomSheet> {
     }
   }
 
+  void _enviarSugestao(String sugestao) {
+    _enviarMensagem(sugestao);
+  }
+
+  // ✅ Método para fechar usando a callback
+  void _fecharChat() {
+    widget.onClose();
+  }
+
+  // ============ BUILD ============
+
   @override
   Widget build(BuildContext context) {
-    final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
-
     return Container(
-      // ✅ Ocupa toda a altura disponível
-      height: double.infinity,
-      width: double.infinity,
+      // ✅ Widget flutuante: tamanho fixo, não tela inteira
+      width: 600,
+      height: 1050,
       decoration: BoxDecoration(
         color: const Color(0xFFF8FAFC),
-        // ✅ Sombra apenas à esquerda (para destacar do conteúdo da Home)
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.15),
-            blurRadius: 20,
-            offset: const Offset(-5, 0),
+            color: Colors.black.withOpacity(0.25),
+            blurRadius: 25,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
-      child: Column(
-        children: [
-          // ✅ Header do painel
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            decoration: const BoxDecoration(color: Color(0xFF0D9488)),
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.smart_toy_outlined,
-                  color: Colors.white,
-                  size: 22,
-                ),
-                const SizedBox(width: 10),
-                const Expanded(
-                  child: Text(
-                    'Assistente 4UPet',
-                    style: TextStyle(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Column(
+          children: [
+            // ✅ HEADER: avatar + título + pata branca + X
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+              decoration: const BoxDecoration(color: Color(0xFF0D9488)),
+              child: Row(
+                children: [
+                  // Avatar do robô
+                  Container(
+                    width: 42,
+                    height: 42,
+                    decoration: BoxDecoration(
                       color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.smart_toy,
+                      color: Color(0xFF0D9488),
+                      size: 26,
                     ),
                   ),
-                ),
-                // ✅ Botão X para fechar (chama o Navigator.pop para segurança)
-                IconButton(
-                  icon: const Icon(Icons.close, color: Colors.white, size: 20),
-                  onPressed: () => Navigator.pop(context),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                ),
-              ],
-            ),
-          ),
-
-          // ✅ Lista de Mensagens
-          Expanded(
-            child: ListView.builder(
-              controller: _scrollController,
-              padding: const EdgeInsets.all(12),
-              itemCount: _messages.length,
-              itemBuilder: (context, index) {
-                final msg = _messages[index];
-                final isUser = msg.usuario;
-
-                return Align(
-                  alignment: isUser
-                      ? Alignment.centerRight
-                      : Alignment.centerLeft,
-                  child: Container(
-                    margin: const EdgeInsets.only(bottom: 10),
-                    padding: const EdgeInsets.all(12),
-                    constraints: BoxConstraints(
-                      maxWidth: MediaQuery.of(context).size.width * 0.9,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isUser ? const Color(0xFF0D9488) : Colors.white,
-                      borderRadius: BorderRadius.circular(14).copyWith(
-                        bottomRight: isUser ? const Radius.circular(4) : null,
-                        bottomLeft: !isUser ? const Radius.circular(4) : null,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
+                  const SizedBox(width: 12),
+                  // Título + subtítulo com pata branca
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          msg.texto,
+                        const Text(
+                          'Assistente 4UPet',
                           style: TextStyle(
-                            color: isUser
-                                ? Colors.white
-                                : const Color(0xFF1E293B),
-                            fontSize: 14,
-                            height: 1.4,
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                        if (msg.fontes.isNotEmpty) ...[
-                          const SizedBox(height: 8),
-                          const Divider(color: Colors.grey, height: 1),
-                          const SizedBox(height: 4),
-                          const Text(
-                            'Fontes:',
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF0D9488),
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          ...msg.fontes.map(
-                            (fonte) => Padding(
-                              padding: const EdgeInsets.only(
-                                left: 6,
-                                bottom: 2,
-                              ),
-                              child: Row(
-                                children: [
-                                  const Icon(
-                                    Icons.link,
-                                    size: 10,
-                                    color: Color(0xFF0D9488),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Expanded(
-                                    child: Text(
-                                      fonte,
-                                      style: const TextStyle(
-                                        fontSize: 10,
-                                        color: Color(0xFF475569),
-                                      ),
-                                    ),
-                                  ),
-                                ],
+                        const SizedBox(height: 2),
+                        Row(
+                          children: [
+                            const Text(
+                              'Sempre aqui para ajudar!',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 11,
                               ),
                             ),
-                          ),
-                        ],
+                            const SizedBox(width: 4),
+                            // ✅ Pata branca única
+                            const Icon(
+                              Icons.pets,
+                              color: Colors.white,
+                              size: 14,
+                            ),
+                          ],
+                        ),
                       ],
                     ),
                   ),
-                );
-              },
-            ),
-          ),
-
-          // ✅ Barra de Input
-          Container(
-            width: double.infinity,
-            padding: EdgeInsets.only(
-              left: 12,
-              right: 12,
-              top: 10,
-              bottom: 10 + (keyboardHeight > 0 ? 10 : 16),
-            ),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, -2),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _controller,
-                    maxLines: null,
-                    textInputAction: TextInputAction.send,
-                    onSubmitted: (_) => _sendMessage(),
-                    decoration: InputDecoration(
-                      hintText: 'Digite sua dúvida...',
-                      hintStyle: TextStyle(
-                        color: Colors.grey.shade400,
-                        fontSize: 13,
+                  // ✅ Apenas o X (minimizar removido)
+                  Material(
+                    color: Colors.white.withOpacity(0.15),
+                    shape: const CircleBorder(),
+                    child: InkWell(
+                      onTap: _fecharChat,
+                      customBorder: const CircleBorder(),
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: const BoxDecoration(shape: BoxShape.circle),
+                        child: const Icon(
+                          Icons.close,
+                          color: Colors.white,
+                          size: 18,
+                        ),
                       ),
-                      filled: true,
-                      fillColor: const Color(0xFFF1F5F9),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(24),
-                        borderSide: BorderSide.none,
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 10,
-                      ),
-                      isDense: true,
                     ),
                   ),
+                ],
+              ),
+            ),
+
+            // ✅ LISTA DE MENSAGENS
+            Expanded(
+              child: ListView.builder(
+                controller: _scrollController,
+                padding: const EdgeInsets.all(16),
+                itemCount: _messages.length,
+                itemBuilder: (context, index) {
+                  final msg = _messages[index];
+                  final isUser = msg.usuario;
+                  final isLast = index == _messages.length - 1;
+
+                  return Column(
+                    children: [
+                      if (isUser)
+                        _buildUserMessage(msg)
+                      else if (msg.ehErro)
+                        _buildErrorMessage(msg) // ✅ sem patinha azul
+                      else
+                        _buildBotMessage(msg, index),
+
+                      if (isLast && !isUser && !msg.ehErro && !_isTyping)
+                        _buildSugestoesRapidas(),
+                    ],
+                  );
+                },
+              ),
+            ),
+
+            // ✅ BARRA DE INPUT
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, -2),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _controller,
+                      maxLines: null,
+                      textInputAction: TextInputAction.send,
+                      onSubmitted: _enviarMensagem,
+                      decoration: InputDecoration(
+                        hintText: 'Digite sua dúvida...',
+                        hintStyle: TextStyle(
+                          color: Colors.grey.shade400,
+                          fontSize: 14,
+                        ),
+                        filled: true,
+                        fillColor: const Color(0xFFF1F5F9),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(24),
+                          borderSide: BorderSide.none,
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 18,
+                          vertical: 12,
+                        ),
+                        isDense: true,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Material(
+                    color: const Color(0xFF0D9488),
+                    shape: const CircleBorder(),
+                    child: InkWell(
+                      onTap: _isTyping
+                          ? null
+                          : () => _enviarMensagem(_controller.text),
+                      customBorder: const CircleBorder(),
+                      child: Container(
+                        width: 44,
+                        height: 44,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFF0D9488),
+                          shape: BoxShape.circle,
+                        ),
+                        child: _isTyping
+                            ? const Center(
+                                child: SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                ),
+                              )
+                            : const Icon(
+                                Icons.send,
+                                color: Colors.white,
+                                size: 20,
+                              ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ============ WIDGETS DE MENSAGEM ============
+
+  Widget _buildUserMessage(ChatMessageModel msg) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Flexible(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: const Color(0xFF0D9488),
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(18),
+                  topRight: Radius.circular(18),
+                  bottomLeft: Radius.circular(18),
+                  bottomRight: Radius.circular(4),
                 ),
-                const SizedBox(width: 6),
-                CircleAvatar(
-                  radius: 18,
-                  backgroundColor: _isTyping
-                      ? Colors.grey
-                      : const Color(0xFF0D9488),
-                  child: _isTyping
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          ),
-                        )
-                      : IconButton(
-                          icon: const Icon(
-                            Icons.send,
-                            color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF0D9488).withOpacity(0.2),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Text(
+                msg.texto,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  height: 1.4,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: const Color(0xFF0D9488).withOpacity(0.15),
+              shape: BoxShape.circle,
+              border: Border.all(color: const Color(0xFF0D9488), width: 1.5),
+            ),
+            child: const Icon(Icons.person, color: Color(0xFF0D9488), size: 20),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBotMessage(ChatMessageModel msg, int index) {
+    final temFontes = msg.fontes.isNotEmpty;
+    final expanded = _expandedMessageIndex == index;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: const Color(0xFF0D9488).withOpacity(0.15),
+              shape: BoxShape.circle,
+              border: Border.all(color: const Color(0xFF0D9488), width: 1.5),
+            ),
+            child: const Icon(
+              Icons.smart_toy,
+              color: Color(0xFF0D9488),
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Flexible(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(4),
+                  topRight: Radius.circular(18),
+                  bottomRight: Radius.circular(18),
+                  bottomLeft: Radius.circular(18),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    msg.texto,
+                    style: const TextStyle(
+                      color: Color(0xFF1E293B),
+                      fontSize: 14,
+                      height: 1.5,
+                    ),
+                  ),
+                  if (temFontes) ...[
+                    const SizedBox(height: 10),
+                    const Divider(height: 1, color: Color(0xFFE2E8F0)),
+                    const SizedBox(height: 8),
+                    InkWell(
+                      onTap: () {
+                        setState(() {
+                          _expandedMessageIndex = expanded ? -1 : index;
+                        });
+                      },
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.description_outlined,
+                            color: Color(0xFF0D9488),
                             size: 16,
                           ),
-                          onPressed: _sendMessage,
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
+                          const SizedBox(width: 6),
+                          Text(
+                            expanded ? 'Ocultar detalhes' : 'Ver mais detalhes',
+                            style: const TextStyle(
+                              color: Color(0xFF0D9488),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          Icon(
+                            expanded ? Icons.expand_less : Icons.chevron_right,
+                            color: const Color(0xFF0D9488),
+                            size: 18,
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (expanded) ...[
+                      const SizedBox(height: 8),
+                      ...msg.fontes.map(
+                        (fonte) => Padding(
+                          padding: const EdgeInsets.only(left: 22, bottom: 4),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.link,
+                                size: 12,
+                                color: Colors.grey.shade600,
+                              ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  fonte,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey.shade700,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                ),
-              ],
+                      ),
+                    ],
+                  ],
+                ],
+              ),
             ),
           ),
         ],
@@ -320,10 +517,105 @@ class _ChatbotBottomSheetState extends State<ChatbotBottomSheet> {
     );
   }
 
-  @override
-  void dispose() {
-    _controller.dispose();
-    _scrollController.dispose();
-    super.dispose();
+  // ✅ Mensagem de erro SEM patinha azul — apenas balão branco
+  Widget _buildErrorMessage(ChatMessageModel msg) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ✅ Avatar do robô (mesmo padrão das mensagens normais)
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: const Color(0xFF0D9488).withOpacity(0.15),
+              shape: BoxShape.circle,
+              border: Border.all(color: const Color(0xFF0D9488), width: 1.5),
+            ),
+            child: const Icon(
+              Icons.smart_toy,
+              color: Color(0xFF0D9488),
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Flexible(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(4),
+                  topRight: Radius.circular(18),
+                  bottomRight: Radius.circular(18),
+                  bottomLeft: Radius.circular(18),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Text(
+                msg.texto,
+                style: const TextStyle(
+                  color: Color(0xFF1E293B),
+                  fontSize: 14,
+                  height: 1.5,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSugestoesRapidas() {
+    return Padding(
+      padding: const EdgeInsets.only(top: 8, bottom: 8),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: _sugestoesRapidas.map((sugestao) {
+          return Material(
+            color: const Color(0xFFECFDF5),
+            borderRadius: BorderRadius.circular(20),
+            child: InkWell(
+              onTap: () => _enviarSugestao(sugestao['texto'] as String),
+              borderRadius: BorderRadius.circular(20),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      sugestao['icone'] as IconData,
+                      color: const Color(0xFF0D9488),
+                      size: 16,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      sugestao['texto'] as String,
+                      style: const TextStyle(
+                        color: Color(0xFF0D9488),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
   }
 }

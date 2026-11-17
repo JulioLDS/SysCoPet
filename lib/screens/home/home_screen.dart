@@ -1260,19 +1260,22 @@ class _HomeScreenState extends State<HomeScreen> {
                 // ✅ PAINEL LATERAL DO CHATBOT (50% largura, 100% altura)
                 if (_chatbotAberto)
                   Positioned(
-                    top: 0,
-                    right: 0,
-                    bottom: 0,
-                    width:
-                        MediaQuery.of(context).size.width *
-                        0.5, // ✅ Metade da tela
-                    child: const ChatbotBottomSheet(),
+                    top: 30,
+                    right: 24,
+                    bottom: 10,
+                    child: ChatbotBottomSheet(
+                      onClose: () {
+                        setState(() {
+                          _chatbotAberto = false;
+                        });
+                      },
+                    ),
                   ),
               ],
             ),
 
       // ✅ FLOATING ACTION BUTTON DO CHATBOT
-      floatingActionButton: _selectedIndex != 0
+      floatingActionButton: _selectedIndex != 0 || _chatbotAberto
           ? null
           : FloatingActionButton(
               onPressed: () {
@@ -1282,8 +1285,8 @@ class _HomeScreenState extends State<HomeScreen> {
               },
               backgroundColor: const Color(0xFF0D9488),
               elevation: 4,
-              child: Icon(
-                _chatbotAberto ? Icons.close : Icons.smart_toy_outlined,
+              child: const Icon(
+                Icons.smart_toy_outlined,
                 color: Colors.white,
                 size: 28,
               ),
@@ -1900,20 +1903,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
-    );
-  }
-
-  void _abrirChatbotOverlay() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      isDismissible: true,
-      enableDrag: true,
-      constraints: BoxConstraints.expand(
-        height: MediaQuery.of(context).size.height,
-      ),
-      builder: (context) => const ChatbotBottomSheet(),
     );
   }
 }
