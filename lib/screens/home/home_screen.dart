@@ -16,12 +16,15 @@ import '../pets/pet_edit_dialog.dart';
 import '../pets/pet_details_screen.dart';
 import '../pets/my_pets_screen.dart';
 import 'package:syscopet/screens/chatbot/chatbot_bottom_sheet.dart';
+import '../pets/reminder_form_dialog.dart';
 import '../settings/account_screen.dart';
 import '../settings/notifications_screen.dart';
 import '../settings/help_screen.dart';
 import '../settings/about_screen.dart';
 import '../agenda/agenda_screen.dart';
 import '../profile/profile_screen.dart';
+import '../vaccines/pet_vaccine_calendar_screen.dart';
+import '../../models/pet_model.dart';
 
 // ✅ Widget helper para hover
 class HoverBuilder extends StatefulWidget {
@@ -892,10 +895,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                                   iconColor: const Color(
                                                     0xFF059669,
                                                   ),
-                                                  onTap: () {
-                                                    // Depois podemos ligar à tela
-                                                    // de vacinas.
-                                                  },
+                                                  onTap: _abrirFluxoVacina,
                                                 ),
                                                 const SizedBox(width: 12),
                                                 _buildQuickActionCard(
@@ -908,9 +908,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                                   iconColor: const Color(
                                                     0xFF9333EA,
                                                   ),
-                                                  onTap: () {
-                                                    // Tela de consultas futuramente.
-                                                  },
+                                                  onTap: () =>
+                                                      _abrirFluxoConsulta(),
                                                 ),
                                                 const SizedBox(width: 12),
                                                 _buildQuickActionCard(
@@ -2638,6 +2637,482 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  // ✅ Fluxo: Consultas → Selecionar Pet → Abrir Lembrete
+  void _abrirFluxoConsulta() async {
+    final petProvider = Provider.of<PetProvider>(context, listen: false);
+
+    if (petProvider.pets.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Adicione um pet primeiro!'),
+          backgroundColor: Color(0xFF0D9488),
+        ),
+      );
+      return;
+    }
+
+    // ✅ Se só tem 1 pet, já abre direto
+    if (petProvider.pets.length == 1) {
+      _abrirLembreteConsulta(petProvider.pets.first.idPet!);
+      return;
+    }
+
+    // ✅ Se tem mais de 1 pet, mostra dialog para escolher
+    final petEscolhido = await showDialog<dynamic>(
+      context: context,
+      builder: (_) => _dialogSelecionarPet(petProvider.pets),
+    );
+
+    if (petEscolhido != null) {
+      _abrirLembreteConsulta(petEscolhido);
+    }
+  }
+
+  // ✅ Abre o formulário de lembrete com tipo "consulta"
+  void _abrirLembreteConsulta(int idPet) async {
+    final resultado = await showDialog<bool>(
+      context: context,
+      builder: (_) => ReminderFormDialog(
+        idPet: idPet,
+        tipoInicial: 'consulta', // ✅ Tipo pré-selecionado
+      ),
+    );
+
+    if (resultado == true && mounted) {
+      final reminderProvider = Provider.of<ReminderProvider>(
+        context,
+        listen: false,
+      );
+      final petProvider = Provider.of<PetProvider>(context, listen: false);
+      await reminderProvider.carregarOcorrenciasDosPets(petProvider.pets);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Consulta agendada com sucesso!'),
+          backgroundColor: Color(0xFF059669),
+        ),
+      );
+    }
+  }
+
+  // ✅ Dialog para selecionar pet
+  Widget _dialogSelecionarPet(List<dynamic> pets) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 450),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Header (mantém igual)
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFE9D5FF),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.calendar_month,
+                      color: Color(0xFF9333EA),
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Text(
+                      'Agendar consulta',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF1E293B),
+                      ),
+                    ),
+                  ),
+                  MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFFEF2F2),
+                          borderRadius: BorderRadius.all(Radius.circular(8)),
+                        ),
+                        child: const Icon(
+                          Icons.close,
+                          color: Color(0xFFEF4444),
+                          size: 18,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+
+              // Mensagem
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE9D5FF),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.pets, color: Color(0xFF9333EA), size: 24),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Text(
+                        'Para qual pet você deseja agendar a consulta?',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Color(0xFF1E293B),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // ✅ Lista de pets com scroll e altura limitada
+              ConstrainedBox(
+                constraints: const BoxConstraints(
+                  maxHeight: 300,
+                ), // ✅ altura máxima
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: pets
+                        .map(
+                          (pet) => _petOptionCard(
+                            pet: pet,
+                            onTap: () => Navigator.pop(context, pet.idPet),
+                          ),
+                        )
+                        .toList(),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ✅ NOVO: Dialog específico para seleção de pet nas VACINAS (Tema Verde)
+  Widget _dialogSelecionarPetVacina(List<dynamic> pets) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 450),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Header Verde
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFD1FAE5), // Fundo verde claro
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.vaccines,
+                      color: Color(0xFF059669), // Verde vacina
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Text(
+                      'Carteira de Vacinas',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF1E293B),
+                      ),
+                    ),
+                  ),
+                  MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFFEF2F2),
+                          borderRadius: BorderRadius.all(Radius.circular(8)),
+                        ),
+                        child: const Icon(
+                          Icons.close,
+                          color: Color(0xFFEF4444),
+                          size: 18,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+
+              // Mensagem de instrução
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFD1FAE5), // Fundo verde claro
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.pets, color: Color(0xFF059669), size: 24),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Text(
+                        'Para qual pet você deseja visualizar ou registrar vacinas?',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Color(0xFF1E293B),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // Lista de pets com scroll e altura limitada
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 300),
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: pets
+                        .map(
+                          (pet) => _petOptionCardVacina(
+                            pet: pet,
+                            onTap: () => Navigator.pop(context, pet.idPet),
+                          ),
+                        )
+                        .toList(),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ✅ Card de opção de pet específico para Vacinas (Tema Verde)
+  Widget _petOptionCardVacina({
+    required dynamic pet,
+    required VoidCallback onTap,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Material(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey.shade200),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 24,
+                  backgroundColor: const Color(
+                    0xFFD1FAE5,
+                  ), // Avatar verde claro
+                  backgroundImage:
+                      pet.urlFoto != null && pet.urlFoto!.isNotEmpty
+                      ? NetworkImage(pet.urlFoto!)
+                      : null,
+                  child: pet.urlFoto == null || pet.urlFoto!.isEmpty
+                      ? const Icon(
+                          Icons.pets,
+                          color: Color(0xFF059669),
+                          size: 20,
+                        )
+                      : null,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        pet.nome,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 15,
+                          color: Color(0xFF1E293B),
+                        ),
+                      ),
+                      Text(
+                        pet.especie,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(
+                  Icons.chevron_right,
+                  color: Color(0xFF059669), // Seta verde
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ✅ Card de opção de pet no dialog
+  Widget _petOptionCard({required dynamic pet, required VoidCallback onTap}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Material(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey.shade200),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 24,
+                  backgroundColor: const Color(0xFFECFDF5),
+                  backgroundImage:
+                      pet.urlFoto != null && pet.urlFoto!.isNotEmpty
+                      ? NetworkImage(pet.urlFoto!)
+                      : null,
+                  child: pet.urlFoto == null || pet.urlFoto!.isEmpty
+                      ? const Icon(
+                          Icons.pets,
+                          color: Color(0xFF0D9488),
+                          size: 20,
+                        )
+                      : null,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        pet.nome,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 15,
+                          color: Color(0xFF1E293B),
+                        ),
+                      ),
+                      Text(
+                        pet.especie,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.chevron_right, color: Color(0xFF9333EA)),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ✅ Fluxo: Vacinas → Selecionar Pet → Abrir Calendário de Vacinas Existente
+  // ✅ Fluxo: Vacinas → Selecionar Pet (Dialog Verde) → Abrir Calendário de Vacinas
+  void _abrirFluxoVacina() async {
+    final petProvider = Provider.of<PetProvider>(context, listen: false);
+
+    if (petProvider.pets.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Adicione um pet primeiro!'),
+          backgroundColor: Color(0xFF059669),
+        ),
+      );
+      return;
+    }
+
+    // Se só tem 1 pet, vai direto
+    if (petProvider.pets.length == 1) {
+      _irParaCalendarioVacinas(petProvider.pets.first);
+      return;
+    }
+
+    // ✅ AQUI ESTÁ A MUDANÇA: Chama o dialog específico de vacinas
+    final petEscolhidoId = await showDialog<dynamic>(
+      context: context,
+      builder: (_) => _dialogSelecionarPetVacina(petProvider.pets),
+    );
+
+    if (petEscolhidoId != null) {
+      final petSelecionado = petProvider.pets.firstWhere(
+        (p) => p.idPet == petEscolhidoId,
+      );
+      _irParaCalendarioVacinas(petSelecionado);
+    }
+  }
+
+  // ✅ Navega para a tela de vacinas passando o PetModel
+  void _irParaCalendarioVacinas(dynamic pet) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => PetVaccineCalendarScreen(pet: pet)),
     );
   }
 }
