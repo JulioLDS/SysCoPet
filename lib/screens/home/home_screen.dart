@@ -321,6 +321,17 @@ class _HomeScreenState extends State<HomeScreen> {
     //mude o número do take para mudar quantos lembretes aparecem na tela
     final lembretesParaMostrar = proximosLembretes.take(2).toList();
 
+    if (MediaQuery.of(context).size.width <= 850) {
+      return _buildMobileLayout(
+        context,
+        authProvider,
+        petProvider,
+        reminderProvider,
+        user,
+        lembretesParaMostrar,
+      );
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       body: _selectedIndex == 1
@@ -1390,6 +1401,813 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+
+  Widget _buildMobileLayout(
+    BuildContext context,
+    AuthProvider authProvider,
+    PetProvider petProvider,
+    ReminderProvider reminderProvider,
+    dynamic user,
+    List<ReminderOccurrenceModel> lembretesParaMostrar,
+  ) {
+    final largura = MediaQuery.of(context).size.width;
+
+    Widget acaoRapida({
+      required String titulo,
+      required String subtitulo,
+      required IconData icone,
+      required Color corFundo,
+      required Color corIcone,
+      required VoidCallback onTap,
+    }) {
+      return Container(
+        margin: const EdgeInsets.only(bottom: 14),
+        decoration: BoxDecoration(
+          color: corFundo,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: corIcone.withOpacity(0.10),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(18),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 17,
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 58,
+                    height: 58,
+                    decoration: BoxDecoration(
+                      color: corIcone,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      icone,
+                      color: Colors.white,
+                      size: 30,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          titulo,
+                          style: const TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF1E293B),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          subtitulo,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey[700],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    Icons.chevron_right,
+                    color: corIcone,
+                    size: 27,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
+      body: _selectedIndex == 1
+          ? const AgendaScreen()
+          : _selectedIndex == 2
+              ? const ProfileScreen()
+              : Stack(
+                  children: [
+                    Positioned.fill(
+                      top: 100,
+                      child: SingleChildScrollView(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SizedBox(
+                              height: 350,
+                              width: double.infinity,
+                              child: Stack(
+                                  alignment: Alignment.center,
+                                  clipBehavior: Clip.none,
+                                  children: [
+                                  Positioned.fill(
+                                    child: Image.asset(
+                                      'assets/images/background2.png',
+                                      fit: BoxFit.cover,
+                                      alignment: Alignment.center,
+                                      errorBuilder: (_, __, ___) =>
+                                          const SizedBox.shrink(),
+                                    ),
+                                  ),
+                                  Positioned(
+                                    left: -125,
+                                    bottom: -170,
+                                    width: largura * 1.4,
+                                    height: 510,
+                                    child: Image.asset(
+                                      'assets/images/pets_lado_esquerdo.png',
+                                      fit: BoxFit.contain,
+                                      alignment: Alignment.bottomCenter,
+                                      errorBuilder: (_, __, ___) =>
+                                          const SizedBox.shrink(),
+                                    ),
+                                  ),
+                                  Container(
+                                    width: largura * 0.88,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 25,
+                                      vertical: 30,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.84),
+                                      borderRadius: BorderRadius.circular(30),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.07),
+                                          blurRadius: 20,
+                                          offset: const Offset(0, 8),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text.rich(
+                                          TextSpan(
+                                            children: [
+                                              const TextSpan(
+                                                text:
+                                                    'Que alegria ter você por aqui, ',
+                                                style: TextStyle(
+                                                  fontSize: 29,
+                                                  fontWeight: FontWeight.w800,
+                                                  color: Color(0xFF1E293B),
+                                                  height: 1.2,
+                                                ),
+                                              ),
+                                              TextSpan(
+                                                text:
+                                                    '${user?.nome?.split(' ').first ?? 'Usuário'}!',
+                                                style: const TextStyle(
+                                                  fontSize: 29,
+                                                  fontWeight: FontWeight.w800,
+                                                  color: Color(0xFF0D9488),
+                                                  height: 1.2,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        const SizedBox(height: 18),
+                                        Text(
+                                          'Aqui, cada detalhe é pensado para o bem-estar e a saúde do seu pet.',
+                                          style: TextStyle(
+                                            fontSize: 17,
+                                            color: Colors.grey[700],
+                                            height: 1.5,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.fromLTRB(
+                                20,
+                                35,
+                                20,
+                                35,
+                              ),
+                              decoration: const BoxDecoration(
+                                color: Color(0xFFF8FAFC),
+                                borderRadius: BorderRadius.vertical(
+                                  top: Radius.circular(35),
+                                ),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.pets,
+                                        color: Color(0xFF0D9488),
+                                        size: 29,
+                                      ),
+                                      const SizedBox(width: 10),
+                                      const Expanded(
+                                        child: Text(
+                                          'Meus Pets',
+                                          style: TextStyle(
+                                            fontSize: 25,
+                                            fontWeight: FontWeight.bold,
+                                            color: Color(0xFF1E293B),
+                                          ),
+                                        ),
+                                      ),
+                                      TextButton(
+                                        onPressed: () async {
+                                          final atualizou =
+                                              await Navigator.push<bool>(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (_) =>
+                                                  const MeusPetsScreen(),
+                                            ),
+                                          );
+
+                                          if (atualizou == true && mounted) {
+                                            await petProvider.carregarPets(
+                                              authProvider.currentUser!.id,
+                                            );
+                                          }
+                                        },
+                                        child: const Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Text(
+                                              'Ver todos',
+                                              style: TextStyle(
+                                                color: Color(0xFF14B8A6),
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            Icon(
+                                              Icons.chevron_right,
+                                              color: Color(0xFF14B8A6),
+                                              size: 25,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 24),
+                                  SizedBox(
+                                    height: 245,
+                                    child: ListView.separated(
+                                      scrollDirection: Axis.horizontal,
+                                      itemCount: petProvider.pets.length + 1,
+                                      separatorBuilder: (_, __) =>
+                                          const SizedBox(width: 16),
+                                      itemBuilder: (context, index) {
+                                        if (index == 0) {
+                                          return SizedBox(
+                                            width: 155,
+                                            child: _buildAddPetCard(),
+                                          );
+                                        }
+
+                                        final pet = petProvider.pets[index - 1];
+
+                                        return SizedBox(
+                                          width: 190,
+                                          child: _buildPetCard(
+                                            pet: pet,
+                                            age: calcularIdade(
+                                              pet.dataNascimento,
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                  const SizedBox(height: 35),
+                                  Container(
+                                    width: double.infinity,
+                                    padding: const EdgeInsets.all(20),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(25),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.04),
+                                          blurRadius: 12,
+                                          offset: const Offset(0, 3),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        const Row(
+                                          children: [
+                                            Icon(
+                                              Icons.bolt,
+                                              color: Color(0xFF14B8A6),
+                                              size: 29,
+                                            ),
+                                            SizedBox(width: 10),
+                                            Text(
+                                              'Ações rápidas',
+                                              style: TextStyle(
+                                                fontSize: 25,
+                                                fontWeight: FontWeight.bold,
+                                                color: Color(0xFF1E293B),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 12),
+                                        Text(
+                                          'Acesse facilmente o que é importante para o seu pet.',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            color: Colors.grey[600],
+                                            height: 1.5,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 24),
+                                        acaoRapida(
+                                          titulo: 'Vacinas',
+                                          subtitulo: 'Ver e agendar vacinas',
+                                          icone: Icons.vaccines,
+                                          corFundo: const Color(0xFFD1FAE5),
+                                          corIcone: const Color(0xFF059669),
+                                          onTap: () {},
+                                        ),
+                                        acaoRapida(
+                                          titulo: 'Consultas',
+                                          subtitulo: 'Agendar visita',
+                                          icone: Icons.calendar_month,
+                                          corFundo: const Color(0xFFE9D5FF),
+                                          corIcone: const Color(0xFF9333EA),
+                                          onTap: () {},
+                                        ),
+                                        acaoRapida(
+                                          titulo: 'Lembretes',
+                                          subtitulo: 'Ver lembretes e alertas',
+                                          icone: Icons.notifications_active,
+                                          corFundo: const Color(0xFFFED7AA),
+                                          corIcone: const Color(0xFFEA580C),
+                                          onTap: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (_) =>
+                                                    const AllRemindersScreen(),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 30),
+                                  Container(
+                                    width: double.infinity,
+                                    padding: const EdgeInsets.all(20),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(25),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.04),
+                                          blurRadius: 12,
+                                          offset: const Offset(0, 3),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        const Row(
+                                          children: [
+                                            Icon(
+                                              Icons.calendar_today_outlined,
+                                              color: Color(0xFF14B8A6),
+                                              size: 28,
+                                            ),
+                                            SizedBox(width: 10),
+                                            Expanded(
+                                              child: Text(
+                                                'Próximos lembretes',
+                                                style: TextStyle(
+                                                  fontSize: 23,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Color(0xFF1E293B),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 10),
+                                        Text(
+                                          'Fique por dentro dos próximos cuidados do seu pet.',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            color: Colors.grey[600],
+                                            height: 1.5,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 22),
+                                        if (lembretesParaMostrar.isEmpty)
+                                          Container(
+                                            width: double.infinity,
+                                            padding: const EdgeInsets.all(22),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFFF8FAFC),
+                                              borderRadius:
+                                                  BorderRadius.circular(20),
+                                              border: Border.all(
+                                                color: Colors.grey.shade200,
+                                              ),
+                                            ),
+                                            child: const Row(
+                                              children: [
+                                                Icon(
+                                                  Icons.notifications_none,
+                                                  color: Colors.grey,
+                                                  size: 30,
+                                                ),
+                                                SizedBox(width: 15),
+                                                Expanded(
+                                                  child: Text(
+                                                    'Nenhum lembrete próximo encontrado.',
+                                                    style: TextStyle(
+                                                      color: Colors.grey,
+                                                      fontSize: 16,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          )
+                                        else
+                                          ...lembretesParaMostrar
+                                              .asMap()
+                                              .entries
+                                              .map((entry) {
+                                            final index = entry.key;
+                                            final lembrete = entry.value;
+                                            final proximaData =
+                                                _getProximaData(lembrete);
+
+                                            if (proximaData == null) {
+                                              return const SizedBox.shrink();
+                                            }
+
+                                            return Padding(
+                                              padding: const EdgeInsets.only(
+                                                bottom: 14,
+                                              ),
+                                              child: _buildReminderWithTimelineMobile(
+                                                context: context,
+                                                idLembrete: lembrete.id,
+                                                idPet: lembrete.idPet,
+                                                icon: _iconePorTipo(
+                                                  lembrete.tipo,
+                                                ),
+                                                iconBg: _corFundoPorTipo(
+                                                  lembrete.tipo,
+                                                ),
+                                                iconColor: _corPorTipo(
+                                                  lembrete.tipo,
+                                                ),
+                                                title: lembrete.titulo,
+                                                pet: _nomePetPorId(
+                                                  lembrete.idPet,
+                                                ),
+                                                badge: _formatarTipo(
+                                                  lembrete.tipo,
+                                                ),
+                                                badgeColor: _corFundoPorTipo(
+                                                  lembrete.tipo,
+                                                ),
+                                                badgeTextColor: _corPorTipo(
+                                                  lembrete.tipo,
+                                                ),
+                                                date: _formatarDataLembrete(
+                                                  proximaData,
+                                                ),
+                                                time: _formatarHoraLembrete(
+                                                  proximaData,
+                                                ),
+                                                isFirst: index == 0,
+                                              ),
+                                            );
+                                          }),
+                                        const SizedBox(height: 12),
+                                        SizedBox(
+                                          width: double.infinity,
+                                          child: ElevatedButton.icon(
+                                            onPressed: () {
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (_) =>
+                                                      const AllRemindersScreen(),
+                                                ),
+                                              );
+                                            },
+                                            icon: const Icon(
+                                              Icons.list_alt,
+                                              color: Color(0xFF0D9488),
+                                            ),
+                                            label: const Text(
+                                              'Ver todos os lembretes',
+                                              style: TextStyle(
+                                                color: Color(0xFF0D9488),
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor:
+                                                  const Color(0xFFECFDF5),
+                                              elevation: 0,
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                vertical: 18,
+                                              ),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(18),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      child: Container(
+                        height: 100,
+                        padding: const EdgeInsets.symmetric(horizontal: 18),
+                        decoration: const BoxDecoration(
+                          color: Color(0xFF0D9488),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black12,
+                              blurRadius: 12,
+                              offset: Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: SafeArea(
+                          bottom: false,
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 48,
+                                height: 48,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: Colors.white,
+                                    width: 2,
+                                  ),
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    user?.nome?.substring(
+                                          0,
+                                          user.nome.length >= 2 ? 2 : 1,
+                                        ).toUpperCase() ??
+                                        'U',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 17,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      user?.nome ?? 'Usuário',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 17,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    Text(
+                                      user?.email ?? '',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        color: Colors.white.withOpacity(0.8),
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              _buildSettingsMenu(authProvider),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    if (_chatbotAberto)
+                      Positioned.fill(
+                        child: GestureDetector(
+                          onTap: () {
+                            setState(() => _chatbotAberto = false);
+                          },
+                          child: Container(
+                            color: Colors.black.withOpacity(0.2),
+                          ),
+                        ),
+                      ),
+                    if (_chatbotAberto)
+                      Positioned(
+                        top: 100,
+                        left: 12,
+                        right: 12,
+                        bottom: 12,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(24),
+                          child: const ChatbotBottomSheet(),
+                        ),
+                      ),
+                  ],
+                ),
+      floatingActionButton: _selectedIndex == 0
+          ? FloatingActionButton(
+              onPressed: () {
+                setState(() {
+                  _chatbotAberto = !_chatbotAberto;
+                });
+              },
+              backgroundColor: const Color(0xFF0D9488),
+              child: Icon(
+                _chatbotAberto ? Icons.close : Icons.smart_toy_outlined,
+                color: Colors.white,
+                size: 28,
+              ),
+            )
+          : null,
+      bottomNavigationBar: Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(25),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 10,
+              offset: Offset(0, -5),
+            ),
+          ],
+        ),
+        child: BottomNavigationBar(
+          currentIndex: _selectedIndex,
+          onTap: (index) {
+            setState(() {
+              _selectedIndex = index;
+              if (index != 0) {
+                _chatbotAberto = false;
+              }
+            });
+          },
+          type: BottomNavigationBarType.fixed,
+          selectedItemColor: const Color(0xFF0D9488),
+          unselectedItemColor: Colors.grey,
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home_rounded),
+              label: 'Início',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.calendar_today_outlined),
+              label: 'Agenda',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person_outline),
+              label: 'Perfil',
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMobileQuickAction({
+    required IconData icon,
+    required Color color,
+    required Color background,
+    required VoidCallback onTap,
+  }) {
+    return Expanded(
+      child: Material(
+        color: background,
+        borderRadius: BorderRadius.circular(22),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(22),
+          child: SizedBox(
+            height: 105,
+            child: Center(
+              child: Container(
+                width: 72,
+                height: 72,
+                decoration: BoxDecoration(
+                  color: color,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  icon,
+                  color: Colors.white,
+                  size: 34,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMobileReminder(dynamic lembrete) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: Colors.grey.shade200,
+        ),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.notifications_active_outlined,
+            color: Color(0xFF0D9488),
+            size: 28,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              lembrete.toString(),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 15,
+                color: Color(0xFF334155),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _logout(BuildContext context, AuthProvider authProvider) async {
     await authProvider.logout();
 
@@ -2256,6 +3074,193 @@ Widget _buildReminderWithTimeline({
         ),
       );
     },
+  );
+}
+
+Widget _buildReminderWithTimelineMobile({
+  required BuildContext context,
+  required int idLembrete,
+  required int idPet,
+  required IconData icon,
+  required Color iconBg,
+  required Color iconColor,
+  required String title,
+  required String pet,
+  required String badge,
+  required Color badgeColor,
+  required Color badgeTextColor,
+  required String date,
+  required String time,
+  required bool isFirst,
+}) {
+  return GestureDetector(
+    onTap: () async {
+      final atualizou = await Navigator.push<bool>(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ReminderDetailsScreen(
+            idLembrete: idLembrete,
+            idPet: idPet,
+          ),
+        ),
+      );
+
+      if (atualizou == true && context.mounted) {
+        final petProvider = Provider.of<PetProvider>(
+          context,
+          listen: false,
+        );
+
+        final reminderProvider = Provider.of<ReminderProvider>(
+          context,
+          listen: false,
+        );
+
+        await reminderProvider.carregarOcorrenciasDosPets(
+          petProvider.pets,
+        );
+      }
+    },
+    child: Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 46,
+            height: 46,
+            decoration: BoxDecoration(
+              color: iconBg,
+              borderRadius: BorderRadius.circular(13),
+            ),
+            child: Icon(
+              icon,
+              color: iconColor,
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  softWrap: true,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1E293B),
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.pets,
+                      color: iconColor,
+                      size: 14,
+                    ),
+                    const SizedBox(width: 5),
+                    Expanded(
+                      child: Text(
+                        pet,
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: badgeColor,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        badge,
+                        style: TextStyle(
+                          color: badgeTextColor,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.calendar_today,
+                          color: Colors.grey[600],
+                          size: 13,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          date,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF475569),
+                          ),
+                        ),
+                      ],
+                    ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.access_time,
+                          color: Colors.grey[500],
+                          size: 13,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          time,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 6),
+          Icon(
+            Icons.chevron_right,
+            color: iconColor,
+            size: 24,
+          ),
+        ],
+      ),
+    ),
   );
 }
 

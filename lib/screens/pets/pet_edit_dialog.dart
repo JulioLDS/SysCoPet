@@ -188,10 +188,14 @@ class _PetEditDialogState extends State<PetEditDialog> {
   @override
   Widget build(BuildContext context) {
     final petProvider = Provider.of<PetProvider>(context);
+    final isMobile = MediaQuery.of(context).size.width <= 600;
 
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      insetPadding: EdgeInsets.symmetric(
+        horizontal: isMobile ? 12 : 20,
+        vertical: 24,
+      ),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 650, maxHeight: 800),
         child: Column(
@@ -231,13 +235,16 @@ class _PetEditDialogState extends State<PetEditDialog> {
             ),
             Flexible(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
+                padding: EdgeInsets.all(isMobile ? 16 : 24),
                 child: Form(
                   key: _formKey,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       TextFormField(
+                        onTapOutside: (_) {
+                          FocusScope.of(context).unfocus();
+                        },
                         controller: nomeController,
                         focusNode: _nomeFocus,
                         textInputAction: TextInputAction.next,
@@ -592,6 +599,9 @@ class _PetEditDialogState extends State<PetEditDialog> {
                         children: [
                           Expanded(
                             child: TextFormField(
+                              onTapOutside: (_) {
+                                FocusScope.of(context).unfocus();
+                              },
                               controller: anoController,
                               focusNode: _anoFocus,
                               keyboardType: TextInputType.number,
@@ -601,6 +611,14 @@ class _PetEditDialogState extends State<PetEditDialog> {
                               },
                               decoration: InputDecoration(
                                 labelText: 'Ano *',
+                                errorMaxLines: 2,
+                                errorStyle: TextStyle(
+                                  fontSize: isMobile ? 10 : 12,
+                                ),
+                                contentPadding: EdgeInsets.symmetric(
+                                  horizontal: isMobile ? 7 : 12,
+                                  vertical: 16,
+                                ),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
@@ -618,6 +636,9 @@ class _PetEditDialogState extends State<PetEditDialog> {
                           const SizedBox(width: 10),
                           Expanded(
                             child: TextFormField(
+                              onTapOutside: (_) {
+                                FocusScope.of(context).unfocus();
+                              },
                               controller: mesController,
                               focusNode: _mesFocus,
                               keyboardType: TextInputType.number,
@@ -638,6 +659,9 @@ class _PetEditDialogState extends State<PetEditDialog> {
                           const SizedBox(width: 10),
                           Expanded(
                             child: TextFormField(
+                              onTapOutside: (_) {
+                                FocusScope.of(context).unfocus();
+                              },
                               controller: diaController,
                               focusNode: _diaFocus,
                               keyboardType: TextInputType.number,
@@ -660,6 +684,9 @@ class _PetEditDialogState extends State<PetEditDialog> {
                       const SizedBox(height: 16),
 
                       TextFormField(
+                        onTapOutside: (_) {
+                          FocusScope.of(context).unfocus();
+                        },
                         controller: pesoController,
                         focusNode: _pesoFocus,
                         keyboardType: TextInputType.number,
@@ -689,6 +716,9 @@ class _PetEditDialogState extends State<PetEditDialog> {
                       const SizedBox(height: 16),
 
                       TextFormField(
+                        onTapOutside: (_) {
+                          FocusScope.of(context).unfocus();
+                        },
                         controller: alturaController,
                         focusNode: _alturaFocus,
                         keyboardType: TextInputType.number,

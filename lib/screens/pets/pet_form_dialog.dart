@@ -154,6 +154,8 @@ class _PetFormDialogState extends State<PetFormDialog> {
   Widget build(BuildContext context) {
     final petProvider = Provider.of<PetProvider>(context);
 
+    final isMobile = MediaQuery.of(context).size.width <= 600;
+
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
@@ -204,6 +206,9 @@ class _PetFormDialogState extends State<PetFormDialog> {
                     children: [
                       // ✅ Nome: Enter pula os dropdowns e vai direto para o Ano
                       TextFormField(
+                        onTapOutside: (_) {
+                          FocusScope.of(context).unfocus();
+                        },
                         controller: nomeController,
                         focusNode: _nomeFocus,
                         textInputAction: TextInputAction.next,
@@ -572,6 +577,9 @@ class _PetFormDialogState extends State<PetFormDialog> {
                         children: [
                           Expanded(
                             child: TextFormField(
+                              onTapOutside: (_) {
+                                FocusScope.of(context).unfocus();
+                              },
                               controller: anoController,
                               focusNode: _anoFocus,
                               keyboardType: TextInputType.number,
@@ -581,6 +589,14 @@ class _PetFormDialogState extends State<PetFormDialog> {
                               },
                               decoration: InputDecoration(
                                 labelText: 'Ano *',
+                                errorMaxLines: 2,
+                                errorStyle: TextStyle(
+                                  fontSize: isMobile ? 10 : 12,
+                                ),
+                                contentPadding: EdgeInsets.symmetric(
+                                  horizontal: isMobile ? 8 : 12,
+                                  vertical: 16,
+                                ),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
@@ -602,6 +618,9 @@ class _PetFormDialogState extends State<PetFormDialog> {
                           const SizedBox(width: 10),
                           Expanded(
                             child: TextFormField(
+                              onTapOutside: (_) {
+                                FocusScope.of(context).unfocus();
+                              },
                               controller: mesController,
                               focusNode: _mesFocus,
                               keyboardType: TextInputType.number,
@@ -610,7 +629,7 @@ class _PetFormDialogState extends State<PetFormDialog> {
                                 FocusScope.of(context).requestFocus(_diaFocus);
                               },
                               decoration: InputDecoration(
-                                labelText: 'Mês - opcional',
+                                labelText: isMobile ? 'Mês' : 'Mês - opcional',
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
@@ -631,6 +650,9 @@ class _PetFormDialogState extends State<PetFormDialog> {
                           const SizedBox(width: 10),
                           Expanded(
                             child: TextFormField(
+                              onTapOutside: (_) {
+                                FocusScope.of(context).unfocus();
+                              },
                               controller: diaController,
                               focusNode: _diaFocus,
                               keyboardType: TextInputType.number,
@@ -639,7 +661,7 @@ class _PetFormDialogState extends State<PetFormDialog> {
                                 FocusScope.of(context).requestFocus(_pesoFocus);
                               },
                               decoration: InputDecoration(
-                                labelText: 'Dia - opcional',
+                                labelText: isMobile ? 'Dia' : 'Dia - opcional',
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
@@ -663,6 +685,9 @@ class _PetFormDialogState extends State<PetFormDialog> {
 
                       // ✅ Peso
                       TextFormField(
+                        onTapOutside: (_) {
+                          FocusScope.of(context).unfocus();
+                        },
                         controller: pesoController,
                         focusNode: _pesoFocus,
                         keyboardType: TextInputType.number,
@@ -698,6 +723,9 @@ class _PetFormDialogState extends State<PetFormDialog> {
 
                       // ✅ Altura
                       TextFormField(
+                        onTapOutside: (_) {
+                          FocusScope.of(context).unfocus();
+                        },
                         controller: alturaController,
                         focusNode: _alturaFocus,
                         keyboardType: TextInputType.number,
