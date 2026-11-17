@@ -17,10 +17,14 @@ class AgendaScreen extends StatefulWidget {
 class _AgendaScreenState extends State<AgendaScreen> {
   DateTime _mesAtual = DateTime.now();
   DateTime? _diaSelecionado;
-  DateTime? _diaComPopover; // ✅ Dia que está exibindo o popover
   bool _carregando = true;
 
-  // ✅ Dimensões da célula do calendário (usadas para posicionar o popover)
+  // ✅ Chaves globais para cada dia (permite calcular posição na tela)
+  final Map<String, GlobalKey> _diaKeys = {};
+
+  // ✅ Overlay entry para o popover (fica acima de TUDO)
+  OverlayEntry? _popoverOverlay;
+
   static const double _cellWidth = 44;
   static const double _cellHeight = 48;
 
@@ -29,6 +33,12 @@ class _AgendaScreenState extends State<AgendaScreen> {
     super.initState();
     _diaSelecionado = DateTime.now();
     _carregarDados();
+  }
+
+  @override
+  void dispose() {
+    _removerPopover();
+    super.dispose();
   }
 
   Future<void> _carregarDados() async {
@@ -49,7 +59,6 @@ class _AgendaScreenState extends State<AgendaScreen> {
     if (mounted) setState(() => _carregando = false);
   }
 
-  // ✅ Retorna o nome do pet associado ao id
   String _nomePetPorId(int idPet) {
     final petProvider = Provider.of<PetProvider>(context, listen: false);
     final petEncontrado = petProvider.pets.where((pet) => pet.idPet == idPet);
@@ -58,16 +67,16 @@ class _AgendaScreenState extends State<AgendaScreen> {
   }
 
   void _mesAnterior() {
+    _removerPopover();
     setState(() {
       _mesAtual = DateTime(_mesAtual.year, _mesAtual.month - 1, 1);
-      _diaComPopover = null;
     });
   }
 
   void _proximoMes() {
+    _removerPopover();
     setState(() {
       _mesAtual = DateTime(_mesAtual.year, _mesAtual.month + 1, 1);
-      _diaComPopover = null;
     });
   }
 
@@ -182,6 +191,297 @@ class _AgendaScreenState extends State<AgendaScreen> {
     }
   }
 
+  // ✅ Remove o popover da overlay
+  void _removerPopover() {
+    _popoverOverlay?.remove();
+    _popoverOverlay = null;
+  }
+
+  // ✅ Mostra o popover próximo ao dia clicado, acima de tudo
+  void _mostrarPopover(DateTime dia) {
+    _removerPopover();
+
+    final key = _diaKeys[_chaveDia(dia)];
+    if (key?.currentContext == null) return;
+
+    final renderBox = key!.currentContext!.findRenderObject() as RenderBox;
+    final posicao = renderBox.localToGlobal(Offset.zero);
+    final tamanho = renderBox.size;
+
+    _popoverOverlay = OverlayEntry(
+      builder: (context) {
+        return Stack(
+          children: [
+            // ✅ Camada transparente que cobre a tela toda e fecha o popover ao clicar
+            Positioned.fill(
+              child: GestureDetector(
+                onTap: () => _removerPopover(),
+                behavior: HitTestBehavior.translucent,
+                child: Container(color: Colors.transparent),
+              ),
+            ),
+            // ✅ Popover posicionado próximo ao dia clicado
+            Positioned(
+              left: (posicao.dx + (tamanho.width / 2) - 110).clamp(
+                0.0,
+                MediaQuery.of(context).size.width - 240,
+              ),
+              top: posicao.dy + tamanho.height + 8,
+              child: _buildPopover(dia),
+            ),
+          ],
+        );
+      },
+    );
+
+    Overlay.of(context).insert(_popoverOverlay!);
+  }
+
+  String _chaveDia(DateTime dia) => '${dia.year}-${dia.month}-${dia.day}';
+
+  // ✅ Fluxo: Adicionar lembrete → Selecionar Pet → Abrir formulário
+  void _abrirFluxoNovoLembrete() async {
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final petProvider = Provider.of<PetProvider>(context, listen: false);
+
+    if (petProvider.pets.isEmpty && auth.currentUser != null) {
+      await petProvider.carregarPets(auth.currentUser!.id);
+    }
+
+    if (petProvider.pets.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Adicione um pet primeiro!'),
+          backgroundColor: Color(0xFF0D9488),
+        ),
+      );
+      return;
+    }
+
+    if (petProvider.pets.length == 1) {
+      _abrirFormularioLembrete(petProvider.pets.first.idPet!);
+      return;
+    }
+
+    final petEscolhidoId = await showDialog<dynamic>(
+      context: context,
+      builder: (_) => _dialogSelecionarPetAgenda(petProvider.pets),
+    );
+
+    if (petEscolhidoId != null) {
+      _abrirFormularioLembrete(petEscolhidoId);
+    }
+  }
+
+  void _abrirFormularioLembrete(int idPet) async {
+    final criou = await showDialog<bool>(
+      context: context,
+      builder: (_) => ReminderFormDialog(idPet: idPet),
+    );
+    if (criou == true && mounted) {
+      await _carregarDados();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Lembrete criado com sucesso!'),
+            backgroundColor: Color(0xFF059669),
+          ),
+        );
+      }
+    }
+  }
+
+  Widget _dialogSelecionarPetAgenda(List<dynamic> pets) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 450),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFCCFBF1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.notifications_active,
+                      color: Color(0xFF0D9488),
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Text(
+                      'Novo lembrete',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF1E293B),
+                      ),
+                    ),
+                  ),
+                  MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFFEF2F2),
+                          borderRadius: BorderRadius.all(Radius.circular(8)),
+                        ),
+                        child: const Icon(
+                          Icons.close,
+                          color: Color(0xFFEF4444),
+                          size: 18,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFCCFBF1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.pets, color: Color(0xFF0D9488), size: 24),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Text(
+                        'Para qual pet você deseja criar um lembrete?',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Color(0xFF1E293B),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 300),
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: pets
+                        .map(
+                          (pet) => _petOptionCardAgenda(
+                            pet: pet,
+                            onTap: () => Navigator.pop(context, pet.idPet),
+                          ),
+                        )
+                        .toList(),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _petOptionCardAgenda({
+    required dynamic pet,
+    required VoidCallback onTap,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Material(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey.shade200),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 24,
+                  backgroundColor: const Color(0xFFCCFBF1),
+                  backgroundImage:
+                      pet.urlFoto != null && pet.urlFoto!.isNotEmpty
+                      ? NetworkImage(pet.urlFoto!)
+                      : null,
+                  child: pet.urlFoto == null || pet.urlFoto!.isEmpty
+                      ? const Icon(
+                          Icons.pets,
+                          color: Color(0xFF0D9488),
+                          size: 20,
+                        )
+                      : null,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        pet.nome,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 15,
+                          color: Color(0xFF1E293B),
+                        ),
+                      ),
+                      Text(
+                        pet.especie,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.chevron_right, color: Color(0xFF0D9488)),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _buildListaLembretes(List<ReminderOccurrenceModel> ocorrencias) {
+    final ordenados =
+        ocorrencias.where((l) => _getProximaData(l) != null).toList()
+          ..sort((a, b) => _getProximaData(a)!.compareTo(_getProximaData(b)!));
+
+    return ordenados
+        .take(5)
+        .map((lembrete) => _buildLembreteCard(lembrete))
+        .toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     final hoje = DateTime.now();
@@ -204,19 +504,6 @@ class _AgendaScreenState extends State<AgendaScreen> {
 
     final totalSemanas = (diasDoCalendario.length / 7).ceil();
 
-    // ✅ Calcula posição do popover (linha/coluna do dia selecionado)
-    double? popoverLeft;
-    double? popoverTop;
-    if (_diaComPopover != null) {
-      final index = diasDoCalendario.indexOf(_diaComPopover!);
-      if (index != -1) {
-        final linha = index ~/ 7;
-        final coluna = index % 7;
-        popoverLeft = coluna * _cellWidth + (_cellWidth / 2);
-        popoverTop = linha * _cellHeight + (_cellHeight / 2);
-      }
-    }
-
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
@@ -232,16 +519,44 @@ class _AgendaScreenState extends State<AgendaScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.today, size: 22),
-            tooltip: 'Ir para hoje',
-            onPressed: () {
-              setState(() {
-                _mesAtual = DateTime(hoje.year, hoje.month, 1);
-                _diaSelecionado = hoje;
-                _diaComPopover = null;
-              });
-            },
+          // ✅ Botão "Hoje" com texto e background
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: Material(
+              color: Colors.white.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(20),
+              child: InkWell(
+                onTap: () {
+                  _removerPopover();
+                  setState(() {
+                    _mesAtual = DateTime(hoje.year, hoje.month, 1);
+                    _diaSelecionado = hoje;
+                  });
+                },
+                borderRadius: BorderRadius.circular(20),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 8,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.today, color: Colors.white, size: 18),
+                      const SizedBox(width: 6),
+                      const Text(
+                        'Hoje',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           ),
         ],
       ),
@@ -251,7 +566,6 @@ class _AgendaScreenState extends State<AgendaScreen> {
               padding: const EdgeInsets.all(20),
               child: Center(
                 child: SizedBox(
-                  // ✅ 70% da largura da tela
                   width: MediaQuery.of(context).size.width * 0.7,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -272,7 +586,6 @@ class _AgendaScreenState extends State<AgendaScreen> {
                         ),
                         child: Column(
                           children: [
-                            // Header do calendário
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
@@ -303,8 +616,6 @@ class _AgendaScreenState extends State<AgendaScreen> {
                               ],
                             ),
                             const SizedBox(height: 16),
-
-                            // Dias da semana
                             Row(
                               children: diasSemana.map((dia) {
                                 return Expanded(
@@ -321,160 +632,114 @@ class _AgendaScreenState extends State<AgendaScreen> {
                               }).toList(),
                             ),
                             const SizedBox(height: 8),
+                            // ✅ Grid de dias
+                            Column(
+                              children: List.generate(totalSemanas, (
+                                semanaIndex,
+                              ) {
+                                final inicio = semanaIndex * 7;
+                                final fim = (inicio + 7).clamp(
+                                  0,
+                                  diasDoCalendario.length,
+                                );
+                                final diasDaSemana = diasDoCalendario.sublist(
+                                  inicio,
+                                  fim,
+                                );
 
-                            // ✅ Stack com grid + popover
-                            // ✅ Stack com grid + popover + detector de clique fora
-                            GestureDetector(
-                              // ✅ Fecha o popover ao clicar em qualquer lugar vazio
-                              onTap: () {
-                                if (_diaComPopover != null) {
-                                  setState(() => _diaComPopover = null);
-                                }
-                              },
-                              behavior: HitTestBehavior.opaque,
-                              child: Stack(
-                                clipBehavior: Clip.none,
-                                children: [
-                                  // Grid de dias
-                                  Column(
-                                    children: List.generate(totalSemanas, (
-                                      semanaIndex,
-                                    ) {
-                                      final inicio = semanaIndex * 7;
-                                      final fim = (inicio + 7).clamp(
-                                        0,
-                                        diasDoCalendario.length,
-                                      );
-                                      final diasDaSemana = diasDoCalendario
-                                          .sublist(inicio, fim);
+                                return SizedBox(
+                                  height: _cellHeight,
+                                  child: Row(
+                                    children: diasDaSemana.map((dia) {
+                                      if (dia == null) {
+                                        return const Expanded(
+                                          child: SizedBox(
+                                            width: _cellWidth,
+                                            height: _cellHeight,
+                                          ),
+                                        );
+                                      }
 
-                                      return SizedBox(
-                                        height: _cellHeight,
-                                        child: Row(
-                                          children: diasDaSemana.map((dia) {
-                                            if (dia == null) {
-                                              return const Expanded(
-                                                child: SizedBox(
-                                                  width: _cellWidth,
-                                                  height: _cellHeight,
-                                                ),
-                                              );
+                                      final chave = _chaveDia(dia);
+                                      final ehHoje =
+                                          dia.year == hoje.year &&
+                                          dia.month == hoje.month &&
+                                          dia.day == hoje.day;
+                                      final ehSelecionado =
+                                          _diaSelecionado != null &&
+                                          dia.year == _diaSelecionado!.year &&
+                                          dia.month == _diaSelecionado!.month &&
+                                          dia.day == _diaSelecionado!.day;
+                                      final lembretesDia = _lembretesDoDia(dia);
+                                      final temLembrete =
+                                          lembretesDia.isNotEmpty;
+
+                                      return Expanded(
+                                        child: GestureDetector(
+                                          key: _diaKeys.putIfAbsent(
+                                            chave,
+                                            () => GlobalKey(),
+                                          ), // ✅ GlobalKey para cada dia
+                                          onTap: () {
+                                            setState(() {
+                                              _diaSelecionado = dia;
+                                            });
+                                            if (temLembrete) {
+                                              // ✅ Mostra popover próximo ao dia clicado
+                                              _mostrarPopover(dia);
+                                            } else {
+                                              _removerPopover();
                                             }
-
-                                            final ehHoje =
-                                                dia.year == hoje.year &&
-                                                dia.month == hoje.month &&
-                                                dia.day == hoje.day;
-                                            final ehSelecionado =
-                                                _diaSelecionado != null &&
-                                                dia.year ==
-                                                    _diaSelecionado!.year &&
-                                                dia.month ==
-                                                    _diaSelecionado!.month &&
-                                                dia.day == _diaSelecionado!.day;
-                                            final lembretesDia =
-                                                _lembretesDoDia(dia);
-                                            final temLembrete =
-                                                lembretesDia.isNotEmpty;
-
-                                            return Expanded(
-                                              child: GestureDetector(
-                                                onTap: () {
-                                                  setState(() {
-                                                    _diaSelecionado = dia;
-                                                    if (temLembrete) {
-                                                      _diaComPopover =
-                                                          _diaComPopover == dia
-                                                          ? null
-                                                          : dia;
-                                                    } else {
-                                                      _diaComPopover = null;
-                                                    }
-                                                  });
-                                                },
-                                                child: Container(
-                                                  margin: const EdgeInsets.all(
-                                                    2,
-                                                  ),
-                                                  decoration: BoxDecoration(
-                                                    shape: BoxShape.circle,
-                                                    color: ehSelecionado
-                                                        ? const Color(
-                                                            0xFF0D9488,
-                                                          )
-                                                        : temLembrete
-                                                        ? const Color(
-                                                            0xFFECFDF5,
-                                                          )
-                                                        : ehHoje
-                                                        ? const Color(
-                                                            0xFFCCFBF1,
-                                                          )
-                                                        : Colors.transparent,
-                                                    border:
-                                                        temLembrete &&
-                                                            !ehSelecionado
-                                                        ? Border.all(
-                                                            color: const Color(
-                                                              0xFF0D9488,
-                                                            ).withOpacity(0.4),
-                                                            width: 1.5,
-                                                          )
-                                                        : null,
-                                                  ),
-                                                  child: Center(
-                                                    child: Text(
-                                                      '${dia.day}',
-                                                      style: TextStyle(
-                                                        color: ehSelecionado
-                                                            ? Colors.white
-                                                            : temLembrete
-                                                            ? const Color(
-                                                                0xFF0D9488,
-                                                              )
-                                                            : const Color(
-                                                                0xFF1E293B,
-                                                              ),
-                                                        fontWeight:
-                                                            ehSelecionado ||
-                                                                temLembrete ||
-                                                                ehHoje
-                                                            ? FontWeight.bold
-                                                            : FontWeight.normal,
-                                                        fontSize: 14,
-                                                      ),
-                                                    ),
-                                                  ),
+                                          },
+                                          child: Container(
+                                            margin: const EdgeInsets.all(2),
+                                            decoration: BoxDecoration(
+                                              shape: BoxShape.circle,
+                                              color: ehSelecionado
+                                                  ? const Color(0xFF0D9488)
+                                                  : temLembrete
+                                                  ? const Color(0xFFECFDF5)
+                                                  : ehHoje
+                                                  ? const Color(0xFFCCFBF1)
+                                                  : Colors.transparent,
+                                              border:
+                                                  temLembrete && !ehSelecionado
+                                                  ? Border.all(
+                                                      color: const Color(
+                                                        0xFF0D9488,
+                                                      ).withOpacity(0.4),
+                                                      width: 1.5,
+                                                    )
+                                                  : null,
+                                            ),
+                                            child: Center(
+                                              child: Text(
+                                                '${dia.day}',
+                                                style: TextStyle(
+                                                  color: ehSelecionado
+                                                      ? Colors.white
+                                                      : temLembrete
+                                                      ? const Color(0xFF0D9488)
+                                                      : const Color(0xFF1E293B),
+                                                  fontWeight:
+                                                      ehSelecionado ||
+                                                          temLembrete ||
+                                                          ehHoje
+                                                      ? FontWeight.bold
+                                                      : FontWeight.normal,
+                                                  fontSize: 14,
                                                 ),
                                               ),
-                                            );
-                                          }).toList(),
+                                            ),
+                                          ),
                                         ),
                                       );
-                                    }),
+                                    }).toList(),
                                   ),
-
-                                  // ✅ POPOVER sobre o dia com lembrete
-                                  if (_diaComPopover != null &&
-                                      popoverLeft != null &&
-                                      popoverTop != null)
-                                    Positioned(
-                                      left: (popoverLeft - 110).clamp(
-                                        0.0,
-                                        MediaQuery.of(context).size.width *
-                                                0.7 -
-                                            220 -
-                                            40,
-                                      ),
-                                      top: popoverTop + 20,
-                                      child: _buildPopover(_diaComPopover!),
-                                    ),
-                                ],
-                              ),
+                                );
+                              }),
                             ),
                             const SizedBox(height: 16),
-
-                            // Legenda
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
@@ -576,7 +841,6 @@ class _AgendaScreenState extends State<AgendaScreen> {
                       ),
                       const SizedBox(height: 12),
 
-                      // Lista de lembretes
                       if (reminderProvider.ocorrencias.isEmpty)
                         Container(
                           padding: const EdgeInsets.all(24),
@@ -615,39 +879,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
                           color: const Color(0xFFECFDF5),
                           borderRadius: BorderRadius.circular(14),
                           child: InkWell(
-                            onTap: () async {
-                              final petProvider = Provider.of<PetProvider>(
-                                context,
-                                listen: false,
-                              );
-                              if (petProvider.pets.isEmpty) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Adicione um pet primeiro!'),
-                                  ),
-                                );
-                                return;
-                              }
-                              final criou = await showDialog<bool>(
-                                context: context,
-                                builder: (_) => ReminderFormDialog(
-                                  idPet: petProvider.pets.first.idPet!,
-                                ),
-                              );
-                              if (criou == true) {
-                                await _carregarDados();
-                                if (mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        'Lembrete criado com sucesso!',
-                                      ),
-                                      backgroundColor: Color(0xFF059669),
-                                    ),
-                                  );
-                                }
-                              }
-                            },
+                            onTap: () => _abrirFluxoNovoLembrete(),
                             borderRadius: BorderRadius.circular(14),
                             child: const Padding(
                               padding: EdgeInsets.symmetric(vertical: 16),
@@ -682,18 +914,6 @@ class _AgendaScreenState extends State<AgendaScreen> {
     );
   }
 
-  // ✅ Lista ordenada de lembretes (extraída para evitar erro de cascade)
-  List<Widget> _buildListaLembretes(List<ReminderOccurrenceModel> ocorrencias) {
-    final ordenados =
-        ocorrencias.where((l) => _getProximaData(l) != null).toList()
-          ..sort((a, b) => _getProximaData(a)!.compareTo(_getProximaData(b)!));
-
-    return ordenados
-        .take(5)
-        .map((lembrete) => _buildLembreteCard(lembrete))
-        .toList();
-  }
-
   // ✅ POPOVER: mini-card que aparece sobre o dia clicado
   Widget _buildPopover(DateTime dia) {
     final lembretes = _lembretesDoDia(dia);
@@ -720,7 +940,6 @@ class _AgendaScreenState extends State<AgendaScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header do popover com data
             Row(
               children: [
                 const Icon(Icons.event, color: Color(0xFF0D9488), size: 16),
@@ -736,7 +955,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
                 const Spacer(),
                 IconButton(
                   icon: const Icon(Icons.close, size: 14, color: Colors.grey),
-                  onPressed: () => setState(() => _diaComPopover = null),
+                  onPressed: () => _removerPopover(),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                 ),
@@ -744,7 +963,6 @@ class _AgendaScreenState extends State<AgendaScreen> {
             ),
             const Divider(height: 1),
             const SizedBox(height: 8),
-            // Lista de lembretes do dia
             ...lembretes.map((lembrete) {
               final corTipo = _corPorTipo(lembrete.tipo);
               final fundoTipo = _corFundoPorTipo(lembrete.tipo);
@@ -799,7 +1017,6 @@ class _AgendaScreenState extends State<AgendaScreen> {
     );
   }
 
-  // ✅ Card de lembrete (agora com o nome do pet)
   Widget _buildLembreteCard(ReminderOccurrenceModel lembrete) {
     final proximaData = _getProximaData(lembrete)!;
     final corTipo = _corPorTipo(lembrete.tipo);
@@ -822,7 +1039,6 @@ class _AgendaScreenState extends State<AgendaScreen> {
       ),
       child: Row(
         children: [
-          // Ícone
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
@@ -832,7 +1048,6 @@ class _AgendaScreenState extends State<AgendaScreen> {
             child: Icon(_iconePorTipo(lembrete.tipo), color: corTipo, size: 22),
           ),
           const SizedBox(width: 12),
-          // Texto + Pet
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -848,7 +1063,6 @@ class _AgendaScreenState extends State<AgendaScreen> {
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 2),
-                // ✅ Linha com pet e data
                 Row(
                   children: [
                     Icon(Icons.pets, color: corTipo, size: 13),
@@ -884,7 +1098,6 @@ class _AgendaScreenState extends State<AgendaScreen> {
             ),
           ),
           const SizedBox(width: 8),
-          // Botão Concluir
           Material(
             color: const Color(0xFFECFDF5),
             borderRadius: BorderRadius.circular(20),
@@ -919,14 +1132,13 @@ class _AgendaScreenState extends State<AgendaScreen> {
             ),
           ),
           const SizedBox(width: 4),
-          // Botão Excluir
-          // Botão Excluir
           IconButton(
             icon: const Icon(Icons.delete_outline, color: Colors.red, size: 20),
             onPressed: () async {
               final confirmou = await showDialog<bool>(
                 context: context,
-                builder: (_) => _buildDialogExcluirLembrete(lembrete),
+                builder: (_) =>
+                    _DialogExcluirLembreteAgenda(titulo: lembrete.titulo),
               );
               if (confirmou == true) {
                 final provider = Provider.of<ReminderProvider>(
@@ -950,9 +1162,16 @@ class _AgendaScreenState extends State<AgendaScreen> {
       ),
     );
   }
+}
 
-  // ✅ Dialog padronizado para exclusão (mesmo padrão do DeleteReminderDialog)
-  Widget _buildDialogExcluirLembrete(ReminderOccurrenceModel lembrete) {
+// ✅ Dialog padronizado para exclusão de lembrete na Agenda
+class _DialogExcluirLembreteAgenda extends StatelessWidget {
+  final String titulo;
+
+  const _DialogExcluirLembreteAgenda({required this.titulo});
+
+  @override
+  Widget build(BuildContext context) {
     return Dialog(
       backgroundColor: Colors.transparent,
       child: ConstrainedBox(
@@ -1021,7 +1240,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
               ),
               const SizedBox(height: 24),
 
-              // ✅ Mensagem de Aviso
+              // ✅ Caixa de aviso
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -1042,7 +1261,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Tem certeza que deseja excluir "${lembrete.titulo}"?',
+                            'Tem certeza que deseja excluir "$titulo"?',
                             style: const TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w600,
