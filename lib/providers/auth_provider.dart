@@ -4,9 +4,16 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
+import '../services/user_service.dart';
 
 class AuthProvider extends ChangeNotifier {
+  AuthProvider({UserService? userService})
+    : _userService = userService ?? UserService();
+
   final AuthService _authService = AuthService();
+  final UserService _userService;
+  bool _disposed = false;
+  bool isUpdatingPhoto = false;
 
   UserModel? currentUser;
 
@@ -35,18 +42,13 @@ class AuthProvider extends ChangeNotifier {
 
   //salvar sessao
   Future<void> _saveUserSession() async {
-    if (currentUser == null) return;
+    final user = currentUser;
+    if (user == null) return;
 
     final prefs = await SharedPreferences.getInstance();
 
-    await prefs.setString(
-      'user_session',
-      jsonEncode({
-        'id': currentUser!.id,
-        'nome': currentUser!.nome,
-        'email': currentUser!.email,
-      }),
-    );
+    if (!identical(currentUser, user)) return;
+    await prefs.setString('user_session', jsonEncode(user.toJson()));
   }
 
   //carregar sessão
@@ -58,11 +60,7 @@ class AuthProvider extends ChangeNotifier {
     if (session != null) {
       final data = jsonDecode(session);
 
-      currentUser = UserModel(
-        id: data['id'],
-        nome: data['nome'],
-        email: data['email'],
-      );
+      currentUser = UserModel.fromJson(data);
     }
 
     isInitialized = true;
@@ -117,11 +115,7 @@ class AuthProvider extends ChangeNotifier {
 
       currentUser = UserModel.fromJson(usuarioJson);
 
-      final token = resposta['token'];
-
-      if (token != null) {
-        await _saveUserSession();
-      }
+      await _saveUserSession();
 
       return null;
     } catch (e) {
@@ -152,11 +146,7 @@ class AuthProvider extends ChangeNotifier {
 
       currentUser = UserModel.fromJson(usuarioJson);
 
-      final token = resposta['token'];
-
-      if (token != null) {
-        await _saveUserSession();
-      }
+      await _saveUserSession();
 
       return null;
     } catch (e) {
@@ -165,6 +155,76 @@ class AuthProvider extends ChangeNotifier {
       isLoading = false;
       notifyListeners();
     }
+  }
+
+  // null representa a remoção confirmada pelo backend.
+  Future<void> atualizarFotoPerfil(String? urlFoto) async {
+    if (currentUser == null || _disposed) return;
+
+    currentUser = currentUser!.copyWith(
+      urlFoto: urlFoto,
+      removerFoto: urlFoto == null,
+    );
+    try {
+      await _saveUserSession();
+    } catch (_) {
+      throw const UserPhotoException(
+        'A foto foi alterada, mas não foi possível salvar a sessão neste dispositivo.',
+      );
+    } finally {
+      if (!_disposed) notifyListeners();
+    }
+  }
+
+  Future<void> enviarFotoPerfil({
+    required List<int> bytes,
+    required String nomeArquivo,
+    String? mimeType,
+  }) => _alterarFoto((user) => _userService.uploadFotoUsuario(
+    idUsuario: user.id,
+    bytes: bytes,
+    nomeArquivo: nomeArquivo,
+    mimeType: mimeType,
+  ));
+
+  Future<void> removerFotoPerfil() => _alterarFoto((user) async {
+    await _userService.removerFotoUsuario(user.id);
+    return null;
+  });
+
+  Future<void> _alterarFoto(
+    Future<String?> Function(UserModel user) operation,
+  ) async {
+    final user = currentUser;
+    if (user == null || _disposed) {
+      throw const UserPhotoException('Entre na sua conta para alterar a foto.');
+    }
+    if (isUpdatingPhoto) {
+      throw const UserPhotoException('Aguarde a alteração da foto terminar.');
+    }
+
+    isUpdatingPhoto = true;
+
+    notifyListeners();
+
+    try {
+      final url = await operation(user);
+      // Não aplicar uma resposta antiga após logout ou troca de sessão.
+      if (_disposed || !identical(currentUser, user)) {
+        throw const UserPhotoException('Sua sessão mudou. Tente novamente.');
+      }
+      await atualizarFotoPerfil(url);
+    } finally {
+      isUpdatingPhoto = false;
+      if (!_disposed) notifyListeners();
+    }
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    _userService.dispose();
+    super.dispose();
   }
 
   //Logout

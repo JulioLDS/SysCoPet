@@ -10,6 +10,7 @@ import 'package:syscopet/screens/pets/reminders_all_screen.dart';
 import 'package:syscopet/screens/chatbot/chatbot_screen.dart';
 import '../pets/pet_form_dialog.dart';
 import '../../providers/auth_provider.dart';
+import '../../widgets/common/user_avatar.dart';
 import '../auth/auth_screen.dart';
 import '../pets/pet_edit_dialog.dart';
 import '../pets/pet_details_screen.dart';
@@ -1203,16 +1204,12 @@ class _HomeScreenState extends State<HomeScreen> {
                             shape: BoxShape.circle,
                             border: Border.all(color: Colors.white, width: 2),
                           ),
-                          child: Center(
-                            child: Text(
-                              user?.nome?.substring(0, 2).toUpperCase() ?? 'U',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                              ),
+                          child: UserAvatar(
+                            user: user,
+                            radius: 22,
+                            backgroundColor: const Color(0xFF0D9488),
+                            foregroundColor: Colors.white,
                             ),
-                          ),
                         ),
                         const SizedBox(width: 12),
                         Expanded(

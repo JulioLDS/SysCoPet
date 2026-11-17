@@ -1,37 +1,122 @@
-import 'dart:io';
+import 'dart:typed_data'; // ✅ Uint8List (funciona em Web e mobile)
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../providers/auth_provider.dart';
+import '../../services/user_service.dart';
+import '../../widgets/common/user_avatar.dart';
 
 class AccountScreen extends StatefulWidget {
-  const AccountScreen({super.key});
+  const AccountScreen({super.key, this.imagePicker});
+
+  final ImagePicker? imagePicker;
 
   @override
   State<AccountScreen> createState() => _AccountScreenState();
 }
 
 class _AccountScreenState extends State<AccountScreen> {
-  File? _imagemPerfil;
-  final ImagePicker _picker = ImagePicker();
+  Uint8List? _bytesPerfil; // ✅ guarda os bytes da imagem (web-safe)
+  bool _selecionandoFoto = false;
+  late final ImagePicker _picker = widget.imagePicker ?? ImagePicker();
 
   Future<void> _selecionarFoto() async {
-    final imagem = await _picker.pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 80,
-    );
+    final auth = context.read<AuthProvider>();
+    if (_selecionandoFoto || auth.isUpdatingPhoto) return;
+    final user = auth.currentUser;
+    if (user == null) {
+      _mostrarMensagem('Entre na sua conta para alterar a foto.');
+      return;
+    }
+
+    setState(() => _selecionandoFoto = true);
+    try {
+      final imagem = await _picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 80,
+      );
 
     if (imagem == null) return;
+      final bytes = await imagem.readAsBytes();
 
-    setState(() {
-      _imagemPerfil = File(imagem.path);
-    });
+    if (!mounted) return;
+    if (!identical(auth.currentUser, user)) {
+        _mostrarMensagem('Sua sessão mudou. Tente novamente.');
+        return;
+      }
+      setState(() => _bytesPerfil = bytes);
+      await auth.enviarFotoPerfil(
+        bytes: bytes,
+        nomeArquivo: imagem.name,
+        mimeType: imagem.mimeType,
+      );
+      if (mounted) _mostrarMensagem('Foto de perfil atualizada!');
+    } on UserPhotoException catch (error) {
+      if (mounted) _mostrarMensagem(error.message);
+    } catch (_) {
+      if (mounted) _mostrarMensagem('Não foi possível atualizar a foto. Tente novamente.');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _bytesPerfil = null;
+          _selecionandoFoto = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _removerFoto() async {
+    final auth = context.read<AuthProvider>();
+    if (_selecionandoFoto || auth.isUpdatingPhoto) return;
+    final user = auth.currentUser;
+    if (user == null) return;
+
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Remover foto de perfil?'),
+        content: const Text('Suas iniciais voltarão a aparecer no perfil.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Remover'),
+          ),
+        ],
+      ),
+    );
+    if (confirmar != true || !mounted) return;
+    if (!identical(auth.currentUser, user)) {
+      _mostrarMensagem('Sua sessão mudou. Tente novamente.');
+      return;
+    }
+    if (_selecionandoFoto || auth.isUpdatingPhoto) return;
+
+    try {
+      await auth.removerFotoPerfil();
+      if (mounted) _mostrarMensagem('Foto de perfil removida!');
+    } on UserPhotoException catch (error) {
+      if (mounted) _mostrarMensagem(error.message);
+    } catch (_) {
+      if (mounted) _mostrarMensagem('Não foi possível remover a foto. Tente novamente.');
+    }
+  }
+
+  void _mostrarMensagem(String mensagem) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(mensagem)));
   }
 
   @override
   Widget build(BuildContext context) {
-    final user = context.watch<AuthProvider>().currentUser;
-    final iniciais = user?.nome?.substring(0, 2).toUpperCase() ?? 'U';
+    final auth = context.watch<AuthProvider>();
+    final user = auth.currentUser;
+    final alterandoFoto = _selecionandoFoto || auth.isUpdatingPhoto;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
@@ -47,13 +132,11 @@ class _AccountScreenState extends State<AccountScreen> {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
-        // ✅ Ícone de editar removido daqui
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Center(
           child: SizedBox(
-            // ✅ Limita a largura dos widgets para 60% da tela
             width: MediaQuery.of(context).size.width * 0.6,
             child: Column(
               children: [
@@ -73,31 +156,18 @@ class _AccountScreenState extends State<AccountScreen> {
                   ),
                   child: Column(
                     children: [
-                      // Row com avatar, nome/email e botão editar
                       Row(
                         children: [
-                          // Avatar com badge de câmera
+                          // ✅ Avatar com badge de câmera (web-safe)
                           Stack(
                             alignment: Alignment.bottomRight,
                             children: [
-                              CircleAvatar(
+                              UserAvatar(
+                                user: user,
+                                bytes: _bytesPerfil,
                                 radius: 50,
-                                backgroundColor: const Color(0xFFECFDF5),
-                                backgroundImage: _imagemPerfil != null
-                                    ? FileImage(_imagemPerfil!)
-                                    : null,
-                                child: _imagemPerfil == null
-                                    ? Text(
-                                        iniciais,
-                                        style: const TextStyle(
-                                          color: Color(0xFF0D9488),
-                                          fontSize: 28,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      )
-                                    : null,
+                                fontSize: 28,
                               ),
-                              // Badge de câmera
                               Positioned(
                                 bottom: 0,
                                 right: 0,
@@ -121,7 +191,6 @@ class _AccountScreenState extends State<AccountScreen> {
                             ],
                           ),
                           const SizedBox(width: 16),
-                          // Nome e Email
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -159,14 +228,11 @@ class _AccountScreenState extends State<AccountScreen> {
                             ),
                           ),
                           const SizedBox(width: 12),
-                          // Botão Editar perfil
                           Material(
                             color: const Color(0xFFECFDF5),
                             borderRadius: BorderRadius.circular(24),
                             child: InkWell(
-                              onTap: () {
-                                // Ação de editar perfil
-                              },
+                              onTap: () {},
                               borderRadius: BorderRadius.circular(24),
                               child: Padding(
                                 padding: const EdgeInsets.symmetric(
@@ -197,6 +263,22 @@ class _AccountScreenState extends State<AccountScreen> {
                           ),
                         ],
                       ),
+                      if (alterandoFoto)
+                        const Padding(
+                          padding: EdgeInsets.only(top: 12),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              ),
+                              SizedBox(width: 10),
+                              Text('Atualizando foto...'),
+                            ],
+                          ),
+                        ),
                     ],
                   ),
                 ),
@@ -219,7 +301,6 @@ class _AccountScreenState extends State<AccountScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Título da seção
                       Row(
                         children: [
                           Container(
@@ -248,11 +329,8 @@ class _AccountScreenState extends State<AccountScreen> {
                       const SizedBox(height: 20),
                       const Divider(height: 1),
                       const SizedBox(height: 20),
-
-                      // Duas colunas: Nome e Email
                       Row(
                         children: [
-                          // Coluna Nome
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -297,7 +375,6 @@ class _AccountScreenState extends State<AccountScreen> {
                             ),
                           ),
                           const SizedBox(width: 20),
-                          // Coluna Email
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -349,7 +426,7 @@ class _AccountScreenState extends State<AccountScreen> {
                 ),
                 const SizedBox(height: 20),
 
-                // ✅ CARD DE AÇÕES (Alterar foto e Alterar senha)
+                // ✅ CARD DE AÇÕES
                 Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
@@ -364,22 +441,27 @@ class _AccountScreenState extends State<AccountScreen> {
                   ),
                   child: Column(
                     children: [
-                      // Alterar foto
                       _buildActionTile(
                         icon: Icons.image_outlined,
                         title: 'Alterar foto',
                         subtitle: 'Escolha uma nova foto para o seu perfil',
-                        onTap: _selecionarFoto,
+                        onTap: alterandoFoto ? null : _selecionarFoto,
                       ),
+                      if (user?.urlFoto?.trim().isNotEmpty == true) ...[
+                        const Divider(height: 1, indent: 60),
+                        _buildActionTile(
+                          icon: Icons.delete_outline,
+                          title: 'Remover foto',
+                          subtitle: 'Voltar a exibir suas iniciais',
+                          onTap: alterandoFoto ? null : _removerFoto,
+                        ),
+                      ],
                       const Divider(height: 1, indent: 60),
-                      // Alterar senha
                       _buildActionTile(
                         icon: Icons.lock_outline,
                         title: 'Alterar senha',
                         subtitle: 'Mantenha sua conta ainda mais segura',
-                        onTap: () {
-                          // Navegar para tela de alterar senha
-                        },
+                        onTap: () {},
                       ),
                     ],
                   ),
@@ -392,12 +474,11 @@ class _AccountScreenState extends State<AccountScreen> {
     );
   }
 
-  // Widget auxiliar para as opções de ação
   Widget _buildActionTile({
     required IconData icon,
     required String title,
     required String subtitle,
-    required VoidCallback onTap,
+    required VoidCallback? onTap,
   }) {
     return Material(
       color: Colors.transparent,
