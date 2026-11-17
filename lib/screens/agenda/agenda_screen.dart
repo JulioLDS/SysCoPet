@@ -514,10 +514,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
         backgroundColor: const Color(0xFF0D9488),
         foregroundColor: Colors.white,
         centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
+        // ❌ REMOVIDO: leading: IconButton(...)
         actions: [
           // ✅ Botão "Hoje" com texto e background
           Padding(

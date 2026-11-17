@@ -303,7 +303,7 @@ class _PetFormDialogState extends State<PetFormDialog> {
                                           width: 30,
                                           height: 30,
                                           child: Image.asset(
-                                            'assets/icons/cao.png',
+                                            'assets/icons/dog.png',
                                             fit: BoxFit.contain,
                                           ),
                                         ),
@@ -325,7 +325,7 @@ class _PetFormDialogState extends State<PetFormDialog> {
                                           width: 30,
                                           height: 30,
                                           child: Image.asset(
-                                            'assets/icons/gato.png',
+                                            'assets/icons/cat.png',
                                             fit: BoxFit.contain,
                                           ),
                                         ),
@@ -347,7 +347,7 @@ class _PetFormDialogState extends State<PetFormDialog> {
                                           width: 30,
                                           height: 30,
                                           child: Image.asset(
-                                            'assets/icons/desconhecido.png',
+                                            'assets/icons/lupa.png',
                                             fit: BoxFit.contain,
                                           ),
                                         ),
@@ -373,7 +373,7 @@ class _PetFormDialogState extends State<PetFormDialog> {
                                           width: 30,
                                           height: 30,
                                           child: Image.asset(
-                                            'assets/icons/cao.png',
+                                            'assets/icons/dog.png',
                                             fit: BoxFit.contain,
                                           ),
                                         ),
@@ -397,7 +397,7 @@ class _PetFormDialogState extends State<PetFormDialog> {
                                           width: 30,
                                           height: 30,
                                           child: Image.asset(
-                                            'assets/icons/gato.png',
+                                            'assets/icons/cat.png',
                                             fit: BoxFit.contain,
                                           ),
                                         ),
@@ -421,7 +421,7 @@ class _PetFormDialogState extends State<PetFormDialog> {
                                           width: 30,
                                           height: 30,
                                           child: Image.asset(
-                                            'assets/icons/desconhecido.png',
+                                            'assets/icons/lupa.png',
                                             fit: BoxFit.contain,
                                           ),
                                         ),
@@ -522,10 +522,10 @@ class _PetFormDialogState extends State<PetFormDialog> {
                                           height: 30,
                                           child: Image.asset(
                                             especieSelecionada == 'cao'
-                                                ? 'assets/icons/cao.png'
+                                                ? 'assets/icons/dog.png'
                                                 : especieSelecionada == 'gato'
-                                                ? 'assets/icons/gato.png'
-                                                : 'assets/icons/desconhecido.png',
+                                                ? 'assets/icons/cat.png'
+                                                : 'assets/icons/lupa.png',
                                             fit: BoxFit.contain,
                                           ),
                                         ),
