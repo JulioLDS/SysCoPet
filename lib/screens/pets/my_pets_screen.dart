@@ -154,6 +154,10 @@ class _MeusPetsScreenState extends State<MeusPetsScreen> {
     final petProvider = Provider.of<PetProvider>(context);
     final pets = petProvider.pets;
 
+    if (MediaQuery.of(context).size.width <= 600) {
+      return _buildMobileLayout(pets);
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       body: CustomScrollView(
@@ -289,6 +293,313 @@ class _MeusPetsScreenState extends State<MeusPetsScreen> {
         ),
         elevation: 4,
       ),
+    );
+  }
+
+  Widget _buildMobileLayout(List<PetModel> pets) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
+      body: CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color(0xFF0D9488),
+                    Color(0xFF14B8A6),
+                  ],
+                ),
+              ),
+              child: SafeArea(
+                bottom: false,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  child: Row(
+                    children: [
+                      _HoverButton(
+                        onTap: () => Navigator.pop(context),
+                        hoverColor: Colors.white.withOpacity(0.3),
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(
+                            Icons.arrow_back,
+                            color: Colors.white,
+                            size: 21,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Container(
+                        padding: const EdgeInsets.all(9),
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.pets,
+                          color: Color(0xFF0D9488),
+                          size: 23,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      const Expanded(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Meus Pets',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 21,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            SizedBox(height: 2),
+                            Text(
+                              'Gerencie todos os seus pets em um só lugar',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          if (pets.isEmpty)
+            _buildEmptyState()
+          else
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 24, 16, 20),
+              sliver: SliverGrid(
+                gridDelegate:
+                    const SliverGridDelegateWithMaxCrossAxisExtent(
+                  maxCrossAxisExtent: 240,
+                  mainAxisSpacing: 18,
+                  crossAxisSpacing: 14,
+                  childAspectRatio: 0.62,
+                ),
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    return _buildMobilePetCard(pets[index], index);
+                  },
+                  childCount: pets.length,
+                ),
+              ),
+            ),
+          const SliverToBoxAdapter(
+            child: SizedBox(height: 100),
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () async {
+          final cadastrou = await showDialog<bool>(
+            context: context,
+            builder: (_) => const PetFormDialog(),
+          );
+
+          if (cadastrou == true && mounted) {
+            await _carregarPets();
+            CustomSnackbar.showSuccess(
+              context,
+              'Pet cadastrado com sucesso!',
+              color: const Color(0xFF047857),
+            );
+          }
+        },
+        backgroundColor: const Color(0xFF0D9488),
+        icon: const Icon(Icons.add, size: 24),
+        label: const Text(
+          'Adicionar Pet',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        elevation: 4,
+      ),
+    );
+  }
+
+  Widget _buildMobilePetCard(PetModel pet, int index) {
+    final especieFormatada = _formatarEspecie(pet.especie);
+    final idade = _calcularIdade(pet.dataNascimento);
+    final raca = _obterNomeRaca(pet);
+
+    return HoverBuilder(
+      builder: (context, isHovered) {
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(25),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.08),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+              if (isHovered)
+                BoxShadow(
+                  color: const Color(0xFF0D9488).withOpacity(0.3),
+                  blurRadius: 12,
+                  spreadRadius: 1,
+                ),
+            ],
+            border: Border.all(
+              color: Colors.grey.shade200,
+              width: 1,
+            ),
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () async {
+                final atualizou = await Navigator.push<bool>(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => PetDetailsScreen(pet: pet),
+                  ),
+                );
+
+                if (atualizou == true && mounted) {
+                  await _carregarPets();
+                }
+              },
+              borderRadius: BorderRadius.circular(25),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 13,
+                  vertical: 17,
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 100,
+                      height: 100,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: const Color(0xFF0D9488)
+                              .withOpacity(0.3),
+                          width: 3,
+                        ),
+                        color: const Color(0xFFECFDF5),
+                      ),
+                      child: pet.urlFoto != null &&
+                              pet.urlFoto!.isNotEmpty
+                          ? ClipOval(
+                              child: Image.network(
+                                pet.urlFoto!,
+                                fit: BoxFit.cover,
+                                width: 100,
+                                height: 100,
+                              ),
+                            )
+                          : const Icon(
+                              Icons.pets,
+                              color: Color(0xFF0D9488),
+                              size: 45,
+                            ),
+                    ),
+                    const SizedBox(height: 13),
+                    Text(
+                      pet.nome,
+                      style: const TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF1E293B),
+                      ),
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      alignment: WrapAlignment.center,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 6,
+                      runSpacing: 5,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 9,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFD1FAE5),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            especieFormatada,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF0D9488),
+                            ),
+                          ),
+                        ),
+                        Text(
+                          raca,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade600,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 9,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFECFDF5),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        idade,
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        softWrap: true,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: Color(0xFF059669),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 

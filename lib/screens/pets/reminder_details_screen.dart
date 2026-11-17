@@ -640,6 +640,9 @@ class _ReminderDetailsScreenState extends State<ReminderDetailsScreen> {
                           ),
                         ],
                       ),
+                      SizedBox(
+                        height: MediaQuery.of(context).padding.bottom + 20,
+                      ),
                     ],
                   ),
                 ),
