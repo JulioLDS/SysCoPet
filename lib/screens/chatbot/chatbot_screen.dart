@@ -2,9 +2,16 @@ import 'package:flutter/material.dart';
 
 import '../../models/chat_message_model.dart';
 import '../../services/chatbot_service.dart';
+import 'package:provider/provider.dart';
+import '../../controllers/chat_session_controller.dart';
+import '../../providers/auth_provider.dart';
+import '../../services/chat_history_service.dart';
+import '../../widgets/chatbot/chat_history_actions.dart';
 
 class ChatbotScreen extends StatefulWidget {
-  const ChatbotScreen({super.key});
+  const ChatbotScreen({super.key, this.chatbotService, this.historyService});
+  final ChatbotService? chatbotService;
+  final ChatHistoryService? historyService;
 
   @override
   State<ChatbotScreen> createState() => _ChatbotScreenState();
@@ -15,78 +22,55 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
 
   final ScrollController _scrollController = ScrollController();
 
-  final ChatbotService _service = ChatbotService();
+  ChatSessionController? _chat;
+  int? _usuarioChat;
+  List<ChatMessageModel> get _mensagens => _chat?.mensagens ?? const [];
+  bool get _carregando => _chat?.enviandoMensagem ?? false;
+  bool get _carregandoHistorico => _chat?.carregandoHistorico ?? false;
+  bool get _ocupado => _chat?.ocupado ?? false;
+  bool get _podeLimpar =>
+      _chat?.idUsuario != null && _mensagens.isNotEmpty && !_ocupado;
 
-  final List<ChatMessageModel> _mensagens = [];
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_chat != null) return;
+    final chat = ChatSessionController(
+      authProvider: context.read<AuthProvider>(),
+      chatbotService: widget.chatbotService,
+      historyService: widget.historyService,
+    );
+    _chat = chat;
+    _usuarioChat = chat.idUsuario;
+    chat.addListener(_atualizarChat);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) chat.carregarHistorico();
+    });
+  }
 
-  bool _carregando = false;
+  void _atualizarChat() {
+    if (!mounted) return;
+    if (_usuarioChat != _chat?.idUsuario) {
+      _usuarioChat = _chat?.idUsuario;
+      _messageController.clear();
+    }
+    setState(() {});
+    _scrollParaFinal();
+  }
 
   Future<void> _enviarMensagem() async {
     final texto = _messageController.text.trim();
-
-    if (texto.isEmpty || _carregando) {
-      return;
-    }
-
-    setState(() {
-      _mensagens.add(ChatMessageModel(texto: texto, usuario: true));
-
-      _carregando = true;
-    });
-
+    if (texto.isEmpty || _ocupado || _chat == null) return;
     _messageController.clear();
-
-    _scrollParaFinal();
-
-    try {
-      final resposta = await _service.enviarMensagem(texto);
-
-      if (!mounted) return;
-
-      setState(() {
-        _mensagens.add(
-          ChatMessageModel(
-            texto: resposta.resposta,
-            usuario: false,
-            fontes: resposta.fontes,
-          ),
-        );
-      });
-    } catch (e) {
-      print('Erro chatbot: $e');
-
-      if (!mounted) return;
-
-      setState(() {
-        _mensagens.add(
-          ChatMessageModel(
-            texto: 'Não foi possível consultar o assistente no momento.',
-            usuario: false,
-          ),
-        );
-      });
-    } finally {
-      if (!mounted) return;
-
-      setState(() {
-        _carregando = false;
-      });
-
-      _scrollParaFinal();
-    }
+    await _chat!.enviarMensagem(texto);
   }
 
   void _scrollParaFinal() {
-    Future.delayed(const Duration(milliseconds: 100), () {
-      if (!_scrollController.hasClients) {
-        return;
-      }
-
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_scrollController.hasClients) return;
       _scrollController.animateTo(
         _scrollController.position.maxScrollExtent,
-
         duration: const Duration(milliseconds: 300),
-
         curve: Curves.easeOut,
       );
     });
@@ -94,9 +78,10 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
 
   @override
   void dispose() {
+    _chat?.removeListener(_atualizarChat);
+    _chat?.dispose();
     _messageController.dispose();
     _scrollController.dispose();
-
     super.dispose();
   }
 
@@ -111,12 +96,24 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
         backgroundColor: const Color(0xFF0D9488),
 
         foregroundColor: Colors.white,
+        actions: [
+          IconButton(
+            onPressed: _podeLimpar
+                ? () => confirmarLimparHistorico(context, _chat!)
+                : null,
+            tooltip: 'Limpar conversa',
+            icon: const Icon(Icons.delete_sweep_outlined),
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
 
       body: Column(
         children: [
           Expanded(
-            child: _mensagens.isEmpty
+            child: _carregandoHistorico
+                ? const Center(child: CircularProgressIndicator())
+                : _mensagens.isEmpty
                 ? _buildInicio()
                 : ListView.builder(
                     controller: _scrollController,
@@ -277,7 +274,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
               child: TextField(
                 controller: _messageController,
 
-                enabled: !_carregando,
+                enabled: !_ocupado,
 
                 minLines: 1,
                 maxLines: 4,
@@ -318,7 +315,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
               ),
 
               child: IconButton(
-                onPressed: _carregando ? null : _enviarMensagem,
+                onPressed: _ocupado ? null : _enviarMensagem,
 
                 color: Colors.white,
 
