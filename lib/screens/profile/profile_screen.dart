@@ -10,7 +10,6 @@ import '../../providers/reminder_provider.dart';
 import '../../models/reminder_ocurrence_model.dart';
 import '../settings/account_screen.dart';
 import '../settings/notifications_screen.dart';
-import '../settings/privacy_screen.dart';
 import '../settings/help_screen.dart';
 import '../settings/about_screen.dart';
 import '../pets/my_pets_screen.dart';
@@ -401,11 +400,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Stack(
             alignment: Alignment.bottomRight,
             children: [
-              UserAvatar(
-                user: user,
-                radius: 48,
-                fontSize: 26,
-              ),
+              UserAvatar(user: user, radius: 48, fontSize: 26),
               Container(
                 padding: const EdgeInsets.all(7),
                 decoration: BoxDecoration(
@@ -1321,12 +1316,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               MaterialPageRoute(builder: (_) => const NotificationsScreen()),
             );
             break;
-          case 'privacidade':
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const PrivacyScreen()),
-            );
-            break;
+
           case 'ajuda':
             Navigator.push(
               context,

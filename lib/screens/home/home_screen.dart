@@ -18,7 +18,6 @@ import '../pets/my_pets_screen.dart';
 import 'package:syscopet/screens/chatbot/chatbot_bottom_sheet.dart';
 import '../settings/account_screen.dart';
 import '../settings/notifications_screen.dart';
-import '../settings/privacy_screen.dart';
 import '../settings/help_screen.dart';
 import '../settings/about_screen.dart';
 import '../agenda/agenda_screen.dart';
@@ -1209,7 +1208,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             radius: 22,
                             backgroundColor: const Color(0xFF0D9488),
                             foregroundColor: Colors.white,
-                            ),
+                          ),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -1404,7 +1403,6 @@ class _HomeScreenState extends State<HomeScreen> {
   // ✅ Widget do Menu de Configurações (estilo imagem de referência)
   Widget _buildSettingsMenu(AuthProvider authProvider) {
     return PopupMenuButton<String>(
-      // ❌ REMOVA O 'icon' - use apenas 'child'
       child: Container(
         padding: const EdgeInsets.all(8),
         decoration: const BoxDecoration(
@@ -1420,7 +1418,6 @@ class _HomeScreenState extends State<HomeScreen> {
       offset: const Offset(0, 50),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       itemBuilder: (context) => [
-        // ✅ Título "GERAL"
         const PopupMenuItem<String>(
           enabled: false,
           child: Padding(
@@ -1435,8 +1432,6 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
         ),
-
-        // ✅ Minha conta
         PopupMenuItem<String>(
           value: 'minha_conta',
           padding: EdgeInsets.zero,
@@ -1445,8 +1440,6 @@ class _HomeScreenState extends State<HomeScreen> {
             title: 'Minha conta',
           ),
         ),
-
-        // ✅ Notificações
         PopupMenuItem<String>(
           value: 'notificacoes',
           padding: EdgeInsets.zero,
@@ -1455,45 +1448,17 @@ class _HomeScreenState extends State<HomeScreen> {
             title: 'Notificações',
           ),
         ),
-
-        // ✅ Privacidade
-        PopupMenuItem<String>(
-          value: 'privacidade',
-          padding: EdgeInsets.zero,
-          child: _buildMenuItem(
-            icon: Icons.shield_outlined,
-            title: 'Privacidade',
-          ),
-        ),
-
-        // ✅ Aparência
-        PopupMenuItem<String>(
-          value: 'aparência',
-          padding: EdgeInsets.zero,
-          child: _buildMenuItem(
-            icon: Icons.palette_outlined,
-            title: 'Aparência',
-          ),
-        ),
-
-        // ✅ Ajuda e suporte
         PopupMenuItem<String>(
           value: 'ajuda',
           padding: EdgeInsets.zero,
           child: _buildMenuItem(icon: Icons.help_outline, title: 'Ajuda'),
         ),
-
-        // ✅ Sobre o app
         PopupMenuItem<String>(
           value: 'sobre',
           padding: EdgeInsets.zero,
           child: _buildMenuItem(icon: Icons.info_outline, title: 'Sobre o app'),
         ),
-
-        // ✅ Linha divisória
         const PopupMenuDivider(height: 1),
-
-        // ✅ Sair da conta (vermelho)
         PopupMenuItem<String>(
           value: 'logout',
           padding: EdgeInsets.zero,
@@ -1516,12 +1481,6 @@ class _HomeScreenState extends State<HomeScreen> {
             Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const NotificationsScreen()),
-            );
-            break;
-          case 'privacidade':
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const PrivacyScreen()),
             );
             break;
           case 'ajuda':
