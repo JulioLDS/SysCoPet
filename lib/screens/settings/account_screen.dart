@@ -37,11 +37,11 @@ class _AccountScreenState extends State<AccountScreen> {
         imageQuality: 80,
       );
 
-    if (imagem == null) return;
+      if (imagem == null) return;
       final bytes = await imagem.readAsBytes();
 
-    if (!mounted) return;
-    if (!identical(auth.currentUser, user)) {
+      if (!mounted) return;
+      if (!identical(auth.currentUser, user)) {
         _mostrarMensagem('Sua sessão mudou. Tente novamente.');
         return;
       }
@@ -55,7 +55,8 @@ class _AccountScreenState extends State<AccountScreen> {
     } on UserPhotoException catch (error) {
       if (mounted) _mostrarMensagem(error.message);
     } catch (_) {
-      if (mounted) _mostrarMensagem('Não foi possível atualizar a foto. Tente novamente.');
+      if (mounted)
+        _mostrarMensagem('Não foi possível atualizar a foto. Tente novamente.');
     } finally {
       if (mounted) {
         setState(() {
@@ -102,7 +103,8 @@ class _AccountScreenState extends State<AccountScreen> {
     } on UserPhotoException catch (error) {
       if (mounted) _mostrarMensagem(error.message);
     } catch (_) {
-      if (mounted) _mostrarMensagem('Não foi possível remover a foto. Tente novamente.');
+      if (mounted)
+        _mostrarMensagem('Não foi possível remover a foto. Tente novamente.');
     }
   }
 
@@ -272,7 +274,9 @@ class _AccountScreenState extends State<AccountScreen> {
                               SizedBox(
                                 width: 18,
                                 height: 18,
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
                               ),
                               SizedBox(width: 10),
                               Text('Atualizando foto...'),
@@ -456,13 +460,6 @@ class _AccountScreenState extends State<AccountScreen> {
                           onTap: alterandoFoto ? null : _removerFoto,
                         ),
                       ],
-                      const Divider(height: 1, indent: 60),
-                      _buildActionTile(
-                        icon: Icons.lock_outline,
-                        title: 'Alterar senha',
-                        subtitle: 'Mantenha sua conta ainda mais segura',
-                        onTap: () {},
-                      ),
                     ],
                   ),
                 ),

@@ -9,15 +9,20 @@ import '../../widgets/common/custom_snackbar.dart';
 class ReminderFormDialog extends StatefulWidget {
   final int idPet;
   final ReminderModel? lembrete;
+  final String? tipoInicial;
 
-  const ReminderFormDialog({super.key, required this.idPet, this.lembrete});
+  const ReminderFormDialog({
+    super.key,
+    required this.idPet,
+    this.lembrete,
+    this.tipoInicial,
+  });
 
   @override
   State<ReminderFormDialog> createState() => _ReminderFormDialogState();
 }
 
 class _ReminderFormDialogState extends State<ReminderFormDialog> {
-
   bool get _editando => widget.lembrete != null;
 
   final _formKey = GlobalKey<FormState>();
@@ -48,12 +53,13 @@ class _ReminderFormDialogState extends State<ReminderFormDialog> {
   final recorrencias = const ['unica', 'diaria', 'semanal', 'mensal'];
 
   @override
+  @override
   void initState() {
     super.initState();
     tituloController.addListener(_updateTituloLength);
     descricaoController.addListener(_updateDescricaoLength);
 
-    // Se estiver editando, preenche os campos
+    // 1. Se estiver EDITANDO um lembrete existente, usa os dados dele
     if (widget.lembrete != null) {
       final lembrete = widget.lembrete!;
 
@@ -64,21 +70,20 @@ class _ReminderFormDialogState extends State<ReminderFormDialog> {
       recorrenciaSelecionada = lembrete.recorrencia;
 
       final data = lembrete.dataHora;
-
-      dataSelecionada = DateTime(
-        data.year,
-        data.month,
-        data.day,
-      );
-
-      horaSelecionada = TimeOfDay(
-        hour: data.hour,
-        minute: data.minute,
-      );
+      dataSelecionada = DateTime(data.year, data.month, data.day);
+      horaSelecionada = TimeOfDay(hour: data.hour, minute: data.minute);
 
       // Atualiza os contadores logo ao abrir
       tituloLength = tituloController.text.length;
       descricaoLength = descricaoController.text.length;
+    }
+    // 2. Se for um NOVO lembrete, verifica se a Home passou um tipo inicial
+    else {
+      if (widget.tipoInicial != null) {
+        tipoSelecionado = widget.tipoInicial!; // ✅ AQUI ELE PEGA 'consulta'
+      } else {
+        tipoSelecionado = 'alimentacao'; // Fallback padrão se nada for passado
+      }
     }
   }
 
@@ -238,9 +243,9 @@ class _ReminderFormDialogState extends State<ReminderFormDialog> {
 
     final String? erro;
     if (_editando) {
-      erro = await provider.atualizarLembrete(lembrete,);
+      erro = await provider.atualizarLembrete(lembrete);
     } else {
-      erro = await provider.criarLembrete(lembrete,);
+      erro = await provider.criarLembrete(lembrete);
     }
 
     if (!mounted) return;
@@ -432,24 +437,17 @@ class _ReminderFormDialogState extends State<ReminderFormDialog> {
 
   Widget _buildMobileLayout(BuildContext context) {
     final media = MediaQuery.of(context);
-    final alturaDisponivel =
-        (media.size.height - media.viewInsets.bottom - 32)
-            .clamp(200.0, media.size.height)
-            .toDouble();
+    final alturaDisponivel = (media.size.height - media.viewInsets.bottom - 32)
+        .clamp(200.0, media.size.height)
+        .toDouble();
 
     return Dialog(
       backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 16,
-      ),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxHeight: alturaDisponivel,
-        ),
+        constraints: BoxConstraints(maxHeight: alturaDisponivel),
         child: SingleChildScrollView(
-          keyboardDismissBehavior:
-              ScrollViewKeyboardDismissBehavior.onDrag,
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           child: Container(
             width: double.infinity,
             padding: const EdgeInsets.all(20),
@@ -481,9 +479,7 @@ class _ReminderFormDialogState extends State<ReminderFormDialog> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            _editando
-                                ? 'Editar Lembrete'
-                                : 'Novo lembrete',
+                            _editando ? 'Editar Lembrete' : 'Novo lembrete',
                             style: const TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
@@ -536,13 +532,13 @@ class _ReminderFormDialogState extends State<ReminderFormDialog> {
                         maxLength: 250,
                         currentLength: tituloLength,
                         textInputAction: TextInputAction.next,
-                        onFieldSubmitted: (_) =>
-                            FocusScope.of(context)
-                                .requestFocus(_descricaoFocus),
+                        onFieldSubmitted: (_) => FocusScope.of(
+                          context,
+                        ).requestFocus(_descricaoFocus),
                         validator: (value) =>
                             (value == null || value.trim().isEmpty)
-                                ? 'Informe o título'
-                                : null,
+                            ? 'Informe o título'
+                            : null,
                       ),
                       const SizedBox(height: 12),
                       _buildCompactInputField(
@@ -564,8 +560,7 @@ class _ReminderFormDialogState extends State<ReminderFormDialog> {
                         label: 'Tipo',
                         icon: _getTipoIcon(tipoSelecionado),
                         iconColor: _getTipoColor(tipoSelecionado),
-                        iconBg: _getTipoColor(tipoSelecionado)
-                            .withOpacity(0.1),
+                        iconBg: _getTipoColor(tipoSelecionado).withOpacity(0.1),
                         value: _formatarTexto(tipoSelecionado),
                         items: tipos
                             .map((tipo) => _formatarTexto(tipo))
@@ -574,39 +569,33 @@ class _ReminderFormDialogState extends State<ReminderFormDialog> {
                         getColorForItem: _getTipoColorByLabel,
                         onChanged: (value) {
                           setState(() {
-                            tipoSelecionado = tipos[
-                                tipos.indexWhere(
-                              (t) => _formatarTexto(t) == value,
-                            )];
+                            tipoSelecionado =
+                                tipos[tipos.indexWhere(
+                                  (t) => _formatarTexto(t) == value,
+                                )];
                           });
                         },
                       ),
                       const SizedBox(height: 12),
                       _buildCompactDropdown(
                         label: 'Recorrência',
-                        icon: _getRecorrenciaIcon(
-                            recorrenciaSelecionada),
-                        iconColor: _getRecorrenciaColor(
-                            recorrenciaSelecionada),
+                        icon: _getRecorrenciaIcon(recorrenciaSelecionada),
+                        iconColor: _getRecorrenciaColor(recorrenciaSelecionada),
                         iconBg: _getRecorrenciaColor(
                           recorrenciaSelecionada,
                         ).withOpacity(0.1),
-                        value: _formatarTexto(
-                            recorrenciaSelecionada),
+                        value: _formatarTexto(recorrenciaSelecionada),
                         items: recorrencias
                             .map((r) => _formatarTexto(r))
                             .toList(),
-                        getIconForItem:
-                            _getRecorrenciaIconByLabel,
-                        getColorForItem:
-                            _getRecorrenciaColorByLabel,
+                        getIconForItem: _getRecorrenciaIconByLabel,
+                        getColorForItem: _getRecorrenciaColorByLabel,
                         onChanged: (value) {
                           setState(() {
                             recorrenciaSelecionada =
-                                recorrencias[
-                                    recorrencias.indexWhere(
-                              (r) => _formatarTexto(r) == value,
-                            )];
+                                recorrencias[recorrencias.indexWhere(
+                                  (r) => _formatarTexto(r) == value,
+                                )];
                           });
                         },
                       ),
@@ -707,20 +696,14 @@ class _ReminderFormDialogState extends State<ReminderFormDialog> {
       children: [
         Text(
           label,
-          style: TextStyle(
-            fontSize: 13,
-            color: Colors.grey.shade600,
-          ),
+          style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
         ),
         const SizedBox(height: 6),
         GestureDetector(
           onTap: onTap,
           child: Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(
-              horizontal: 8,
-              vertical: 9,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 9),
             decoration: BoxDecoration(
               border: Border.all(color: Colors.grey.shade200),
               borderRadius: BorderRadius.circular(12),
@@ -733,11 +716,7 @@ class _ReminderFormDialogState extends State<ReminderFormDialog> {
                     color: iconBg,
                     borderRadius: BorderRadius.circular(6),
                   ),
-                  child: Icon(
-                    icon,
-                    color: iconColor,
-                    size: 16,
-                  ),
+                  child: Icon(icon, color: iconColor, size: 16),
                 ),
                 const SizedBox(width: 6),
                 Expanded(
@@ -796,8 +775,7 @@ class _ReminderFormDialogState extends State<ReminderFormDialog> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        _editando ? 'Editar Lembrete' :
-                        'Novo lembrete',
+                        _editando ? 'Editar Lembrete' : 'Novo lembrete',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -805,8 +783,9 @@ class _ReminderFormDialogState extends State<ReminderFormDialog> {
                         ),
                       ),
                       Text(
-                        _editando ? 'Edite o seu lembrete' :
-                        'Crie um lembrete para cuidar ainda melhor do seu pet.',
+                        _editando
+                            ? 'Edite o seu lembrete'
+                            : 'Crie um lembrete para cuidar ainda melhor do seu pet.',
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.grey.shade600,
