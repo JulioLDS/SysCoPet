@@ -49,3 +49,4 @@ build/
 .flutter-plugins
 .flutter-plugins-dependencies
 *.env
+aplicar.dart

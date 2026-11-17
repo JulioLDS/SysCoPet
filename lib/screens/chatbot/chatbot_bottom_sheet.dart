@@ -1,13 +1,24 @@
 import 'package:flutter/material.dart';
 import '../../models/chat_message_model.dart';
-import '../../models/chatbot_response_model.dart';
 import '../../services/chatbot_service.dart';
+import 'package:provider/provider.dart';
+import '../../controllers/chat_session_controller.dart';
+import '../../providers/auth_provider.dart';
+import '../../services/chat_history_service.dart';
+import '../../widgets/chatbot/chat_history_actions.dart';
 
 class ChatbotBottomSheet extends StatefulWidget {
   // ✅ Callback para fechar (ao invés de Navigator.pop)
   final VoidCallback onClose;
 
-  const ChatbotBottomSheet({super.key, required this.onClose});
+  const ChatbotBottomSheet({
+    super.key,
+    required this.onClose,
+    this.chatbotService,
+    this.historyService,
+  });
+  final ChatbotService? chatbotService;
+  final ChatHistoryService? historyService;
 
   @override
   State<ChatbotBottomSheet> createState() => _ChatbotBottomSheetState();
@@ -16,18 +27,27 @@ class ChatbotBottomSheet extends StatefulWidget {
 class _ChatbotBottomSheetState extends State<ChatbotBottomSheet> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  final ChatbotService _service = ChatbotService();
-
-  final List<ChatMessageModel> _messages = [
-    const ChatMessageModel(
-      texto:
-          'Olá! Sou o assistente 4UPet. Como posso ajudar com a saúde do seu pet hoje?',
-      usuario: false,
-    ),
-  ];
-
-  bool _isTyping = false;
+  ChatSessionController? _chat;
+  int? _usuarioChat;
   int _expandedMessageIndex = -1;
+
+  List<ChatMessageModel> get _messages => [
+    if (_chat?.mensagens.isEmpty ?? true)
+      const ChatMessageModel(
+        texto:
+            'Olá! Sou o assistente 4UPet. Como posso ajudar com a saúde do seu pet hoje?',
+        usuario: false,
+      ),
+    ...?_chat?.mensagens,
+    if (_chat?.enviandoMensagem == true)
+      const ChatMessageModel(texto: '...', usuario: false),
+  ];
+  bool get _isTyping => _chat?.ocupado ?? false;
+  bool get _carregandoHistorico => _chat?.carregandoHistorico ?? false;
+  bool get _podeLimpar =>
+      _chat?.idUsuario != null &&
+      (_chat?.mensagens.isNotEmpty ?? false) &&
+      !_isTyping;
 
   // ✅ Sugestões rápidas
   final List<Map<String, dynamic>> _sugestoesRapidas = [
@@ -37,80 +57,60 @@ class _ChatbotBottomSheetState extends State<ChatbotBottomSheet> {
   ];
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_chat != null) return;
+    final chat = ChatSessionController(
+      authProvider: context.read<AuthProvider>(),
+      chatbotService: widget.chatbotService,
+      historyService: widget.historyService,
+      mensagemErro:
+          'Ops! Tive um problema de conexão. Verifique sua internet e tente novamente.',
+    );
+    _chat = chat;
+    _usuarioChat = chat.idUsuario;
+    chat.addListener(_atualizarChat);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) chat.carregarHistorico();
+    });
+  }
+
+  void _atualizarChat() {
+    if (!mounted) return;
+    if (_usuarioChat != _chat?.idUsuario) {
+      _usuarioChat = _chat?.idUsuario;
+      _controller.clear();
+      _expandedMessageIndex = -1;
+    }
+    setState(() {});
+    _scrollToBottom();
+  }
+
+  @override
   void dispose() {
+    _chat?.removeListener(_atualizarChat);
+    _chat?.dispose();
     _controller.dispose();
     _scrollController.dispose();
     super.dispose();
   }
 
   void _scrollToBottom() {
-    if (_scrollController.hasClients) {
-      Future.delayed(const Duration(milliseconds: 100), () {
-        if (_scrollController.hasClients) {
-          _scrollController.animateTo(
-            _scrollController.position.maxScrollExtent,
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeOut,
-          );
-        }
-      });
-    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_scrollController.hasClients) return;
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    });
   }
 
   Future<void> _enviarMensagem(String texto) async {
-    if (texto.trim().isEmpty || _isTyping) return;
-
-    setState(() {
-      _messages.add(ChatMessageModel(texto: texto, usuario: true));
-      _messages.add(const ChatMessageModel(texto: '...', usuario: false));
-      _isTyping = true;
-      _expandedMessageIndex = -1;
-      _controller.clear();
-    });
-    _scrollToBottom();
-
-    try {
-      final response = await _service.enviarMensagem(texto);
-
-      setState(() {
-        _messages.removeLast();
-
-        if (response.contextoSuficiente) {
-          _messages.add(
-            ChatMessageModel(
-              texto: response.resposta,
-              usuario: false,
-              fontes: response.fontes.isNotEmpty ? response.fontes : [],
-            ),
-          );
-        } else {
-          _messages.add(
-            ChatMessageModel(
-              texto: response.resposta.isEmpty
-                  ? 'Desculpe, não encontrei essa informação na base de conhecimento do 4UPet. Para dúvidas sobre a saúde do seu pet, lembre-se de sempre consultar um médico-veterinário!'
-                  : response.resposta,
-              usuario: false,
-              ehErro: true,
-            ),
-          );
-        }
-      });
-    } catch (e) {
-      setState(() {
-        _messages.removeLast();
-        _messages.add(
-          const ChatMessageModel(
-            texto:
-                'Ops! Tive um problema de conexão. Verifique sua internet e tente novamente.',
-            usuario: false,
-            ehErro: true,
-          ),
-        );
-      });
-    } finally {
-      setState(() => _isTyping = false);
-      _scrollToBottom();
-    }
+    if (texto.trim().isEmpty || _isTyping || _chat == null) return;
+    _expandedMessageIndex = -1;
+    _controller.clear();
+    await _chat!.enviarMensagem(texto);
   }
 
   void _enviarSugestao(String sugestao) {
@@ -201,6 +201,17 @@ class _ChatbotBottomSheetState extends State<ChatbotBottomSheet> {
                       ],
                     ),
                   ),
+                  IconButton(
+                    onPressed: _podeLimpar
+                        ? () => confirmarLimparHistorico(context, _chat!)
+                        : null,
+                    tooltip: 'Limpar conversa',
+                    icon: const Icon(
+                      Icons.delete_sweep_outlined,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                  ),
                   // ✅ Apenas o X (minimizar removido)
                   Material(
                     color: Colors.white.withOpacity(0.15),
@@ -226,30 +237,32 @@ class _ChatbotBottomSheetState extends State<ChatbotBottomSheet> {
 
             // ✅ LISTA DE MENSAGENS
             Expanded(
-              child: ListView.builder(
-                controller: _scrollController,
-                padding: const EdgeInsets.all(16),
-                itemCount: _messages.length,
-                itemBuilder: (context, index) {
-                  final msg = _messages[index];
-                  final isUser = msg.usuario;
-                  final isLast = index == _messages.length - 1;
+              child: _carregandoHistorico
+                  ? const Center(child: CircularProgressIndicator())
+                  : ListView.builder(
+                      controller: _scrollController,
+                      padding: const EdgeInsets.all(16),
+                      itemCount: _messages.length,
+                      itemBuilder: (context, index) {
+                        final msg = _messages[index];
+                        final isUser = msg.usuario;
+                        final isLast = index == _messages.length - 1;
 
-                  return Column(
-                    children: [
-                      if (isUser)
-                        _buildUserMessage(msg)
-                      else if (msg.ehErro)
-                        _buildErrorMessage(msg) // ✅ sem patinha azul
-                      else
-                        _buildBotMessage(msg, index),
+                        return Column(
+                          children: [
+                            if (isUser)
+                              _buildUserMessage(msg)
+                            else if (msg.ehErro)
+                              _buildErrorMessage(msg) // ✅ sem patinha azul
+                            else
+                              _buildBotMessage(msg, index),
 
-                      if (isLast && !isUser && !msg.ehErro && !_isTyping)
-                        _buildSugestoesRapidas(),
-                    ],
-                  );
-                },
-              ),
+                            if (isLast && !isUser && !msg.ehErro && !_isTyping)
+                              _buildSugestoesRapidas(),
+                          ],
+                        );
+                      },
+                    ),
             ),
 
             // ✅ BARRA DE INPUT
@@ -270,6 +283,7 @@ class _ChatbotBottomSheetState extends State<ChatbotBottomSheet> {
                   Expanded(
                     child: TextField(
                       controller: _controller,
+                      enabled: !_isTyping,
                       maxLines: null,
                       textInputAction: TextInputAction.send,
                       onSubmitted: _enviarMensagem,
