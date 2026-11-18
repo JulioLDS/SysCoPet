@@ -265,9 +265,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final reminderProvider = context.watch<ReminderProvider>();
 
     final ocorrencias = reminderProvider.ocorrencias;
-    final historico = ocorrencias
-    .where((o) => o.ativo || o.concluido)
-    .toList();
+    final historico = ocorrencias.where((o) => o.ativo || o.concluido).toList();
 
     final concluidos = historico.where((o) => o.concluido).length;
 
@@ -295,119 +293,119 @@ class _ProfileScreenState extends State<ProfileScreen> {
         actions: [_buildSettingsMenu(), const SizedBox(width: 8)],
       ),
       body: MediaQuery.of(context).size.width < 600
-        ? _buildMobileLayout(
-            user: user,
-            totalPets: totalPets,
-            lembretesAtivos: lembretesAtivos,
-            taxaConclusao: taxaConclusao,
-            ocorrencias: ocorrencias,
-            dist: dist,
-            totalDist: totalDist,
-            proximo: proximo,
-            pets: petProvider.pets,
-            doMes: doMes,
-          )
-      : SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1400),
-            child: Column(
-              children: [
-                // ===== LINHA 1: Usuário + Destaque =====
-                IntrinsicHeight(
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
+          ? _buildMobileLayout(
+              user: user,
+              totalPets: totalPets,
+              lembretesAtivos: lembretesAtivos,
+              taxaConclusao: taxaConclusao,
+              ocorrencias: ocorrencias,
+              dist: dist,
+              totalDist: totalDist,
+              proximo: proximo,
+              pets: petProvider.pets,
+              doMes: doMes,
+            )
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 1400),
+                  child: Column(
                     children: [
-                      Expanded(flex: 2, child: _cardUsuario(user)),
-                      const SizedBox(width: 20),
-                      Expanded(flex: 1, child: _cardCuidando()),
+                      // ===== LINHA 1: Usuário + Destaque =====
+                      IntrinsicHeight(
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Expanded(flex: 2, child: _cardUsuario(user)),
+                            const SizedBox(width: 20),
+                            Expanded(flex: 1, child: _cardCuidando()),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+
+                      // ===== LINHA 2: 4 Métricas =====
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _metricCard(
+                              icon: Icons.pets,
+                              value: '$totalPets',
+                              label: 'Total de Pets',
+                              bg: const Color(0xFFECFDF5),
+                              fg: const Color(0xFF0D9488),
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const MeusPetsScreen(),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: _metricCard(
+                              icon: Icons.notifications_active,
+                              value: '$lembretesAtivos',
+                              label: 'Lembretes Ativos',
+                              bg: const Color(0xFFFEF3C7),
+                              fg: const Color(0xFFF59E0B),
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const AllRemindersScreen(),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: _metricCard(
+                              icon: Icons.check_circle,
+                              value: '$taxaConclusao%',
+                              label: 'Taxa de Conclusão',
+                              bg: const Color(0xFFD1FAE5),
+                              fg: const Color(0xFF059669),
+                              onTap: () {},
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(child: _proximoLembreteCard(proximo)),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+
+                      // ===== LINHA 3: Donut + Barras + Pets (mesma altura) =====
+                      IntrinsicHeight(
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Expanded(child: _cardDonut(dist, totalDist)),
+                            const SizedBox(width: 20),
+                            Expanded(child: _cardBarras(ocorrencias)),
+                            const SizedBox(width: 20),
+                            Expanded(child: _cardPets(petProvider.pets)),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+
+                      // ===== LINHA 4: Lembretes do mês + Destaque =====
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(flex: 2, child: _cardLembretesMes(doMes)),
+                          const SizedBox(width: 20),
+                          Expanded(flex: 1, child: _cardBemCuidado()),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
                     ],
                   ),
                 ),
-                const SizedBox(height: 20),
-
-                // ===== LINHA 2: 4 Métricas =====
-                Row(
-                  children: [
-                    Expanded(
-                      child: _metricCard(
-                        icon: Icons.pets,
-                        value: '$totalPets',
-                        label: 'Total de Pets',
-                        bg: const Color(0xFFECFDF5),
-                        fg: const Color(0xFF0D9488),
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const MeusPetsScreen(),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _metricCard(
-                        icon: Icons.notifications_active,
-                        value: '$lembretesAtivos',
-                        label: 'Lembretes Ativos',
-                        bg: const Color(0xFFFEF3C7),
-                        fg: const Color(0xFFF59E0B),
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const AllRemindersScreen(),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _metricCard(
-                        icon: Icons.check_circle,
-                        value: '$taxaConclusao%',
-                        label: 'Taxa de Conclusão',
-                        bg: const Color(0xFFD1FAE5),
-                        fg: const Color(0xFF059669),
-                        onTap: () {},
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(child: _proximoLembreteCard(proximo)),
-                  ],
-                ),
-                const SizedBox(height: 20),
-
-                // ===== LINHA 3: Donut + Barras + Pets (mesma altura) =====
-                IntrinsicHeight(
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Expanded(child: _cardDonut(dist, totalDist)),
-                      const SizedBox(width: 20),
-                      Expanded(child: _cardBarras(ocorrencias)),
-                      const SizedBox(width: 20),
-                      Expanded(child: _cardPets(petProvider.pets)),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 20),
-
-                // ===== LINHA 4: Lembretes do mês + Destaque =====
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(flex: 2, child: _cardLembretesMes(doMes)),
-                    const SizedBox(width: 20),
-                    Expanded(flex: 1, child: _cardBemCuidado()),
-                  ],
-                ),
-                const SizedBox(height: 24),
-              ],
+              ),
             ),
-          ),
-        ),
-      ),
     );
   }
 
@@ -445,9 +443,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   fg: const Color(0xFF0D9488),
                   onTap: () => Navigator.push(
                     context,
-                    MaterialPageRoute(
-                      builder: (_) => const MeusPetsScreen(),
-                    ),
+                    MaterialPageRoute(builder: (_) => const MeusPetsScreen()),
                   ),
                 ),
               ),
@@ -517,11 +513,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Stack(
             alignment: Alignment.bottomRight,
             children: [
-              UserAvatar(
-                user: user,
-                radius: 42,
-                fontSize: 24,
-              ),
+              UserAvatar(user: user, radius: 42, fontSize: 24),
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
@@ -551,10 +543,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Text(
             user?.email ?? '',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Colors.grey.shade600,
-              fontSize: 13,
-            ),
+            style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
             overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 14),
@@ -563,9 +552,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             label: 'Editar perfil',
             onTap: () => Navigator.push(
               context,
-              MaterialPageRoute(
-                builder: (_) => const AccountScreen(),
-              ),
+              MaterialPageRoute(builder: (_) => const AccountScreen()),
             ),
           ),
         ],
@@ -583,11 +570,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         children: [
           Row(
             children: [
-              const Icon(
-                Icons.pets,
-                color: Color(0xFF0D9488),
-                size: 22,
-              ),
+              const Icon(Icons.pets, color: Color(0xFF0D9488), size: 22),
               const SizedBox(width: 8),
               const Expanded(
                 child: Text(
@@ -604,9 +587,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 label: 'Ver todos',
                 onTap: () => Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (_) => const MeusPetsScreen(),
-                  ),
+                  MaterialPageRoute(builder: (_) => const MeusPetsScreen()),
                 ),
               ),
             ],
@@ -624,9 +605,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _cardLembretesMesMobile(
-    List<ReminderOccurrenceModel> doMes,
-  ) {
+  Widget _cardLembretesMesMobile(List<ReminderOccurrenceModel> doMes) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
@@ -657,9 +636,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 label: 'Ver agenda',
                 onTap: () => Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (_) => const AgendaScreen(),
-                  ),
+                  MaterialPageRoute(builder: (_) => const AgendaScreen()),
                 ),
               ),
             ],
@@ -858,9 +835,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final isMobile = MediaQuery.of(context).size.width < 600;
 
     final meses = [
-      'Janeiro', 'Fevereiro', 'Março', 'Abril',
-      'Maio', 'Junho', 'Julho', 'Agosto',
-      'Setembro', 'Outubro', 'Novembro', 'Dezembro',
+      'Janeiro',
+      'Fevereiro',
+      'Março',
+      'Abril',
+      'Maio',
+      'Junho',
+      'Julho',
+      'Agosto',
+      'Setembro',
+      'Outubro',
+      'Novembro',
+      'Dezembro',
     ];
 
     final dataCompleta = proxima != null
@@ -899,10 +885,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               children: [
                 const Text(
                   'Próximo lembrete',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Colors.grey,
-                  ),
+                  style: TextStyle(fontSize: 11, color: Colors.grey),
                 ),
 
                 const SizedBox(height: 3),
@@ -924,20 +907,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   const SizedBox(height: 3),
                   Text(
                     isMobile ? dataCompleta : _formatarDataCurta(proxima),
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey.shade600,
-                    ),
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                   ),
                 ],
               ],
             ),
           ),
 
-          const Icon(
-            Icons.chevron_right,
-            color: Color(0xFF0D9488),
-          ),
+          const Icon(Icons.chevron_right, color: Color(0xFF0D9488)),
         ],
       ),
     );
@@ -1117,15 +1094,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     final quantidades = List.generate(4, (i) {
       return ocorrencias.where((lembrete) {
-        final datas = [
-          lembrete.dataHora,
-          ...lembrete.proximasOcorrencias,
-        ];
+        final datas = [lembrete.dataHora, ...lembrete.proximasOcorrencias];
 
         return datas.any(
-          (data) =>
-              data.year == meses[i].year &&
-              data.month == meses[i].month,
+          (data) => data.year == meses[i].year && data.month == meses[i].month,
         );
       }).length;
     });
@@ -1134,14 +1106,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final limiteGrafico = maiorValor == 0 ? 5.0 : (maiorValor + 2).toDouble();
 
     const nomesMeses = [
-      'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun',
-      'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez',
+      'Jan',
+      'Fev',
+      'Mar',
+      'Abr',
+      'Mai',
+      'Jun',
+      'Jul',
+      'Ago',
+      'Set',
+      'Out',
+      'Nov',
+      'Dez',
     ];
 
     final labelsMeses = meses.map((m) => nomesMeses[m.month - 1]).toList();
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: _cardDecoration(),
+      clipBehavior: Clip.hardEdge,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1216,10 +1199,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 borderData: FlBorderData(show: false),
                 barGroups: [
-                  _barGroup(0, quantidades[0].toDouble()),
-                  _barGroup(1, quantidades[1].toDouble()),
-                  _barGroup(2, quantidades[2].toDouble()),
-                  _barGroup(3, quantidades[3].toDouble()),
+                  _barGroup(0, quantidades[0].toDouble(), limiteGrafico),
+                  _barGroup(1, quantidades[1].toDouble(), limiteGrafico),
+                  _barGroup(2, quantidades[2].toDouble(), limiteGrafico),
+                  _barGroup(3, quantidades[3].toDouble(), limiteGrafico),
                 ],
               ),
             ),
@@ -1229,7 +1212,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  BarChartGroupData _barGroup(int x, double y) {
+  BarChartGroupData _barGroup(int x, double y, double limite) {
     return BarChartGroupData(
       x: x,
       barRods: [
@@ -1240,7 +1223,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
           backDrawRodData: BackgroundBarChartRodData(
             show: true,
-            toY: 15,
+            toY: limite,
             color: Colors.grey.shade100,
           ),
         ),
@@ -1690,14 +1673,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           child: _buildMenuItem(
             icon: Icons.notifications_outlined,
             title: 'Notificações',
-          ),
-        ),
-        PopupMenuItem<String>(
-          value: 'privacidade',
-          padding: EdgeInsets.zero,
-          child: _buildMenuItem(
-            icon: Icons.shield_outlined,
-            title: 'Privacidade',
           ),
         ),
         PopupMenuItem<String>(
