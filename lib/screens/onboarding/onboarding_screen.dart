@@ -414,22 +414,6 @@ class _OnboardingScreenState extends State<OnboardingScreen>
           ),
         ),
 
-        // Logo
-        Row(
-          children: [
-             Container(
-                margin: const EdgeInsets.only(left: 95, top: 55),
-                child: RotatedBox(
-                  quarterTurns: 1,
-                  child: Image.asset(
-                    'assets/icons/Logo_PI.png',
-                    height: 200,
-                  ),
-                ),
-              ),
-            ],
-        ),
-
         const SizedBox(height: 50),
 
         // Pets
@@ -452,134 +436,152 @@ class _OnboardingScreenState extends State<OnboardingScreen>
           padding: const EdgeInsets.all(24),
           child: FadeTransition(
             opacity: _fadeInAnimation,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Stack(
+              clipBehavior: Clip.none,
               children: [
-                const SizedBox(height: 115),
-
-                // Título
-                const Text.rich(
-                  TextSpan(
-                    text: 'Mais cuidado,\n',
-                    style: TextStyle(
-                      fontSize: 30,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF1E293B),
-                      height: 1.2,
+                // Logo: agora acompanha a rolagem
+                Positioned(
+                  top: 31,
+                  left: 71,
+                  child: RotatedBox(
+                    quarterTurns: 1,
+                    child: Image.asset(
+                      'assets/icons/Logo_PI.png',
+                      height: 200,
                     ),
-                    children: [
+                  ),
+                ),
+
+                // Conteúdo principal
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                  const SizedBox(height: 115),
+
+                    // Título
+                    const Text.rich(
                       TextSpan(
-                        text: 'mais amor,\n',
-                        style: TextStyle(
-                          fontSize: 30,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF0D9488),
-                        ),
-                      ),
-                      TextSpan(
-                        text: 'mais conexão.',
+                        text: 'Mais cuidado,\n',
                         style: TextStyle(
                           fontSize: 30,
                           fontWeight: FontWeight.w800,
                           color: Color(0xFF1E293B),
+                          height: 1.2,
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 16),
-
-                // Descrição
-                const Text(
-                  'A plataforma completa para gerenciar a saúde, bem-estar e rotina do seu pet.',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey,
-                    height: 1.5,
-                  ),
-                ),
-
-                const SizedBox(height: 30),
-
-                // Cards de Features
-                _buildFeatureCard(
-                  icon: Icons.vaccines_outlined,
-                  iconColor: const Color(0xFF059669),
-                  iconBg: const Color(0xFFD1FAE5),
-                  title: 'Organize tudo',
-                  subtitle:
-                      'Vacinas, consultas, exames e muito mais em um só lugar.',
-                  scaleFactor: scaleFactor,
-                  cardWidth: double.infinity,
-                  cardHeight: 100,
-                ),
-
-                const SizedBox(height: 16),
-
-                _buildFeatureCard(
-                  icon: Icons.calendar_month_outlined,
-                  iconColor: const Color(0xFF2563EB),
-                  iconBg: const Color(0xFFDBEAFE),
-                  title: 'Não perca nada',
-                  subtitle:
-                      'Receba lembretes de compromissos e cuide sempre em dia.',
-                  scaleFactor: scaleFactor,
-                  cardWidth: double.infinity,
-                  cardHeight: 100,
-                ),
-
-                const SizedBox(height: 16),
-
-                _buildFeatureCard(
-                  icon: Icons.favorite_outline,
-                  iconColor: const Color(0xFFEA580C),
-                  iconBg: const Color(0xFFFFEDD5),
-                  title: 'Cuidado que conecta',
-                  subtitle:
-                      'Informações do seu pet sempre com você, onde estiver.',
-                  scaleFactor: scaleFactor,
-                  cardWidth: double.infinity,
-                  cardHeight: 100,
-                ),
-
-                const SizedBox(height: 30),
-
-                // Botão
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pushReplacementNamed(context, '/auth');
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF0D9488).withOpacity(0.85),
-                      foregroundColor: Colors.white,
-                      elevation: 6,
-                      shadowColor: const Color(0xFF0D9488).withOpacity(0.4),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                        children: [
+                          TextSpan(
+                            text: 'mais amor,\n',
+                            style: TextStyle(
+                              fontSize: 30,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF0D9488),
+                            ),
+                          ),
+                          TextSpan(
+                            text: 'mais conexão.',
+                            style: TextStyle(
+                              fontSize: 30,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF1E293B),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.pets, size: 24),
-                        SizedBox(width: 12),
-                        Text(
-                          'Vamos começar',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
+
+                    const SizedBox(height: 16),
+
+                    // Descrição
+                    const Text(
+                      'A plataforma completa para gerenciar a saúde, bem-estar e rotina do seu pet.',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.grey,
+                        height: 1.5,
+                      ),
+                    ),
+
+                    const SizedBox(height: 30),
+
+                    // Cards de Features
+                    _buildFeatureCard(
+                      icon: Icons.vaccines_outlined,
+                      iconColor: const Color(0xFF059669),
+                      iconBg: const Color(0xFFD1FAE5),
+                      title: 'Organize tudo',
+                      subtitle:
+                          'Vacinas, consultas, exames e muito mais em um só lugar.',
+                      scaleFactor: scaleFactor,
+                      cardWidth: double.infinity,
+                      cardHeight: 100,
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    _buildFeatureCard(
+                      icon: Icons.calendar_month_outlined,
+                      iconColor: const Color(0xFF2563EB),
+                      iconBg: const Color(0xFFDBEAFE),
+                      title: 'Não perca nada',
+                      subtitle:
+                          'Receba lembretes de compromissos e cuide sempre em dia.',
+                      scaleFactor: scaleFactor,
+                      cardWidth: double.infinity,
+                      cardHeight: 100,
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    _buildFeatureCard(
+                      icon: Icons.favorite_outline,
+                      iconColor: const Color(0xFFEA580C),
+                      iconBg: const Color(0xFFFFEDD5),
+                      title: 'Cuidado que conecta',
+                      subtitle:
+                          'Informações do seu pet sempre com você, onde estiver.',
+                      scaleFactor: scaleFactor,
+                      cardWidth: double.infinity,
+                      cardHeight: 100,
+                    ),
+
+                    const SizedBox(height: 30),
+
+                    // Botão
+                    SizedBox(
+                      width: double.infinity,
+                      height: 56,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pushReplacementNamed(context, '/auth');
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF0D9488).withOpacity(0.85),
+                          foregroundColor: Colors.white,
+                          elevation: 6,
+                          shadowColor: const Color(0xFF0D9488).withOpacity(0.4),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
                           ),
                         ),
-                      ],
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.pets, size: 24),
+                            SizedBox(width: 12),
+                            Text(
+                              'Vamos começar',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
-                  ),
+                    const SizedBox(height: 40),
+                  ],
                 ),
-
-                const SizedBox(height: 40),
               ],
             ),
           ),
