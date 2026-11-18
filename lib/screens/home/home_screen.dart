@@ -1734,7 +1734,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       icone: Icons.vaccines,
                                       corFundo: const Color(0xFFD1FAE5),
                                       corIcone: const Color(0xFF059669),
-                                      onTap: () {},
+                                      onTap: _abrirFluxoVacina,
                                     ),
                                     acaoRapida(
                                       titulo: 'Consultas',
@@ -1742,7 +1742,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       icone: Icons.calendar_month,
                                       corFundo: const Color(0xFFE9D5FF),
                                       corIcone: const Color(0xFF9333EA),
-                                      onTap: () {},
+                                      onTap: _abrirFluxoConsulta,
                                     ),
                                     acaoRapida(
                                       titulo: 'Lembretes',

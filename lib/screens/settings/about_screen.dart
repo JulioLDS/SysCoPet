@@ -243,22 +243,22 @@ class AboutScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 _teamMember(
-                  name: 'Julio Lucas',
+                  name: 'Augusto Lothar Barros Coutinho',
                   role: 'Desenvolvedor Full Stack',
                 ),
                 const Divider(height: 1, indent: 48),
                 _teamMember(
-                  name: 'Sangu',
+                  name: 'Gustavo Pereira dos Santos',
                   role: 'Backend Node.js',
                 ),
                 const Divider(height: 1, indent: 48),
                 _teamMember(
-                  name: 'Juju',
+                  name: 'Julio Lima da Silva',
                   role: 'Frontend Flutter',
                 ),
                 const Divider(height: 1, indent: 48),
                 _teamMember(
-                  name: 'Zé Esfiha',
+                  name: 'Rodrigo Marques de Córdova',
                   role: 'Mobile Flutter',
                 ),
               ],
@@ -284,23 +284,31 @@ class AboutScreen extends StatelessWidget {
                   icon: Icons.privacy_tip_outlined,
                   title: 'Política de privacidade',
                   onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Em desenvolvimento'),
-                        backgroundColor: Color(0xFF0D9488),
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => LegalScreen(
+                          title: 'Política de Privacidade',
+                          content: _politicaPrivacidadeContent,
+                        ),
                       ),
                     );
                   },
                 ),
+
                 const Divider(height: 1, indent: 36),
+
                 _linkItem(
                   icon: Icons.description_outlined,
                   title: 'Termos de uso',
                   onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Em desenvolvimento'),
-                        backgroundColor: Color(0xFF0D9488),
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => LegalScreen(
+                          title: 'Termos de Uso',
+                          content: _termosDeUsoContent,
+                        ),
                       ),
                     );
                   },

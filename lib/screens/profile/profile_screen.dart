@@ -265,6 +265,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final reminderProvider = context.watch<ReminderProvider>();
 
     final ocorrencias = reminderProvider.ocorrencias;
+    final historico = ocorrencias
+    .where((o) => o.ativo || o.concluido)
+    .toList();
+
+    final concluidos = historico.where((o) => o.concluido).length;
+
+    final taxaConclusao = historico.isEmpty
+        ? 0
+        : (concluidos / historico.length * 100).round();
     final totalPets = petProvider.pets.length;
     final lembretesAtivos = ocorrencias.where((l) => l.ativo).length;
     final dist = _calcularDistribuicao(ocorrencias);
@@ -290,6 +299,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             user: user,
             totalPets: totalPets,
             lembretesAtivos: lembretesAtivos,
+            taxaConclusao: taxaConclusao,
+            ocorrencias: ocorrencias,
             dist: dist,
             totalDist: totalDist,
             proximo: proximo,
@@ -354,7 +365,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     Expanded(
                       child: _metricCard(
                         icon: Icons.check_circle,
-                        value: '92%',
+                        value: '$taxaConclusao%',
                         label: 'Taxa de Conclusão',
                         bg: const Color(0xFFD1FAE5),
                         fg: const Color(0xFF059669),
@@ -374,7 +385,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     children: [
                       Expanded(child: _cardDonut(dist, totalDist)),
                       const SizedBox(width: 20),
-                      Expanded(child: _cardBarras()),
+                      Expanded(child: _cardBarras(ocorrencias)),
                       const SizedBox(width: 20),
                       Expanded(child: _cardPets(petProvider.pets)),
                     ],
@@ -404,7 +415,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     required UserModel? user,
     required int totalPets,
     required int lembretesAtivos,
+    required int taxaConclusao,
     required Map<String, _TipoLembrete> dist,
+    required List<ReminderOccurrenceModel> ocorrencias,
     required int totalDist,
     required ReminderOccurrenceModel? proximo,
     required List<dynamic> pets,
@@ -460,7 +473,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
           _metricCard(
             icon: Icons.check_circle,
-            value: '92%',
+            value: '$taxaConclusao%',
             label: 'Taxa de Conclusão',
             bg: const Color(0xFFD1FAE5),
             fg: const Color(0xFF059669),
@@ -476,7 +489,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           // GRÁFICOS EM COLUNA
           _cardDonut(dist, totalDist),
           const SizedBox(height: 12),
-          _cardBarras(),
+          _cardBarras(ocorrencias),
           const SizedBox(height: 12),
 
           // PETS
@@ -1093,8 +1106,39 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _cardBarras() {
+  Widget _cardBarras(List<ReminderOccurrenceModel> ocorrencias) {
     final isMobile = MediaQuery.of(context).size.width < 600;
+    final agora = DateTime.now();
+
+    final meses = List.generate(
+      4,
+      (i) => DateTime(agora.year, agora.month - 3 + i, 1),
+    );
+
+    final quantidades = List.generate(4, (i) {
+      return ocorrencias.where((lembrete) {
+        final datas = [
+          lembrete.dataHora,
+          ...lembrete.proximasOcorrencias,
+        ];
+
+        return datas.any(
+          (data) =>
+              data.year == meses[i].year &&
+              data.month == meses[i].month,
+        );
+      }).length;
+    });
+
+    final maiorValor = quantidades.reduce((a, b) => a > b ? a : b);
+    final limiteGrafico = maiorValor == 0 ? 5.0 : (maiorValor + 2).toDouble();
+
+    const nomesMeses = [
+      'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun',
+      'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez',
+    ];
+
+    final labelsMeses = meses.map((m) => nomesMeses[m.month - 1]).toList();
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: _cardDecoration(),
@@ -1109,7 +1153,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: BarChart(
               BarChartData(
                 alignment: BarChartAlignment.spaceAround,
-                maxY: 15,
+                maxY: limiteGrafico,
                 barTouchData: BarTouchData(
                   enabled: true,
                   touchTooltipData: BarTouchTooltipData(
@@ -1129,7 +1173,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       showTitles: true,
                       reservedSize: isMobile ? 32 : 22,
                       getTitlesWidget: (v, m) {
-                        const meses = ['Mai', 'Jun', 'Jul', 'Ago'];
+                        final meses = labelsMeses;
                         return Padding(
                           padding: const EdgeInsets.only(top: 8),
                           child: Text(
@@ -1172,10 +1216,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 borderData: FlBorderData(show: false),
                 barGroups: [
-                  _barGroup(0, 8),
-                  _barGroup(1, 11),
-                  _barGroup(2, 13),
-                  _barGroup(3, 12),
+                  _barGroup(0, quantidades[0].toDouble()),
+                  _barGroup(1, quantidades[1].toDouble()),
+                  _barGroup(2, quantidades[2].toDouble()),
+                  _barGroup(3, quantidades[3].toDouble()),
                 ],
               ),
             ),

@@ -104,7 +104,9 @@ class _PetConsultationsScreenState extends State<PetConsultationsScreen> {
               padding: const EdgeInsets.all(20),
               child: Center(
                 child: SizedBox(
-                  width: MediaQuery.of(context).size.width * 0.7,
+                  width: MediaQuery.of(context).size.width < 600
+                      ? MediaQuery.of(context).size.width - 40
+                      : MediaQuery.of(context).size.width * 0.7,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
