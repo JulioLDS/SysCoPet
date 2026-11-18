@@ -45,6 +45,28 @@ class _PetEditDialogState extends State<PetEditDialog> {
 
   final PetService petService = PetService();
 
+  Widget _iconeEspecie(String? especie, {double tamanho = 20}) {
+    String caminho;
+
+    switch (especie) {
+      case 'cao':
+        caminho = 'assets/icons/dog.png';
+        break;
+      case 'gato':
+        caminho = 'assets/icons/cat.png';
+        break;
+      default:
+        caminho = 'assets/icons/lupa.png';
+    }
+
+    return Image.asset(
+      caminho,
+      width: tamanho,
+      height: tamanho,
+      fit: BoxFit.contain,
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -319,15 +341,11 @@ class _PetEditDialogState extends State<PetEditDialog> {
                         menuMaxHeight: 300,
                         selectedItemBuilder: (context) {
                           return [
-                            const Row(
+                            Row(
                               children: [
-                                Icon(
-                                  Icons.pets,
-                                  color: Color(0xFF0D9488),
-                                  size: 18,
-                                ),
-                                SizedBox(width: 8),
-                                Text(
+                                _iconeEspecie('cao', tamanho: 18),
+                                const SizedBox(width: 8),
+                                const Text(
                                   'Cão',
                                   style: TextStyle(
                                     fontSize: 14,
@@ -336,15 +354,11 @@ class _PetEditDialogState extends State<PetEditDialog> {
                                 ),
                               ],
                             ),
-                            const Row(
+                            Row(
                               children: [
-                                Icon(
-                                  Icons.pets,
-                                  color: Color(0xFF8B5CF6),
-                                  size: 18,
-                                ),
-                                SizedBox(width: 8),
-                                Text(
+                                _iconeEspecie('gato', tamanho: 18),
+                                const SizedBox(width: 8),
+                                const Text(
                                   'Gato',
                                   style: TextStyle(
                                     fontSize: 14,
@@ -353,15 +367,11 @@ class _PetEditDialogState extends State<PetEditDialog> {
                                 ),
                               ],
                             ),
-                            const Row(
+                            Row(
                               children: [
-                                Icon(
-                                  Icons.help_outline,
-                                  color: Color(0xFF0D9488),
-                                  size: 18,
-                                ),
-                                SizedBox(width: 8),
-                                Text(
+                                _iconeEspecie('outro', tamanho: 18),
+                                const SizedBox(width: 8),
+                                const Text(
                                   'Outro',
                                   style: TextStyle(
                                     fontSize: 14,
@@ -372,18 +382,14 @@ class _PetEditDialogState extends State<PetEditDialog> {
                             ),
                           ];
                         },
-                        items: const [
+                        items: [
                           DropdownMenuItem(
                             value: 'cao',
                             child: Row(
                               children: [
-                                Icon(
-                                  Icons.pets,
-                                  color: Color(0xFF0D9488),
-                                  size: 20,
-                                ),
-                                SizedBox(width: 12),
-                                Text(
+                                _iconeEspecie('cao'),
+                                const SizedBox(width: 12),
+                                const Text(
                                   'Cão',
                                   style: TextStyle(
                                     fontSize: 14,
@@ -397,13 +403,9 @@ class _PetEditDialogState extends State<PetEditDialog> {
                             value: 'gato',
                             child: Row(
                               children: [
-                                Icon(
-                                  Icons.pets,
-                                  color: Color(0xFF8B5CF6),
-                                  size: 20,
-                                ),
-                                SizedBox(width: 12),
-                                Text(
+                                _iconeEspecie('gato'),
+                                const SizedBox(width: 12),
+                                const Text(
                                   'Gato',
                                   style: TextStyle(
                                     fontSize: 14,
@@ -417,13 +419,9 @@ class _PetEditDialogState extends State<PetEditDialog> {
                             value: 'outro',
                             child: Row(
                               children: [
-                                Icon(
-                                  Icons.help_outline,
-                                  color: Color(0xFF0D9488),
-                                  size: 20,
-                                ),
-                                SizedBox(width: 12),
-                                Text(
+                                _iconeEspecie('outro'),
+                                const SizedBox(width: 12),
+                                const Text(
                                   'Outro',
                                   style: TextStyle(
                                     fontSize: 14,
@@ -538,19 +536,7 @@ class _PetEditDialogState extends State<PetEditDialog> {
                                   value: raca.idRaca,
                                   child: Row(
                                     children: [
-                                      Icon(
-                                        especieSelecionada == 'cao'
-                                            ? Icons.pets
-                                            : especieSelecionada == 'gato'
-                                            ? Icons.pets
-                                            : Icons.help_outline,
-                                        color: especieSelecionada == 'cao'
-                                            ? const Color(0xFF0D9488)
-                                            : especieSelecionada == 'gato'
-                                            ? const Color(0xFF8B5CF6)
-                                            : const Color(0xFF0D9488),
-                                        size: 20,
-                                      ),
+                                      _iconeEspecie(especieSelecionada, tamanho: 20),
                                       const SizedBox(width: 12),
                                       Text(
                                         raca.nome,

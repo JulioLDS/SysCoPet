@@ -529,7 +529,7 @@ class _MeusPetsScreenState extends State<MeusPetsScreen> {
                         color: Color(0xFF1E293B),
                       ),
                       textAlign: TextAlign.center,
-                      maxLines: 2,
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 10),
@@ -581,15 +581,18 @@ class _MeusPetsScreenState extends State<MeusPetsScreen> {
                         color: const Color(0xFFECFDF5),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: Text(
-                        idade,
-                        textAlign: TextAlign.center,
-                        maxLines: 2,
-                        softWrap: true,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: Color(0xFF059669),
-                          fontWeight: FontWeight.w600,
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          idade,
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          softWrap: true,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: Color(0xFF059669),
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     ),

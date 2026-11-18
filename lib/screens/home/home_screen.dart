@@ -1738,7 +1738,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       icone: Icons.vaccines,
                                       corFundo: const Color(0xFFD1FAE5),
                                       corIcone: const Color(0xFF059669),
-                                      onTap: () {},
+                                      onTap: _abrirFluxoVacina,
                                     ),
                                     acaoRapida(
                                       titulo: 'Consultas',
@@ -1746,7 +1746,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       icone: Icons.calendar_month,
                                       corFundo: const Color(0xFFE9D5FF),
                                       corIcone: const Color(0xFF9333EA),
-                                      onTap: () {},
+                                      onTap: _abrirFluxoConsulta,
                                     ),
                                     acaoRapida(
                                       titulo: 'Lembretes',
@@ -2047,11 +2047,20 @@ class _HomeScreenState extends State<HomeScreen> {
                     left: 12,
                     right: 12,
                     bottom: 12,
-                    child: ClipRRect(borderRadius: BorderRadius.circular(24)),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(24),
+                      child: ChatbotScreen(
+                        onClose: () {
+                          setState(() {
+                            _chatbotAberto = false;
+                          });
+                        },
+                      ),
+                    ),
                   ),
               ],
             ),
-      floatingActionButton: _selectedIndex == 0
+      floatingActionButton: _selectedIndex == 0 && !_chatbotAberto
           ? FloatingActionButton(
               onPressed: () {
                 setState(() {

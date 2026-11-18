@@ -201,6 +201,16 @@ class _PetVaccineCalendarScreenState extends State<PetVaccineCalendarScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final largura = MediaQuery.of(context).size.width;
+
+    if (largura < 600) {
+      return _buildMobileLayout();
+    }
+
+    return _buildWebLayout(context);
+  }
+
+  Widget _buildWebLayout(BuildContext context) {
     final provider = Provider.of<VaccineProvider>(context);
 
     return Scaffold(
@@ -427,6 +437,277 @@ class _PetVaccineCalendarScreenState extends State<PetVaccineCalendarScreen> {
                 ),
               ),
             ),
+    );
+  }
+
+  Widget _buildMobileLayout() {
+    final provider = Provider.of<VaccineProvider>(context);
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF0D9488),
+        foregroundColor: Colors.white,
+        title: Text(
+          'Vacinas de ${widget.pet.nome}',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        actions: [
+          IconButton(
+            onPressed: _exportarPdf,
+            tooltip: 'Exportar carteira',
+            icon: const Icon(Icons.picture_as_pdf),
+          ),
+        ],
+      ),
+      body: provider.isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : provider.calendario.isEmpty
+              ? _buildEmptyState()
+              : SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 70),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Column(
+                          children: [
+                            Icon(
+                              Icons.vaccines,
+                              color: Color(0xFF0D9488),
+                              size: 42,
+                            ),
+                            SizedBox(height: 12),
+                            Text(
+                              'Carteira de vacinação',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF1E293B),
+                              ),
+                            ),
+                            SizedBox(height: 8),
+                            Text(
+                              'Mantenha a saúde do seu pet sempre em dia!',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+
+                      ...provider.calendario.map(
+                        (dose) => _buildMobileDoseCard(dose),
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFECFDF5),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Text(
+                          'Mantenha o calendário de vacinas atualizado '
+                          'para garantir a saúde do seu pet.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Color(0xFF0D9488),
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+    );
+  }
+
+  Widget _buildMobileDoseCard(VaccineCalendarModel dose) {
+    final corStatus = _corStatus(dose);
+    final textoStatus = _textoStatus(dose);
+    final diasRestantes = _diasRestantes(dose);
+
+    final ehAplicada = dose.status == 'aplicada';
+    final ehPendente = dose.status == 'pendente';
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: const BoxDecoration(
+                  color: Color(0xFFCCFBF1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.vaccines,
+                  color: Color(0xFF0D9488),
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      dose.vacinaNome,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF1E293B),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _textoDose(dose),
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 16),
+          const Divider(),
+          const SizedBox(height: 10),
+
+          _infoRow(
+            Icons.calendar_today,
+            'Data prevista',
+            _formatarData(dose.dataPrevista),
+          ),
+
+          if (dose.dataAplicacao != null)
+            _infoRow(
+              Icons.check_circle,
+              'Data de aplicação',
+              _formatarData(dose.dataAplicacao!),
+            ),
+
+          if (dose.proximoReforco != null)
+            _infoRow(
+              Icons.update,
+              'Próximo reforço',
+              _formatarData(dose.proximoReforco!),
+            ),
+
+          const SizedBox(height: 8),
+
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              _mobileBadge(textoStatus, corStatus),
+
+              if (dose.obrigatoria)
+                _mobileBadge('Obrigatória', Colors.red),
+
+              if (dose.essencial)
+                _mobileBadge('Essencial', Colors.blue),
+
+              if (ehPendente && diasRestantes > 0)
+                _mobileBadge(
+                  _formatarTempoRestante(diasRestantes),
+                  Colors.orange,
+                ),
+            ],
+          ),
+
+          const SizedBox(height: 16),
+
+          if (ehPendente) ...[
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () => _marcarComoAplicada(dose),
+                icon: const Icon(Icons.check),
+                label: const Text('Registrar aplicação'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF0D9488),
+                  foregroundColor: Colors.white,
+                ),
+              ),
+            ),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => _pularDose(dose),
+                icon: const Icon(Icons.skip_next),
+                label: const Text('Pular dose'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.grey.shade700,
+                ),
+              ),
+            ),
+          ] else
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => _mostrarDetalhes(dose),
+                icon: const Icon(Icons.visibility_outlined),
+                label: const Text('Ver detalhes'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF0D9488),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _mobileBadge(String texto, Color cor) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 10,
+        vertical: 6,
+      ),
+      decoration: BoxDecoration(
+        color: cor.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        texto,
+        style: TextStyle(
+          color: cor,
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
     );
   }
 
