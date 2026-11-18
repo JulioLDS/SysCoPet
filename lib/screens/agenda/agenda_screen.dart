@@ -486,6 +486,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
   Widget build(BuildContext context) {
     final hoje = DateTime.now();
     final reminderProvider = Provider.of<ReminderProvider>(context);
+    final isMobile = MediaQuery.of(context).size.width < 600;
 
     const diasSemana = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
@@ -495,14 +496,20 @@ class _AgendaScreenState extends State<AgendaScreen> {
     final diaSemanaInicio = primeiroDiaMes.weekday % 7;
 
     final diasDoCalendario = <DateTime?>[];
+
     for (var i = 0; i < diaSemanaInicio; i++) {
       diasDoCalendario.add(null);
     }
+
     for (var i = 1; i <= diasNoMes; i++) {
       diasDoCalendario.add(DateTime(_mesAtual.year, _mesAtual.month, i));
     }
 
     final totalSemanas = (diasDoCalendario.length / 7).ceil();
+
+    while (diasDoCalendario.length < totalSemanas * 7) {
+      diasDoCalendario.add(null);
+    }
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
@@ -563,16 +570,21 @@ class _AgendaScreenState extends State<AgendaScreen> {
       body: _carregando
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: Center(
-                child: SizedBox(
-                  width: MediaQuery.of(context).size.width * 0.7,
+            padding: EdgeInsets.symmetric(
+              horizontal: isMobile ? 16 : 20,
+              vertical: 20,
+            ),
+            child: Center(
+              child: SizedBox(
+                width: isMobile
+                    ? double.infinity
+                    : MediaQuery.of(context).size.width * 0.7,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // ✅ CALENDÁRIO
                       Container(
-                        padding: const EdgeInsets.all(20),
+                        padding: EdgeInsets.all(isMobile ? 12 : 20),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(20),
@@ -817,6 +829,11 @@ class _AgendaScreenState extends State<AgendaScreen> {
                                 ),
                               );
                             },
+                            style: TextButton.styleFrom(
+                              padding: EdgeInsets.zero,
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
                             child: const Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
@@ -1017,11 +1034,197 @@ class _AgendaScreenState extends State<AgendaScreen> {
     );
   }
 
+  
   Widget _buildLembreteCard(ReminderOccurrenceModel lembrete) {
     final proximaData = _getProximaData(lembrete)!;
     final corTipo = _corPorTipo(lembrete.tipo);
     final fundoTipo = _corFundoPorTipo(lembrete.tipo);
     final nomePet = _nomePetPorId(lembrete.idPet);
+    final isMobile = MediaQuery.of(context).size.width < 600;
+
+    final icone = Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: fundoTipo,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Icon(
+        _iconePorTipo(lembrete.tipo),
+        color: corTipo,
+        size: 22,
+      ),
+    );
+
+    final informacoes = Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            lembrete.titulo,
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF1E293B),
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              Icon(Icons.pets, color: corTipo, size: 13),
+              const SizedBox(width: 4),
+              Flexible(
+                child: Text(
+                  nomePet,
+                  style: TextStyle(
+                    color: Colors.grey.shade700,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              Text(
+                '  •  ',
+                style: TextStyle(
+                  color: Colors.grey.shade400,
+                  fontSize: 11,
+                ),
+              ),
+              Expanded(
+                child: Text(
+                  _formatarData(proximaData),
+                  style: TextStyle(
+                    color: Colors.grey.shade600,
+                    fontSize: 11,
+                  ),
+                  maxLines: 1,
+                  softWrap: false,
+                  overflow: TextOverflow.visible,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+
+    final botaoConcluir = Material(
+      color: const Color(0xFFECFDF5),
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        onTap: () {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Funcionalidade em desenvolvimento'),
+              backgroundColor: Color(0xFF059669),
+            ),
+          );
+        },
+        borderRadius: BorderRadius.circular(20),
+        child: const Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 8,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.check, color: Color(0xFF0D9488), size: 16),
+              SizedBox(width: 4),
+              Text(
+                'Concluir',
+                style: TextStyle(
+                  color: Color(0xFF0D9488),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    final botaoExcluir = IconButton(
+      icon: const Icon(
+        Icons.delete_outline,
+        color: Colors.red,
+        size: 20,
+      ),
+      onPressed: () async {
+        final confirmou = await showDialog<bool>(
+          context: context,
+          builder: (_) =>
+              _DialogExcluirLembreteAgenda(titulo: lembrete.titulo),
+        );
+
+        if (confirmou == true) {
+          final provider = Provider.of<ReminderProvider>(
+            context,
+            listen: false,
+          );
+          await provider.deletarLembrete(lembrete.id, lembrete.idPet);
+          await _carregarDados();
+
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Lembrete excluído!'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        }
+      },
+    );
+
+    final acoes = Row(
+  children: [
+    if (isMobile)
+      Expanded(
+        child: Material(
+          color: const Color(0xFFECFDF5),
+          borderRadius: BorderRadius.circular(20),
+          child: InkWell(
+            onTap: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Funcionalidade em desenvolvimento'),
+                  backgroundColor: Color(0xFF059669),
+                ),
+              );
+            },
+            borderRadius: BorderRadius.circular(20),
+            child: const Padding(
+              padding: EdgeInsets.symmetric(vertical: 10),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.check, color: Color(0xFF0D9488), size: 16),
+                  SizedBox(width: 4),
+                  Text(
+                    'Concluir',
+                    style: TextStyle(
+                      color: Color(0xFF0D9488),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      )
+    else
+      botaoConcluir,
+
+    const SizedBox(width: 8),
+    botaoExcluir,
+  ],
+);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -1037,127 +1240,31 @@ class _AgendaScreenState extends State<AgendaScreen> {
           ),
         ],
       ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: fundoTipo,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(_iconePorTipo(lembrete.tipo), color: corTipo, size: 22),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      child: isMobile
+      ? Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               children: [
-                Text(
-                  lembrete.titulo,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF1E293B),
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 2),
-                Row(
-                  children: [
-                    Icon(Icons.pets, color: corTipo, size: 13),
-                    const SizedBox(width: 4),
-                    Text(
-                      nomePet,
-                      style: TextStyle(
-                        color: Colors.grey.shade700,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    Text(
-                      '  •  ',
-                      style: TextStyle(
-                        color: Colors.grey.shade400,
-                        fontSize: 12,
-                      ),
-                    ),
-                    Expanded(
-                      child: Text(
-                        _formatarData(proximaData),
-                        style: TextStyle(
-                          color: Colors.grey.shade600,
-                          fontSize: 12,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
+                icone,
+                const SizedBox(width: 12),
+                informacoes,
               ],
             ),
+            const SizedBox(height: 10),
+            Align(
+              alignment: Alignment.centerRight,
+              child: acoes,
           ),
+        ],
+      )
+      : Row(
+        children: [
+          icone,
+          const SizedBox(width: 12),
+          informacoes,
           const SizedBox(width: 8),
-          Material(
-            color: const Color(0xFFECFDF5),
-            borderRadius: BorderRadius.circular(20),
-            child: InkWell(
-              onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Funcionalidade em desenvolvimento'),
-                    backgroundColor: Color(0xFF059669),
-                  ),
-                );
-              },
-              borderRadius: BorderRadius.circular(20),
-              child: const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.check, color: Color(0xFF0D9488), size: 16),
-                    SizedBox(width: 4),
-                    Text(
-                      'Concluir',
-                      style: TextStyle(
-                        color: Color(0xFF0D9488),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 4),
-          IconButton(
-            icon: const Icon(Icons.delete_outline, color: Colors.red, size: 20),
-            onPressed: () async {
-              final confirmou = await showDialog<bool>(
-                context: context,
-                builder: (_) =>
-                    _DialogExcluirLembreteAgenda(titulo: lembrete.titulo),
-              );
-              if (confirmou == true) {
-                final provider = Provider.of<ReminderProvider>(
-                  context,
-                  listen: false,
-                );
-                await provider.deletarLembrete(lembrete.id, lembrete.idPet);
-                await _carregarDados();
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Lembrete excluído!'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                }
-              }
-            },
-          ),
+          acoes,
         ],
       ),
     );

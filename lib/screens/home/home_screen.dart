@@ -2043,11 +2043,20 @@ class _HomeScreenState extends State<HomeScreen> {
                     left: 12,
                     right: 12,
                     bottom: 12,
-                    child: ClipRRect(borderRadius: BorderRadius.circular(24)),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(24),
+                      child: ChatbotScreen(
+                        onClose: () {
+                          setState(() {
+                            _chatbotAberto = false;
+                          });
+                        },
+                      ),
+                    ),
                   ),
               ],
             ),
-      floatingActionButton: _selectedIndex == 0
+      floatingActionButton: _selectedIndex == 0 && !_chatbotAberto
           ? FloatingActionButton(
               onPressed: () {
                 setState(() {

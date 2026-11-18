@@ -4,7 +4,12 @@ import '../../models/chat_message_model.dart';
 import '../../services/chatbot_service.dart';
 
 class ChatbotScreen extends StatefulWidget {
-  const ChatbotScreen({super.key});
+  final VoidCallback? onClose;
+
+  const ChatbotScreen({
+    super.key,
+    this.onClose,
+  });
 
   @override
   State<ChatbotScreen> createState() => _ChatbotScreenState();
@@ -103,13 +108,29 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       backgroundColor: const Color(0xFFF8FAFC),
 
       appBar: AppBar(
-        title: const Text('Assistente 4UPet'),
-
+        toolbarHeight: 56,
+        leading: widget.onClose != null
+          ? Transform.translate(
+              offset: const Offset(0, -12),
+              child: IconButton(
+                onPressed: widget.onClose,
+                icon: const Icon(Icons.close),
+                tooltip: 'Fechar chat',
+              ),
+            )
+          : null,
+        title: Padding(
+          padding: const EdgeInsets.only(bottom: 22),
+          child: const Text(
+            'Assistente 4UPet',
+            style: TextStyle(fontSize: 22),
+          ),
+        ),
         backgroundColor: const Color(0xFF0D9488),
-
         foregroundColor: Colors.white,
       ),
 
@@ -158,36 +179,50 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   }
 
   Widget _buildInicio() {
-    return const Center(
-      child: Padding(
-        padding: EdgeInsets.all(32),
-
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-
-          children: [
-            Icon(Icons.pets, size: 64, color: Color(0xFF0D9488)),
-
-            SizedBox(height: 18),
-
-            Text(
-              'Olá! Sou o assistente do 4UPet',
-              textAlign: TextAlign.center,
-
-              style: TextStyle(fontSize: 21, fontWeight: FontWeight.bold),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: constraints.maxHeight,
             ),
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.pets,
+                      size: 48,
+                      color: Color(0xFF0D9488),
+                    ),
 
-            SizedBox(height: 10),
+                    const SizedBox(height: 12),
 
-            Text(
-              'Envie uma pergunta sobre saúde e cuidados com seu pet.',
-              textAlign: TextAlign.center,
+                    const Text(
+                      'Olá! Sou o assistente do 4UPet',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 19,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
 
-              style: TextStyle(color: Colors.grey),
+                    const SizedBox(height: 8),
+
+                    const Text(
+                      'Envie uma pergunta sobre saúde e cuidados com seu pet.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                  ],
+                ),
+              ),
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 

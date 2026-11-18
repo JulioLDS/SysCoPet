@@ -55,7 +55,9 @@ class _HelpScreenState extends State<HelpScreen> {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: SingleChildScrollView(
+      body: MediaQuery.of(context).size.width < 600
+        ? _buildMobileLayout()
+        : SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Center(
           child: SizedBox(
@@ -219,6 +221,183 @@ class _HelpScreenState extends State<HelpScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildMobileLayout() {
+    return SingleChildScrollView(
+      padding: EdgeInsets.fromLTRB(
+        12,
+        12,
+        12,
+        MediaQuery.of(context).padding.bottom + 28,
+      ),
+      child: Column(
+        children: [
+          // SEÇÃO 1: PERGUNTAS FREQUENTES
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.help_outline,
+                      color: Color(0xFF0D9488),
+                      size: 24,
+                    ),
+                    const SizedBox(width: 8),
+                    const Expanded(
+                      child: Text(
+                        'Perguntas frequentes',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1E293B),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                ...List.generate(_faqs.length, (index) {
+                  final faq = _faqs[index];
+                  final aberto = _faqAberto == index;
+
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: _faqCard(
+                      pergunta: faq['pergunta']!,
+                      resposta: faq['resposta']!,
+                      aberto: aberto,
+                      onTap: () {
+                        setState(() {
+                          _faqAberto = aberto ? -1 : index;
+                        });
+                      },
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 14),
+
+          // SEÇÃO 2: PRECISA DE AJUDA?
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.support_agent,
+                      color: Color(0xFF0D9488),
+                      size: 24,
+                    ),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'Precisa de ajuda?',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF1E293B),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                _contactOption(
+                  icon: Icons.email_outlined,
+                  title: 'Email',
+                  subtitle: 'suporte@4upet.com.br',
+                  onTap: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Abrindo email...'),
+                        backgroundColor: Color(0xFF0D9488),
+                      ),
+                    );
+                  },
+                ),
+                const Divider(height: 1, indent: 56),
+                _contactOption(
+                  icon: Icons.chat_bubble_outline,
+                  title: 'Chat conosco',
+                  subtitle: 'Fale com nossa equipe em tempo real',
+                  onTap: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Chat em desenvolvimento'),
+                        backgroundColor: Color(0xFF0D9488),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 14),
+
+          // SEÇÃO 3: DICA
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: const Color(0xFFECFDF5),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(
+                  Icons.lightbulb_outline,
+                  color: Color(0xFF0D9488),
+                  size: 22,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Dica: Use o assistente 4UPet para tirar dúvidas rápidas sobre saúde animal sem sair do app!',
+                    style: TextStyle(
+                      color: Colors.grey.shade700,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
