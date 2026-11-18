@@ -105,9 +105,7 @@ class ReminderProvider extends ChangeNotifier {
 
       print("TOTAL: ${todasOcorrencias.length}");
 
-      ocorrencias = todasOcorrencias
-          .where((ocorrencia) => ocorrencia.ativo)
-          .toList();
+      ocorrencias = todasOcorrencias;
 
       ocorrencias.sort((a, b) => a.dataHora.compareTo(b.dataHora));
     } catch (e) {

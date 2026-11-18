@@ -22,7 +22,9 @@ class AboutScreen extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: SingleChildScrollView(
+      body: MediaQuery.of(context).size.width < 600
+        ? _buildMobileLayout(context)
+        : SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Center(
           child: SizedBox(
@@ -63,6 +65,279 @@ class AboutScreen extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildMobileLayout(BuildContext context) {
+    return SingleChildScrollView(
+      padding: EdgeInsets.fromLTRB(
+        12,
+        12,
+        12,
+        MediaQuery.of(context).padding.bottom + 28,
+      ),
+      child: Column(
+        children: [
+          // CARD 1: IDENTIDADE DO APP
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(22),
+            decoration: _mobileCardDecoration(),
+            child: Column(
+              children: [
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFECFDF5),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.pets,
+                    color: Color(0xFF0D9488),
+                    size: 48,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                const Text(
+                  '4UPet',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF0D9488),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFECFDF5),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Text(
+                    'Versão 1.0.0',
+                    style: TextStyle(
+                      color: Color(0xFF0D9488),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Cuidando de quem você ama! 🐾',
+                  style: TextStyle(
+                    color: Colors.grey.shade600,
+                    fontSize: 14,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 14),
+
+          // CARD 2: SOBRE O APLICATIVO
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(18),
+            decoration: _mobileCardDecoration(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _mobileSectionTitle(
+                  Icons.info_outline,
+                  'Sobre o 4UPet',
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'O 4UPet é um aplicativo completo para gerenciamento da saúde e bem-estar do seu pet. Com lembretes inteligentes, assistente veterinário virtual com IA e controle de vacinas e consultas, cuidamos do seu melhor amigo.',
+                  style: TextStyle(
+                    color: Colors.grey.shade700,
+                    fontSize: 14,
+                    height: 1.6,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 14),
+
+          // CARD 3: FUNCIONALIDADES
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(18),
+            decoration: _mobileCardDecoration(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _mobileSectionTitle(
+                  Icons.star_outline,
+                  'Funcionalidades',
+                ),
+                const SizedBox(height: 12),
+                _featureItem(
+                  icon: Icons.pets,
+                  text: 'Cadastro de múltiplos pets',
+                ),
+                const Divider(height: 1, indent: 36),
+                _featureItem(
+                  icon: Icons.notifications_active,
+                  text: 'Lembretes inteligentes com recorrência',
+                ),
+                const Divider(height: 1, indent: 36),
+                _featureItem(
+                  icon: Icons.smart_toy,
+                  text: 'Assistente veterinário com IA (RAG)',
+                ),
+                const Divider(height: 1, indent: 36),
+                _featureItem(
+                  icon: Icons.calendar_today,
+                  text: 'Calendário de cuidados mensal',
+                ),
+                const Divider(height: 1, indent: 36),
+                _featureItem(
+                  icon: Icons.dashboard,
+                  text: 'Dashboard com gráficos e métricas',
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 14),
+
+          // CARD 4: EQUIPE DE DESENVOLVIMENTO
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(18),
+            decoration: _mobileCardDecoration(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.people_outline,
+                      color: Color(0xFF0D9488),
+                      size: 22,
+                    ),
+                    const SizedBox(width: 8),
+                    const Expanded(
+                      child: Text(
+                        'Equipe de desenvolvimento',
+                        softWrap: true,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1E293B),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                _teamMember(
+                  name: 'Augusto Lothar Barros Coutinho',
+                  role: 'Desenvolvedor Full Stack',
+                ),
+                const Divider(height: 1, indent: 48),
+                _teamMember(
+                  name: 'Gustavo Pereira dos Santos',
+                  role: 'Backend Node.js',
+                ),
+                const Divider(height: 1, indent: 48),
+                _teamMember(
+                  name: 'Julio Lima da Silva',
+                  role: 'Frontend Flutter',
+                ),
+                const Divider(height: 1, indent: 48),
+                _teamMember(
+                  name: 'Rodrigo Marques de Córdova',
+                  role: 'Mobile Flutter',
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 14),
+
+          // CARD 5: LINKS ÚTEIS
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(18),
+            decoration: _mobileCardDecoration(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _mobileSectionTitle(
+                  Icons.link,
+                  'Links úteis',
+                ),
+                const SizedBox(height: 12),
+                _linkItem(
+                  icon: Icons.privacy_tip_outlined,
+                  title: 'Política de privacidade',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => LegalScreen(
+                          title: 'Política de Privacidade',
+                          content: _politicaPrivacidadeContent,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+
+                const Divider(height: 1, indent: 36),
+
+                _linkItem(
+                  icon: Icons.description_outlined,
+                  title: 'Termos de uso',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => LegalScreen(
+                          title: 'Termos de Uso',
+                          content: _termosDeUsoContent,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
+          // RODAPÉ
+          Text(
+            '© 2026 4UPet. Todos os direitos reservados.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.grey.shade500,
+              fontSize: 12,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Feito com 💚 para tutores de pets',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.grey.shade500,
+              fontSize: 12,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -120,6 +395,43 @@ class AboutScreen extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  BoxDecoration _mobileCardDecoration() {
+    return BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(20),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.04),
+          blurRadius: 10,
+          offset: const Offset(0, 2),
+        ),
+      ],
+    );
+  }
+
+  Widget _mobileSectionTitle(IconData icon, String title) {
+    return Row(
+      children: [
+        Icon(
+          icon,
+          color: const Color(0xFF0D9488),
+          size: 22,
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            title,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF1E293B),
+            ),
+          ),
+        ),
+      ],
     );
   }
 

@@ -6,6 +6,7 @@ class ReminderOccurrenceModel {
   final String tipo;
   final String recorrencia;
   final bool ativo;
+  final bool concluido;
 
   final DateTime dataHora;
 
@@ -18,6 +19,7 @@ class ReminderOccurrenceModel {
     required this.tipo,
     required this.recorrencia,
     required this.ativo,
+    required this.concluido,
     required this.dataHora,
     required this.proximasOcorrencias,
   });
@@ -33,6 +35,7 @@ class ReminderOccurrenceModel {
       tipo: json['tipo'],
       recorrencia: json['recorrencia'],
       ativo: json['ativo'],
+      concluido: json['concluido'] == true,
       dataHora: DateTime.parse(json['data_hora']),
       proximasOcorrencias:
           (json['proximas_ocorrencias'] as List? ??[])

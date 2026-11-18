@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/user_service.dart';
 import '../../widgets/common/user_avatar.dart';
+import 'package:flutter/foundation.dart';
 
 class AccountScreen extends StatefulWidget {
   const AccountScreen({super.key, this.imagePicker});
@@ -135,7 +136,12 @@ class _AccountScreenState extends State<AccountScreen> {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: SingleChildScrollView(
+      body: MediaQuery.of(context).size.width < 600
+          ? _buildMobileLayout(
+              user: user,
+              alterandoFoto: alterandoFoto,
+            )
+          : SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Center(
           child: SizedBox(
@@ -467,6 +473,281 @@ class _AccountScreenState extends State<AccountScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildMobileProfileCard(dynamic user, bool alterandoFoto) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(
+        horizontal: 18,
+        vertical: 22,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Stack(
+            alignment: Alignment.bottomRight,
+            children: [
+              Container(
+                width: 116,
+                height: 116,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: const Color(0xFFECFDF5),
+                    width: 4,
+                  ),
+                ),
+                child: ClipOval(
+                  child: UserAvatar(
+                    user: user,
+                    bytes: _bytesPerfil,
+                    radius: 58,
+                    fontSize: 32,
+                  ),
+                ),
+              ),
+              GestureDetector(
+                onTap: alterandoFoto ? null : _selecionarFoto,
+                child: Container(
+                  padding: const EdgeInsets.all(9),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0D9488),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: Colors.white,
+                      width: 2,
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.camera_alt,
+                    color: Colors.white,
+                    size: 18,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            user?.nome ?? 'Usuário',
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 19,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF1E293B),
+            ),
+          ),
+          const SizedBox(height: 5),
+          Text(
+            user?.email ?? '',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey.shade600,
+            ),
+          ),
+          if (alterandoFoto)
+            const Padding(
+              padding: EdgeInsets.only(top: 14),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                    ),
+                  ),
+                  SizedBox(width: 10),
+                  Text('Atualizando foto...'),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMobilePersonalInfoCard(dynamic user) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: const BoxDecoration(
+                  color: Color(0xFFECFDF5),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.person,
+                  color: Color(0xFF0D9488),
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 10),
+              const Text(
+                'Informações pessoais',
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1E293B),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          const Divider(height: 1),
+          const SizedBox(height: 18),
+          _buildMobileInfoItem(
+            icon: Icons.person_outline,
+            label: 'Nome completo',
+            value: user?.nome ?? 'Usuário',
+          ),
+          const SizedBox(height: 18),
+          _buildMobileInfoItem(
+            icon: Icons.email_outlined,
+            label: 'E-mail',
+            value: user?.email ?? '',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMobileInfoItem({
+    required IconData icon,
+    required String label,
+    required String value,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: const BoxDecoration(
+                color: Color(0xFFECFDF5),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                icon,
+                color: const Color(0xFF0D9488),
+                size: 16,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: const TextStyle(
+                color: Colors.grey,
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 7),
+        Padding(
+          padding: const EdgeInsets.only(left: 30),
+          child: Text(
+            value,
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF1E293B),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMobilePhotoActions(dynamic user, bool alterandoFoto) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          _buildActionTile(
+            icon: Icons.image_outlined,
+            title: 'Alterar foto',
+            subtitle: 'Escolha uma nova foto para o seu perfil',
+            onTap: alterandoFoto ? null : _selecionarFoto,
+          ),
+          if (user?.urlFoto?.trim().isNotEmpty == true) ...[
+            const Divider(height: 1, indent: 60),
+            _buildActionTile(
+              icon: Icons.delete_outline,
+              title: 'Remover foto',
+              subtitle: 'Voltar a exibir suas iniciais',
+              onTap: alterandoFoto ? null : _removerFoto,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMobileLayout({
+    required dynamic user,
+    required bool alterandoFoto,
+  }) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 12,
+        vertical: 16,
+      ),
+      child: Column(
+        children: [
+          _buildMobileProfileCard(user, alterandoFoto),
+          const SizedBox(height: 14),
+          _buildMobilePersonalInfoCard(user),
+          const SizedBox(height: 14),
+          _buildMobilePhotoActions(user, alterandoFoto),
+          SizedBox(
+            height: MediaQuery.of(context).padding.bottom + 16,
+          ),
+        ],
       ),
     );
   }

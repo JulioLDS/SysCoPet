@@ -19,6 +19,7 @@ import 'reminder_form_dialog.dart';
 import 'package:provider/provider.dart';
 import 'pet_consultations_screen.dart';
 import 'pet_all_reminders_screen.dart';
+import 'package:syscopet/screens/pets/reminders_all_screen.dart';
 
 class PetDetailsScreen extends StatefulWidget {
   final PetModel pet;
@@ -1127,6 +1128,21 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
                     badge: 'Acompanhamento vet', // ✅ Texto novo
                     badgeColor: const Color(0xFF8B5CF6),
                     backgroundImage: 'assets/images/cuidados2.png',
+                    onTap: () async {
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => PetConsultationsScreen(pet: _currentPet),
+                        ),
+                      );
+
+                      if (!mounted) return;
+
+                      await Provider.of<ReminderProvider>(
+                        context,
+                        listen: false,
+                      ).carregarOcorrenciasDoPet(_currentPet.idPet!);
+                    },
                   ),
                   const SizedBox(height: 12),
                   _buildCareItem(
@@ -1135,9 +1151,17 @@ class _PetDetailsScreenState extends State<PetDetailsScreen> {
                     iconBg: const Color(0xFFFFEDD5),
                     title: 'Lembretes',
                     subtitle: 'Gerenciador de Lembretes',
-                    badge: 'Cuidados em dia', // ✅ Texto novo
+                    badge: 'Cuidados em dia',
                     badgeColor: const Color(0xFFF59E0B),
                     backgroundImage: 'assets/images/cuidados3.png',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const AllRemindersScreen(),
+                        ),
+                      );
+                    },
                   ),
 
                   const SizedBox(height: 26),
