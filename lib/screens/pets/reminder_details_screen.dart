@@ -4,6 +4,7 @@ import 'package:syscopet/screens/pets/reminder_form_dialog.dart';
 import '../../models/reminder_model.dart';
 import '../../providers/reminder_provider.dart';
 import '../../widgets/common/custom_snackbar.dart';
+import '../../widgets/reminders/complete_reminder_action.dart';
 
 class ReminderDetailsScreen extends StatefulWidget {
   final int idLembrete;
@@ -24,8 +25,29 @@ class _ReminderDetailsScreenState extends State<ReminderDetailsScreen> {
   bool _carregando = true;
   bool _houveAlteracao = false;
 
+  bool get _concluindo =>
+      context.read<ReminderProvider>().estaConcluindo(widget.idLembrete);
+
+  Future<void> _concluirLembrete() async {
+    final lembrete = _lembrete;
+    if (lembrete == null || !lembrete.pendente || _concluindo) return;
+    final result = await confirmarConclusaoLembrete(
+      context,
+      idLembrete: widget.idLembrete,
+      idPet: widget.idPet,
+      titulo: lembrete.titulo,
+      recorrencia: lembrete.recorrencia,
+    );
+    if (!mounted || result == null) return;
+    setState(() {
+      _lembrete = result.lembrete;
+      _houveAlteracao = true;
+    });
+  }
+
   //Excluir
   Future<void> _confirmarExclusao() async {
+    if (_concluindo) return;
     final confirmar = await showDialog<bool>(
       context: context,
       builder: (_) => DeleteReminderDialog(reminderTitle: _lembrete!.titulo),
@@ -64,7 +86,7 @@ class _ReminderDetailsScreenState extends State<ReminderDetailsScreen> {
   }
 
   Future<void> _editarLembrete() async {
-    if (_lembrete == null) return;
+    if (_lembrete == null || _concluindo) return;
 
     final atualizou = await showDialog<bool>(
       context: context,
@@ -226,6 +248,8 @@ class _ReminderDetailsScreenState extends State<ReminderDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final reminderProvider = context.watch<ReminderProvider>();
+    final concluindo = reminderProvider.estaConcluindo(widget.idLembrete);
     if (_carregando) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
@@ -579,7 +603,10 @@ class _ReminderDetailsScreenState extends State<ReminderDetailsScreen> {
                       _statusCard(
                         titulo: 'Status',
                         ativo: lembrete.ativo,
-                        icon: lembrete.ativo
+                        concluido: lembrete.concluidoDefinitivamente,
+                        icon: lembrete.concluidoDefinitivamente
+                            ? Icons.task_alt
+                            : lembrete.ativo
                             ? Icons.check_circle_outline
                             : Icons.cancel_outlined,
                         onTap: _editarLembrete,
@@ -587,12 +614,54 @@ class _ReminderDetailsScreenState extends State<ReminderDetailsScreen> {
 
                       const SizedBox(height: 32),
 
+                      if (lembrete.pendente) ...[
+                        SizedBox(
+                          width: double.infinity,
+                          child: Tooltip(
+                            message: lembrete.recorrencia == 'unica'
+                                ? 'Concluir lembrete'
+                                : 'Conclusão por ocorrência indisponível',
+                            child: ElevatedButton.icon(
+                              onPressed:
+                                  concluindo || lembrete.recorrencia != 'unica'
+                                  ? null
+                                  : _concluirLembrete,
+                              icon: concluindo
+                                  ? const SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Icon(Icons.check_circle_outline),
+                              label: Text(
+                                concluindo
+                                    ? 'Concluindo...'
+                                    : 'Concluir lembrete',
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF059669),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+
                       // ✅ BOTÕES DE AÇÃO
                       Row(
                         children: [
                           Expanded(
                             child: OutlinedButton.icon(
-                              onPressed: _editarLembrete,
+                              onPressed: concluindo ? null : _editarLembrete,
                               icon: const Icon(Icons.edit, size: 20),
                               label: const Text(
                                 'Editar',
@@ -617,7 +686,7 @@ class _ReminderDetailsScreenState extends State<ReminderDetailsScreen> {
                           const SizedBox(width: 12),
                           Expanded(
                             child: ElevatedButton.icon(
-                              onPressed: _confirmarExclusao,
+                              onPressed: concluindo ? null : _confirmarExclusao,
                               icon: const Icon(Icons.delete_outline, size: 20),
                               label: const Text(
                                 'Excluir',
@@ -731,6 +800,7 @@ class _ReminderDetailsScreenState extends State<ReminderDetailsScreen> {
   Widget _statusCard({
     required String titulo,
     required bool ativo,
+    bool concluido = false,
     required IconData icon,
     VoidCallback? onTap,
   }) {
@@ -802,7 +872,11 @@ class _ReminderDetailsScreenState extends State<ReminderDetailsScreen> {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            ativo ? 'Ativo' : 'Inativo',
+                            concluido
+                                ? 'Concluído'
+                                : ativo
+                                ? 'Ativo'
+                                : 'Inativo',
                             style: TextStyle(
                               color: ativo
                                   ? const Color(0xFF0D9488)

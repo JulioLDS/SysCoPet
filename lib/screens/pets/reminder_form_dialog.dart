@@ -3,17 +3,22 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/reminder_model.dart';
+import '../../models/pet_model.dart';
 import '../../providers/reminder_provider.dart';
 import '../../widgets/common/custom_snackbar.dart';
 
 class ReminderFormDialog extends StatefulWidget {
-  final int idPet;
+  final int? idPet;
+  final List<PetModel> petsDisponiveis;
+  final DateTime? dataInicial;
   final ReminderModel? lembrete;
   final String? tipoInicial;
 
   const ReminderFormDialog({
     super.key,
-    required this.idPet,
+    this.idPet,
+    this.petsDisponiveis = const [],
+    this.dataInicial,
     this.lembrete,
     this.tipoInicial,
   });
@@ -24,6 +29,14 @@ class ReminderFormDialog extends StatefulWidget {
 
 class _ReminderFormDialogState extends State<ReminderFormDialog> {
   bool get _editando => widget.lembrete != null;
+  bool get _escolherPet => !_editando && widget.idPet == null;
+  int? _idPetSelecionado;
+  bool _salvando = false;
+
+  List<PetModel> get _petsDisponiveis => {
+    for (final pet in widget.petsDisponiveis)
+      if (pet.idPet != null) pet.idPet!: pet,
+  }.values.toList();
 
   final _formKey = GlobalKey<FormState>();
 
@@ -53,9 +66,16 @@ class _ReminderFormDialogState extends State<ReminderFormDialog> {
   final recorrencias = const ['unica', 'diaria', 'semanal', 'mensal'];
 
   @override
-  @override
   void initState() {
     super.initState();
+    _idPetSelecionado = widget.lembrete?.idPet ?? widget.idPet;
+    if (_escolherPet && _petsDisponiveis.length == 1) {
+      _idPetSelecionado = _petsDisponiveis.single.idPet;
+    }
+    if (!_editando && widget.dataInicial != null) {
+      final data = widget.dataInicial!;
+      dataSelecionada = DateTime(data.year, data.month, data.day);
+    }
     tituloController.addListener(_updateTituloLength);
     descricaoController.addListener(_updateDescricaoLength);
 
@@ -112,13 +132,21 @@ class _ReminderFormDialogState extends State<ReminderFormDialog> {
 
   // ✅ SELECIONAR DATA (Nativo com tema customizado)
   Future<void> _selecionarData() async {
-    final hoje = DateTime.now();
+    final agora = DateTime.now();
+    final hoje = DateTime(agora.year, agora.month, agora.day);
+    final ultimaData = DateTime(hoje.year + 5);
+    final escolhida = dataSelecionada ?? hoje;
+    final inicial = escolhida.isBefore(hoje)
+        ? hoje
+        : escolhida.isAfter(ultimaData)
+        ? ultimaData
+        : escolhida;
 
     final data = await showDatePicker(
       context: context,
-      initialDate: dataSelecionada ?? hoje,
+      initialDate: inicial,
       firstDate: hoje,
-      lastDate: DateTime(hoje.year + 5),
+      lastDate: ultimaData,
       locale: const Locale('pt', 'BR'),
       builder: (context, child) {
         return Theme(
@@ -209,7 +237,13 @@ class _ReminderFormDialogState extends State<ReminderFormDialog> {
   }
 
   Future<void> _salvar() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (_salvando || !_formKey.currentState!.validate()) return;
+    final idPet = _idPetSelecionado;
+    if (idPet == null ||
+        (_escolherPet && !_petsDisponiveis.any((pet) => pet.idPet == idPet))) {
+      CustomSnackbar.showError(context, 'Selecione o pet do lembrete');
+      return;
+    }
 
     final dataHora = _montarDataHora();
 
@@ -228,7 +262,7 @@ class _ReminderFormDialogState extends State<ReminderFormDialog> {
 
     final lembrete = ReminderModel(
       idLembrete: widget.lembrete?.idLembrete,
-      idPet: widget.idPet,
+      idPet: idPet,
       titulo: tituloController.text.trim(),
       descricao: descricaoController.text.trim().isEmpty
           ? null
@@ -237,30 +271,80 @@ class _ReminderFormDialogState extends State<ReminderFormDialog> {
       tipo: tipoSelecionado,
       recorrencia: recorrenciaSelecionada,
       ativo: widget.lembrete?.ativo ?? true,
+      concluido: widget.lembrete?.concluido ?? false,
     );
 
     final provider = Provider.of<ReminderProvider>(context, listen: false);
 
-    final String? erro;
-    if (_editando) {
-      erro = await provider.atualizarLembrete(lembrete);
-    } else {
-      erro = await provider.criarLembrete(lembrete);
+    setState(() => _salvando = true);
+    try {
+      final erro = _editando
+          ? await provider.atualizarLembrete(lembrete)
+          : await provider.criarLembrete(lembrete);
+      if (!mounted) return;
+      if (erro != null) {
+        CustomSnackbar.showError(context, erro);
+        return;
+      }
+      if (!_editando && provider.avisoCriacao != null) {
+        CustomSnackbar.showWarning(context, provider.avisoCriacao!);
+      } else {
+        CustomSnackbar.showSuccess(
+          context,
+          _editando
+              ? 'Lembrete atualizado com sucesso!'
+              : 'Lembrete criado com sucesso!',
+          color: const Color(0xFF047857),
+        );
+      }
+      Navigator.pop(context, true);
+    } catch (_) {
+      if (mounted)
+        CustomSnackbar.showError(
+          context,
+          'Não foi possível salvar o lembrete. Tente novamente.',
+        );
+    } finally {
+      if (mounted) setState(() => _salvando = false);
     }
+  }
 
-    if (!mounted) return;
-
-    if (erro != null) {
-      CustomSnackbar.showError(context, erro);
-      return;
-    }
-
-    CustomSnackbar.showSuccess(
-      context,
-      'Lembrete criado com sucesso!',
-      color: const Color(0xFF047857),
+  Widget _buildPetSelector() {
+    final pets = _petsDisponiveis;
+    return DropdownButtonFormField<int>(
+      key: const ValueKey('reminder-pet-selector'),
+      value: _idPetSelecionado,
+      isExpanded: true,
+      decoration: InputDecoration(
+        labelText: 'Pet',
+        hintText: 'Selecione o pet',
+        prefixIcon: const Icon(Icons.pets, color: Color(0xFF0D9488)),
+        filled: true,
+        fillColor: const Color(0xFFF8FAFC),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        helperText: pets.isEmpty
+            ? 'Adicione um pet antes de criar um lembrete.'
+            : null,
+      ),
+      items: pets
+          .map(
+            (pet) => DropdownMenuItem<int>(
+              value: pet.idPet,
+              child: Text(
+                '${pet.nome} (${pet.especie})',
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          )
+          .toList(),
+      onChanged: _salvando || pets.isEmpty
+          ? null
+          : (value) => setState(() => _idPetSelecionado = value),
+      validator: (value) =>
+          value == null || !pets.any((pet) => pet.idPet == value)
+          ? 'Selecione o pet do lembrete'
+          : null,
     );
-    Navigator.pop(context, true);
   }
 
   String _formatarData(DateTime? data) {
@@ -500,7 +584,7 @@ class _ReminderFormDialogState extends State<ReminderFormDialog> {
                       ),
                     ),
                     GestureDetector(
-                      onTap: () => Navigator.pop(context),
+                      onTap: _salvando ? null : () => Navigator.pop(context),
                       child: Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
@@ -522,6 +606,10 @@ class _ReminderFormDialogState extends State<ReminderFormDialog> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      if (_escolherPet) ...[
+                        _buildPetSelector(),
+                        const SizedBox(height: 16),
+                      ],
                       _buildCompactInputField(
                         label: 'Título',
                         icon: Icons.edit,
@@ -633,7 +721,9 @@ class _ReminderFormDialogState extends State<ReminderFormDialog> {
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     TextButton(
-                      onPressed: () => Navigator.pop(context),
+                      onPressed: _salvando
+                          ? null
+                          : () => Navigator.pop(context),
                       child: const Text(
                         'Cancelar',
                         style: TextStyle(
@@ -645,7 +735,7 @@ class _ReminderFormDialogState extends State<ReminderFormDialog> {
                     ),
                     const SizedBox(width: 8),
                     ElevatedButton(
-                      onPressed: _salvar,
+                      onPressed: _salvando ? null : _salvar,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF0D9488),
                         foregroundColor: Colors.white,
@@ -740,7 +830,6 @@ class _ReminderFormDialogState extends State<ReminderFormDialog> {
     );
   }
 
-  @override
   Widget _buildWebLayout(BuildContext context) {
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -797,7 +886,7 @@ class _ReminderFormDialogState extends State<ReminderFormDialog> {
                 MouseRegion(
                   cursor: SystemMouseCursors.click,
                   child: GestureDetector(
-                    onTap: () => Navigator.pop(context),
+                    onTap: _salvando ? null : () => Navigator.pop(context),
                     child: Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
@@ -820,6 +909,10 @@ class _ReminderFormDialogState extends State<ReminderFormDialog> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  if (_escolherPet) ...[
+                    _buildPetSelector(),
+                    const SizedBox(height: 16),
+                  ],
                   _buildCompactInputField(
                     label: 'Título',
                     icon: Icons.edit,
@@ -927,7 +1020,7 @@ class _ReminderFormDialogState extends State<ReminderFormDialog> {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 TextButton(
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: _salvando ? null : () => Navigator.pop(context),
                   child: const Text(
                     'Cancelar',
                     style: TextStyle(
@@ -939,7 +1032,7 @@ class _ReminderFormDialogState extends State<ReminderFormDialog> {
                 ),
                 const SizedBox(width: 12),
                 ElevatedButton(
-                  onPressed: _salvar,
+                  onPressed: _salvando ? null : _salvar,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF0D9488),
                     foregroundColor: Colors.white,
@@ -1161,16 +1254,18 @@ class _ReminderFormDialogState extends State<ReminderFormDialog> {
                     child: Icon(icon, color: iconColor, size: 18),
                   ),
                   const SizedBox(width: 10),
-                  Text(
-                    value.isEmpty ? 'Selecionar' : value,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: value.isEmpty
-                          ? Colors.grey.shade400
-                          : const Color(0xFF1E293B),
+                  Expanded(
+                    child: Text(
+                      value.isEmpty ? 'Selecionar' : value,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: value.isEmpty
+                            ? Colors.grey.shade400
+                            : const Color(0xFF1E293B),
+                      ),
                     ),
                   ),
-                  const Spacer(),
                   Icon(
                     icon == Icons.calendar_today
                         ? Icons.calendar_today

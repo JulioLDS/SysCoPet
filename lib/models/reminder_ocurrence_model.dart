@@ -1,11 +1,14 @@
 class ReminderOccurrenceModel {
-
   final int id;
   final int idPet;
   final String titulo;
   final String tipo;
   final String recorrencia;
   final bool ativo;
+  final bool concluido;
+
+  bool get concluidoDefinitivamente => recorrencia == 'unica' && concluido;
+  bool get pendente => ativo && !concluidoDefinitivamente;
 
   final DateTime dataHora;
 
@@ -18,28 +21,24 @@ class ReminderOccurrenceModel {
     required this.tipo,
     required this.recorrencia,
     required this.ativo,
+    this.concluido = false,
     required this.dataHora,
     required this.proximasOcorrencias,
   });
 
-  factory ReminderOccurrenceModel.fromJson(
-      Map<String,dynamic> json){
-
+  factory ReminderOccurrenceModel.fromJson(Map<String, dynamic> json) {
     return ReminderOccurrenceModel(
-
       id: int.parse(json['id'].toString()),
       idPet: int.parse(json['id_pet'].toString()),
       titulo: json['titulo'],
       tipo: json['tipo'],
       recorrencia: json['recorrencia'],
       ativo: json['ativo'],
-      dataHora: DateTime.parse(json['data_hora']),
-      proximasOcorrencias:
-          (json['proximas_ocorrencias'] as List? ??[])
-              .map(
-                (e)=>DateTime.parse(e.toString(),).toLocal(),
-              )
-              .toList(),
+      concluido: json['concluido'] == true || json['concluido'] == 'true',
+      dataHora: DateTime.parse(json['data_hora']).toLocal(),
+      proximasOcorrencias: (json['proximas_ocorrencias'] as List? ?? [])
+          .map((e) => DateTime.parse(e.toString()).toLocal())
+          .toList(),
     );
   }
 }

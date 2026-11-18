@@ -6,8 +6,104 @@ import '../services/reminder_service.dart';
 import '../models/reminder_ocurrence_model.dart';
 import '../services/notification_service.dart';
 
+class ReminderCompletionResult {
+  const ReminderCompletionResult(this.lembrete, {this.aviso});
+  final ReminderModel lembrete;
+  final String? aviso;
+}
+
 class ReminderProvider extends ChangeNotifier {
-  final ReminderService _service = ReminderService();
+  ReminderProvider({
+    ReminderService? service,
+    Future<void> Function(ReminderModel lembrete)? cancelarNotificacao,
+    Future<void> Function(ReminderModel lembrete)? agendarNotificacao,
+  }) : _service = service ?? ReminderService(),
+       _ownsService = service == null,
+       _agendarNotificacao = agendarNotificacao ?? _agendarPadrao,
+       _cancelarNotificacao =
+           cancelarNotificacao ??
+           NotificationService.cancelarNotificacaoDoLembrete;
+
+  final ReminderService _service;
+  final bool _ownsService;
+  final Future<void> Function(ReminderModel lembrete) _agendarNotificacao;
+  String? avisoCriacao;
+  final Future<void> Function(ReminderModel lembrete) _cancelarNotificacao;
+  final Set<int> _concluindo = {};
+  final Set<int> _concluidosConfirmados = {};
+  bool _disposed = false;
+
+  static Future<void> _agendarPadrao(ReminderModel lembrete) =>
+      NotificationService.agendarNotificacao(
+        id: NotificationService.gerarIdNotificacao(lembrete),
+        titulo: lembrete.titulo,
+        descricao: lembrete.descricao,
+        dataHora: lembrete.dataHora,
+      );
+
+  bool estaConcluindo(int id) => _concluindo.contains(id);
+
+  Future<ReminderCompletionResult> concluirLembrete({
+    required int idLembrete,
+    required int idPet,
+    required String recorrencia,
+  }) async {
+    // A query atual altera a série inteira; nunca usá-la para uma recorrência.
+    if (recorrencia != 'unica') {
+      throw const ReminderCompletionException(
+        'A conclusão de uma ocorrência recorrente ainda não está disponível.',
+      );
+    }
+    if (_disposed || !_concluindo.add(idLembrete)) {
+      throw const ReminderCompletionException(
+        'Aguarde a conclusão do lembrete terminar.',
+      );
+    }
+    notifyListeners();
+    try {
+      final updated = await _service.concluirLembrete(idLembrete);
+      if (updated.idPet != idPet) {
+        throw const ReminderCompletionException(
+          'A API retornou um lembrete de outro pet.',
+        );
+      }
+      _concluidosConfirmados.add(idLembrete);
+      if (!_disposed) {
+        lembretes = lembretes
+            .map(
+              (item) => item.idLembrete == idLembrete && item.idPet == idPet
+                  ? updated
+                  : item,
+            )
+            .toList();
+        ocorrencias.removeWhere(
+          (item) => item.id == idLembrete && item.idPet == idPet,
+        );
+        ocorrenciasPet.removeWhere(
+          (item) => item.id == idLembrete && item.idPet == idPet,
+        );
+        notifyListeners();
+      }
+      String? aviso;
+      try {
+        await _cancelarNotificacao(updated);
+      } catch (_) {
+        aviso =
+            'Lembrete concluído, mas não foi possível cancelar a notificação neste dispositivo.';
+      }
+      return ReminderCompletionResult(updated, aviso: aviso);
+    } finally {
+      _concluindo.remove(idLembrete);
+      if (!_disposed) notifyListeners();
+    }
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    if (_ownsService) _service.dispose();
+    super.dispose();
+  }
 
   List<ReminderModel> lembretes = [];
   //Usada pela home
@@ -34,7 +130,11 @@ class ReminderProvider extends ChangeNotifier {
 
   //buscar lembrete por id
   Future<ReminderModel?> buscarLembretePorId(int idPet, int idLembrete) async {
-    return await _service.buscarLembretePorId(idPet, idLembrete);
+    final item = await _service.buscarLembretePorId(idPet, idLembrete);
+    if (item != null && _concluidosConfirmados.contains(idLembrete)) {
+      return item.copyWith(concluido: true);
+    }
+    return item;
   }
 
   //Carregar lembretes DOS pets
@@ -53,7 +153,13 @@ class ReminderProvider extends ChangeNotifier {
         todosLembretes.addAll(lembretesDoPet);
       }
 
-      lembretes = todosLembretes.where((lembrete) => lembrete.ativo).toList();
+      lembretes = todosLembretes
+          .where(
+            (lembrete) =>
+                lembrete.pendente &&
+                !_concluidosConfirmados.contains(lembrete.idLembrete),
+          )
+          .toList();
 
       lembretes.sort((a, b) => a.dataHora.compareTo(b.dataHora));
     } finally {
@@ -70,7 +176,9 @@ class ReminderProvider extends ChangeNotifier {
     try {
       ocorrenciasPet = await _service.buscarOcorrencias(idPet);
 
-      ocorrenciasPet = ocorrenciasPet.where((o) => o.ativo).toList();
+      ocorrenciasPet = ocorrenciasPet
+          .where((o) => o.pendente && !_concluidosConfirmados.contains(o.id))
+          .toList();
 
       ocorrenciasPet.sort((a, b) => a.dataHora.compareTo(b.dataHora));
     } catch (e) {
@@ -106,7 +214,11 @@ class ReminderProvider extends ChangeNotifier {
       print("TOTAL: ${todasOcorrencias.length}");
 
       ocorrencias = todasOcorrencias
-          .where((ocorrencia) => ocorrencia.ativo)
+          .where(
+            (ocorrencia) =>
+                ocorrencia.pendente &&
+                !_concluidosConfirmados.contains(ocorrencia.id),
+          )
           .toList();
 
       ocorrencias.sort((a, b) => a.dataHora.compareTo(b.dataHora));
@@ -123,37 +235,30 @@ class ReminderProvider extends ChangeNotifier {
   //Criar lembrete
   Future<String?> criarLembrete(ReminderModel lembrete) async {
     isLoading = true;
+    avisoCriacao = null;
     notifyListeners();
-
-    final erro = await _service.criarLembrete(lembrete);
-
-     if (erro == null) {
-      // ID local pra notificação
-      final idNotificacao =
-          NotificationService.gerarIdNotificacao(lembrete);
-
-      // Agenda a notificação
-      await NotificationService.agendarNotificacao(
-        id: idNotificacao,
-        titulo: lembrete.titulo,
-        descricao: lembrete.descricao,
-        dataHora: lembrete.dataHora,
-      );
-
-      await carregarLembretesDoPet(lembrete.idPet);
-    } else {
+    try {
+      final erro = await _service.criarLembrete(lembrete);
+      if (erro != null) return erro;
+      // O registro já foi criado: falhas locais não devem induzir outro POST.
+      try {
+        await _agendarNotificacao(lembrete);
+      } catch (_) {
+        avisoCriacao =
+            'Lembrete criado, mas a notificação não pôde ser agendada neste dispositivo.';
+      }
+      try {
+        await carregarLembretesDoPet(lembrete.idPet);
+        await carregarOcorrenciasDoPet(lembrete.idPet);
+      } catch (_) {
+        avisoCriacao =
+            'Lembrete criado, mas não foi possível atualizar a lista. Reabra a agenda.';
+      }
+      return null;
+    } finally {
       isLoading = false;
-      notifyListeners();
+      if (!_disposed) notifyListeners();
     }
-
-    if (erro != null) {
-      isLoading = false;
-      notifyListeners();
-      return erro;
-    }
-    await carregarOcorrenciasDoPet(lembrete.idPet);
-
-    return null;
   }
 
   //Atualizar lembrete

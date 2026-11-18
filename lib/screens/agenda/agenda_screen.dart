@@ -4,11 +4,16 @@ import '../../providers/auth_provider.dart';
 import '../../providers/reminder_provider.dart';
 import '../../providers/pet_provider.dart';
 import '../../models/reminder_ocurrence_model.dart';
+import '../../models/pet_model.dart';
 import '../pets/reminder_form_dialog.dart';
 import '../pets/reminders_all_screen.dart';
+import '../../widgets/reminders/complete_reminder_action.dart';
 
 class AgendaScreen extends StatefulWidget {
-  const AgendaScreen({super.key});
+  const AgendaScreen({super.key, this.onVoltar});
+
+  // Na Home a agenda é uma aba, não uma rota separada.
+  final VoidCallback? onVoltar;
 
   @override
   State<AgendaScreen> createState() => _AgendaScreenState();
@@ -18,6 +23,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
   DateTime _mesAtual = DateTime.now();
   DateTime? _diaSelecionado;
   bool _carregando = true;
+  bool _abrindoFormulario = false;
 
   // ✅ Chaves globais para cada dia (permite calcular posição na tela)
   final Map<String, GlobalKey> _diaKeys = {};
@@ -32,7 +38,9 @@ class _AgendaScreenState extends State<AgendaScreen> {
   void initState() {
     super.initState();
     _diaSelecionado = DateTime.now();
-    _carregarDados();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _carregarDados();
+    });
   }
 
   @override
@@ -66,6 +74,15 @@ class _AgendaScreenState extends State<AgendaScreen> {
     return petEncontrado.first.nome;
   }
 
+  void _voltar() {
+    _removerPopover();
+    if (widget.onVoltar != null) {
+      widget.onVoltar!();
+    } else {
+      Navigator.of(context).maybePop();
+    }
+  }
+
   void _mesAnterior() {
     _removerPopover();
     setState(() {
@@ -86,6 +103,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
       listen: false,
     );
     return reminderProvider.ocorrencias.where((lembrete) {
+      if (!lembrete.pendente) return false;
       final data = _getProximaData(lembrete);
       if (data == null) return false;
       return data.year == dia.year &&
@@ -95,6 +113,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
   }
 
   DateTime? _getProximaData(ReminderOccurrenceModel lembrete) {
+    if (!lembrete.pendente) return null;
     final agora = DateTime.now();
     if (lembrete.dataHora.isAfter(agora)) return lembrete.dataHora;
     for (final data in lembrete.proximasOcorrencias) {
@@ -239,236 +258,53 @@ class _AgendaScreenState extends State<AgendaScreen> {
 
   String _chaveDia(DateTime dia) => '${dia.year}-${dia.month}-${dia.day}';
 
-  // ✅ Fluxo: Adicionar lembrete → Selecionar Pet → Abrir formulário
-  void _abrirFluxoNovoLembrete() async {
-    final auth = Provider.of<AuthProvider>(context, listen: false);
-    final petProvider = Provider.of<PetProvider>(context, listen: false);
-
-    if (petProvider.pets.isEmpty && auth.currentUser != null) {
-      await petProvider.carregarPets(auth.currentUser!.id);
-    }
-
-    if (petProvider.pets.isEmpty) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Adicione um pet primeiro!'),
-          backgroundColor: Color(0xFF0D9488),
+  // A escolha do pet fica dentro do próprio formulário da agenda.
+  Future<void> _abrirFluxoNovoLembrete() async {
+    if (_abrindoFormulario) return;
+    _removerPopover();
+    final auth = context.read<AuthProvider>();
+    final pets = context.read<PetProvider>();
+    final user = auth.currentUser;
+    if (user == null) return;
+    setState(() => _abrindoFormulario = true);
+    try {
+      await pets.carregarPets(user.id);
+      if (!mounted || !identical(auth.currentUser, user)) return;
+      final disponiveis = List<PetModel>.unmodifiable(
+        pets.pets.where((pet) => pet.idPet != null),
+      );
+      if (disponiveis.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Adicione um pet primeiro!'),
+            backgroundColor: Color(0xFF0D9488),
+          ),
+        );
+        return;
+      }
+      final criou = await showDialog<bool>(
+        context: context,
+        builder: (_) => ReminderFormDialog(
+          petsDisponiveis: disponiveis,
+          dataInicial: _diaSelecionado,
         ),
       );
-      return;
-    }
-
-    if (petProvider.pets.length == 1) {
-      _abrirFormularioLembrete(petProvider.pets.first.idPet!);
-      return;
-    }
-
-    final petEscolhidoId = await showDialog<dynamic>(
-      context: context,
-      builder: (_) => _dialogSelecionarPetAgenda(petProvider.pets),
-    );
-
-    if (petEscolhidoId != null) {
-      _abrirFormularioLembrete(petEscolhidoId);
-    }
-  }
-
-  void _abrirFormularioLembrete(int idPet) async {
-    final criou = await showDialog<bool>(
-      context: context,
-      builder: (_) => ReminderFormDialog(idPet: idPet),
-    );
-    if (criou == true && mounted) {
-      await _carregarDados();
+      if (criou == true && mounted && identical(auth.currentUser, user)) {
+        await _carregarDados();
+      }
+    } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Lembrete criado com sucesso!'),
-            backgroundColor: Color(0xFF059669),
+            content: Text(
+              'Não foi possível carregar os pets. Tente novamente.',
+            ),
           ),
         );
       }
+    } finally {
+      if (mounted) setState(() => _abrindoFormulario = false);
     }
-  }
-
-  Widget _dialogSelecionarPetAgenda(List<dynamic> pets) {
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 450),
-        child: Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 20,
-                offset: const Offset(0, 10),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFCCFBF1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.notifications_active,
-                      color: Color(0xFF0D9488),
-                      size: 24,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  const Expanded(
-                    child: Text(
-                      'Novo lembrete',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF1E293B),
-                      ),
-                    ),
-                  ),
-                  MouseRegion(
-                    cursor: SystemMouseCursors.click,
-                    child: GestureDetector(
-                      onTap: () => Navigator.pop(context),
-                      child: Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: const BoxDecoration(
-                          color: Color(0xFFFEF2F2),
-                          borderRadius: BorderRadius.all(Radius.circular(8)),
-                        ),
-                        child: const Icon(
-                          Icons.close,
-                          color: Color(0xFFEF4444),
-                          size: 18,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFCCFBF1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.pets, color: Color(0xFF0D9488), size: 24),
-                    const SizedBox(width: 12),
-                    const Expanded(
-                      child: Text(
-                        'Para qual pet você deseja criar um lembrete?',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Color(0xFF1E293B),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxHeight: 300),
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: pets
-                        .map(
-                          (pet) => _petOptionCardAgenda(
-                            pet: pet,
-                            onTap: () => Navigator.pop(context, pet.idPet),
-                          ),
-                        )
-                        .toList(),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _petOptionCardAgenda({
-    required dynamic pet,
-    required VoidCallback onTap,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Material(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey.shade200),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 24,
-                  backgroundColor: const Color(0xFFCCFBF1),
-                  backgroundImage:
-                      pet.urlFoto != null && pet.urlFoto!.isNotEmpty
-                      ? NetworkImage(pet.urlFoto!)
-                      : null,
-                  child: pet.urlFoto == null || pet.urlFoto!.isEmpty
-                      ? const Icon(
-                          Icons.pets,
-                          color: Color(0xFF0D9488),
-                          size: 20,
-                        )
-                      : null,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        pet.nome,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 15,
-                          color: Color(0xFF1E293B),
-                        ),
-                      ),
-                      Text(
-                        pet.especie,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey.shade600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const Icon(Icons.chevron_right, color: Color(0xFF0D9488)),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
   }
 
   List<Widget> _buildListaLembretes(List<ReminderOccurrenceModel> ocorrencias) {
@@ -514,10 +350,14 @@ class _AgendaScreenState extends State<AgendaScreen> {
         backgroundColor: const Color(0xFF0D9488),
         foregroundColor: Colors.white,
         centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
+        automaticallyImplyLeading: false,
+        leading: widget.onVoltar != null || Navigator.of(context).canPop()
+            ? IconButton(
+                tooltip: 'Voltar',
+                icon: const Icon(Icons.arrow_back),
+                onPressed: _voltar,
+              )
+            : null,
         actions: [
           // ✅ Botão "Hoje" com texto e background
           Padding(
@@ -879,7 +719,9 @@ class _AgendaScreenState extends State<AgendaScreen> {
                           color: const Color(0xFFECFDF5),
                           borderRadius: BorderRadius.circular(14),
                           child: InkWell(
-                            onTap: () => _abrirFluxoNovoLembrete(),
+                            onTap: _abrindoFormulario
+                                ? null
+                                : _abrirFluxoNovoLembrete,
                             borderRadius: BorderRadius.circular(14),
                             child: const Padding(
                               padding: EdgeInsets.symmetric(vertical: 16),
@@ -1017,7 +859,23 @@ class _AgendaScreenState extends State<AgendaScreen> {
     );
   }
 
+  Future<void> _concluirLembrete(ReminderOccurrenceModel lembrete) async {
+    _removerPopover();
+    final result = await confirmarConclusaoLembrete(
+      context,
+      idLembrete: lembrete.id,
+      idPet: lembrete.idPet,
+      titulo: lembrete.titulo,
+      recorrencia: lembrete.recorrencia,
+    );
+    if (mounted && result != null) setState(() {});
+  }
+
   Widget _buildLembreteCard(ReminderOccurrenceModel lembrete) {
+    final concluindo = context.read<ReminderProvider>().estaConcluindo(
+      lembrete.id,
+    );
+    final podeConcluir = lembrete.recorrencia == 'unica' && !concluindo;
     final proximaData = _getProximaData(lembrete)!;
     final corTipo = _corPorTipo(lembrete.tipo);
     final fundoTipo = _corFundoPorTipo(lembrete.tipo);
@@ -1098,35 +956,44 @@ class _AgendaScreenState extends State<AgendaScreen> {
             ),
           ),
           const SizedBox(width: 8),
-          Material(
-            color: const Color(0xFFECFDF5),
-            borderRadius: BorderRadius.circular(20),
-            child: InkWell(
-              onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Funcionalidade em desenvolvimento'),
-                    backgroundColor: Color(0xFF059669),
-                  ),
-                );
-              },
+          Tooltip(
+            message: lembrete.recorrencia == 'unica'
+                ? 'Concluir lembrete'
+                : 'Conclusão por ocorrência indisponível',
+            child: Material(
+              color: const Color(0xFFECFDF5),
               borderRadius: BorderRadius.circular(20),
-              child: const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.check, color: Color(0xFF0D9488), size: 16),
-                    SizedBox(width: 4),
-                    Text(
-                      'Concluir',
-                      style: TextStyle(
-                        color: Color(0xFF0D9488),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
+              child: InkWell(
+                onTap: podeConcluir ? () => _concluirLembrete(lembrete) : null,
+                borderRadius: BorderRadius.circular(20),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.check,
+                        color: podeConcluir
+                            ? const Color(0xFF0D9488)
+                            : Colors.grey,
+                        size: 16,
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 4),
+                      Text(
+                        concluindo ? 'Concluindo...' : 'Concluir',
+                        style: TextStyle(
+                          color: podeConcluir
+                              ? const Color(0xFF0D9488)
+                              : Colors.grey,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -1134,29 +1001,34 @@ class _AgendaScreenState extends State<AgendaScreen> {
           const SizedBox(width: 4),
           IconButton(
             icon: const Icon(Icons.delete_outline, color: Colors.red, size: 20),
-            onPressed: () async {
-              final confirmou = await showDialog<bool>(
-                context: context,
-                builder: (_) =>
-                    _DialogExcluirLembreteAgenda(titulo: lembrete.titulo),
-              );
-              if (confirmou == true) {
-                final provider = Provider.of<ReminderProvider>(
-                  context,
-                  listen: false,
-                );
-                await provider.deletarLembrete(lembrete.id, lembrete.idPet);
-                await _carregarDados();
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Lembrete excluído!'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                }
-              }
-            },
+            onPressed: concluindo
+                ? null
+                : () async {
+                    final confirmou = await showDialog<bool>(
+                      context: context,
+                      builder: (_) =>
+                          _DialogExcluirLembreteAgenda(titulo: lembrete.titulo),
+                    );
+                    if (confirmou == true) {
+                      final provider = Provider.of<ReminderProvider>(
+                        context,
+                        listen: false,
+                      );
+                      await provider.deletarLembrete(
+                        lembrete.id,
+                        lembrete.idPet,
+                      );
+                      await _carregarDados();
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Lembrete excluído!'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    }
+                  },
           ),
         ],
       ),

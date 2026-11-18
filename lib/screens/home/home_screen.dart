@@ -116,6 +116,10 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
+  void _voltarDaAgenda() {
+    setState(() => _selectedIndex = 0);
+  }
+
   final ScrollController _petScrollController = ScrollController();
   int _currentPetIndex = 0;
   bool _chatbotAberto = false;
@@ -338,7 +342,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       body: _selectedIndex == 1
-          ? const AgendaScreen()
+          ? AgendaScreen(onVoltar: _voltarDaAgenda)
           : _selectedIndex == 2
           ? const ProfileScreen()
           : Stack(
@@ -1484,7 +1488,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       body: _selectedIndex == 1
-          ? const AgendaScreen()
+          ? AgendaScreen(onVoltar: _voltarDaAgenda)
           : _selectedIndex == 2
           ? const ProfileScreen()
           : Stack(

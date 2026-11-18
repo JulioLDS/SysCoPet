@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
@@ -11,9 +12,7 @@ class NotificationService {
   static Future<void> initialize() async {
     tz.initializeTimeZones();
 
-    tz.setLocalLocation(
-      tz.getLocation('America/Sao_Paulo'),
-    );
+    tz.setLocalLocation(tz.getLocation('America/Sao_Paulo'));
 
     const androidSettings = AndroidInitializationSettings(
       '@mipmap/ic_launcher',
@@ -23,16 +22,15 @@ class NotificationService {
       android: androidSettings,
     );
 
-    await _notifications.initialize(
-      initializationSettings,
-    );
+    await _notifications.initialize(initializationSettings);
 
-    final androidPlugin =
-        _notifications.resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>();
+    final androidPlugin = _notifications
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
 
-    final notificacoesPermitidas =
-        await androidPlugin?.areNotificationsEnabled();
+    final notificacoesPermitidas = await androidPlugin
+        ?.areNotificationsEnabled();
 
     if (notificacoesPermitidas != true) {
       await androidPlugin?.requestNotificationsPermission();
@@ -47,10 +45,7 @@ class NotificationService {
     required String? descricao,
     required DateTime dataHora,
   }) async {
-    final horario = tz.TZDateTime.from(
-      dataHora,
-      tz.local,
-    );
+    final horario = tz.TZDateTime.from(dataHora, tz.local);
 
     await _notifications.zonedSchedule(
       id,
@@ -72,8 +67,14 @@ class NotificationService {
     );
   }
 
+  static Future<void> cancelarNotificacaoDoLembrete(
+    ReminderModel lembrete,
+  ) async {
+    if (kIsWeb) return;
+    await _notifications.cancel(gerarIdNotificacao(lembrete));
+  }
+
   static int gerarIdNotificacao(ReminderModel lembrete) {
-    return lembrete.dataHora.millisecondsSinceEpoch
-        .remainder(2147483647);
+    return lembrete.dataHora.millisecondsSinceEpoch.remainder(2147483647);
   }
 }

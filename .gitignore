@@ -50,3 +50,5 @@ build/
 .flutter-plugins-dependencies
 *.env
 aplicar.dart
+aplicar_lembretes.dart
+aplicar_correcao_agenda.dart
